@@ -84,6 +84,7 @@ export {
   activateSceneHandler,
   captureSceneHandler,
   createSceneHandler,
+  createSceneFromUvttHandler,
   createWallsHandler,
   deleteWallHandler,
   normalizeSceneHandler,
