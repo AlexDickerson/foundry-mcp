@@ -10,6 +10,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
 
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +40,33 @@ jobs:
             type=raw,value=latest
             type=raw,value=${{ steps.version.outputs.VERSION }}
 
-      - name: Build and push
+      - name: Build image (local)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Grype vulnerability scan
+        uses: anchore/scan-action@v7
+        id: grype
+        with:
+          image: ghcr.io/${{ github.repository }}:latest
+          fail-build: true
+          severity-cutoff: high
+          only-fixed: true
+          output-format: sarif
+
+      - name: Upload Grype SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: ${{ steps.grype.outputs.sarif }}
+
+      - name: Push image
         uses: docker/build-push-action@v6
         with:
           context: .
