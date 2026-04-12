@@ -22,7 +22,7 @@ COPY module/src ./src
 RUN npx vite build
 
 # Copy the static dist assets that aren't produced by vite
-COPY module/dist/module.json module/dist/module.json
+COPY module/dist/module.json ./dist/module.json
 COPY module/dist/styles ./dist/styles
 COPY module/dist/templates ./dist/templates
 
