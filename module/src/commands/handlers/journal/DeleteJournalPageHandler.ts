@@ -3,9 +3,7 @@ import type { FoundryGame } from './journalTypes';
 
 declare const game: FoundryGame;
 
-export async function deleteJournalPageHandler(
-  params: DeleteJournalPageParams
-): Promise<DeleteResult> {
+export async function deleteJournalPageHandler(params: DeleteJournalPageParams): Promise<DeleteResult> {
   const journal = game.journal.get(params.journalId);
 
   if (!journal) {

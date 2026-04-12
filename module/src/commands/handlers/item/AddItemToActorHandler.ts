@@ -10,10 +10,7 @@ interface FoundryItem {
 interface FoundryActor {
   id: string;
   name: string;
-  createEmbeddedDocuments(
-    embeddedName: string,
-    data: Record<string, unknown>[]
-  ): Promise<FoundryItem[]>;
+  createEmbeddedDocuments(embeddedName: string, data: Record<string, unknown>[]): Promise<FoundryItem[]>;
 }
 
 interface ActorsCollection {
@@ -35,7 +32,7 @@ export async function addItemToActorHandler(params: AddItemToActorParams): Promi
 
   const itemData: Record<string, unknown> = {
     name: params.name,
-    type: params.type
+    type: params.type,
   };
 
   if (params.img !== undefined) {
@@ -60,6 +57,6 @@ export async function addItemToActorHandler(params: AddItemToActorParams): Promi
     type: createdItem.type,
     img: createdItem.img,
     actorId: actor.id,
-    actorName: actor.name
+    actorName: actor.name,
   };
 }

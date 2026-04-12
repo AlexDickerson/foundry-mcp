@@ -19,14 +19,19 @@ function createMockItem(overrides?: Partial<MockItem>): MockItem {
     img: 'items/sword.webp',
     folder: { name: 'Weapons' },
     toObject: jest.fn().mockReturnValue({ system: { damage: '1d8', weight: 3 } }),
-    ...overrides
+    ...overrides,
   };
 }
 
 function setGame(items: MockItem[] | undefined): void {
-  const collection = items !== undefined
-    ? { forEach: jest.fn((fn: (item: MockItem) => void) => { items.forEach(fn); }) }
-    : undefined;
+  const collection =
+    items !== undefined
+      ? {
+          forEach: jest.fn((fn: (item: MockItem) => void) => {
+            items.forEach(fn);
+          }),
+        }
+      : undefined;
   (globalThis as Record<string, unknown>)['game'] = { items: collection };
 }
 
@@ -39,8 +44,22 @@ describe('getItemsHandler', () => {
 
   it('should return all items with correct fields', async () => {
     setGame([
-      createMockItem({ id: 'i1', uuid: 'Item.i1', name: 'Sword', type: 'weapon', img: 'items/sword.webp', folder: { name: 'Weapons' } }),
-      createMockItem({ id: 'i2', uuid: 'Item.i2', name: 'Potion', type: 'consumable', img: 'items/potion.webp', folder: null })
+      createMockItem({
+        id: 'i1',
+        uuid: 'Item.i1',
+        name: 'Sword',
+        type: 'weapon',
+        img: 'items/sword.webp',
+        folder: { name: 'Weapons' },
+      }),
+      createMockItem({
+        id: 'i2',
+        uuid: 'Item.i2',
+        name: 'Potion',
+        type: 'consumable',
+        img: 'items/potion.webp',
+        folder: null,
+      }),
     ]);
 
     const result = await getItemsHandler({} as Record<string, never>);

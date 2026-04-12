@@ -57,12 +57,9 @@ export function sendCommand(type: string, params: Record<string, unknown> = {}):
 }
 
 /** Send a command to Foundry and wrap the result as an MCP tool response. */
-export async function foundryTool(
-  type: string,
-  params: Record<string, unknown> = {},
-): Promise<CallToolResult> {
+export async function foundryTool(type: string, params: Record<string, unknown> = {}): Promise<CallToolResult> {
   try {
-    const data = await sendCommand(type, params) as Record<string, unknown> | null;
+    const data = (await sendCommand(type, params)) as Record<string, unknown> | null;
 
     // capture-scene returns { image, mimeType, ... } — surface image as MCP image block
     if (data && typeof data.image === 'string' && typeof data.mimeType === 'string') {
@@ -113,7 +110,10 @@ wss.on('connection', (ws: WebSocket) => {
   ws.on('message', (raw: Buffer) => {
     try {
       const msg = JSON.parse(raw.toString()) as {
-        id: string; success: boolean; data?: unknown; error?: string;
+        id: string;
+        success: boolean;
+        data?: unknown;
+        error?: string;
       };
       const pending = pendingCommands.get(msg.id);
       if (!pending) {

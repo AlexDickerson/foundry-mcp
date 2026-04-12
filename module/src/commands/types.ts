@@ -776,9 +776,9 @@ export interface CreateSceneParams {
 
 export interface WallDefinition {
   c: [number, number, number, number];
-  move?: number;   // 0=none, 1=normal (default 1)
-  sense?: number;  // 0=none, 1=normal (default 1)
-  door?: number;   // 0=none, 1=door, 2=secret (default 0)
+  move?: number; // 0=none, 1=normal (default 1)
+  sense?: number; // 0=none, 1=normal (default 1)
+  door?: number; // 0=none, 1=door, 2=secret (default 0)
 }
 
 export interface CreateWallsParams {
@@ -804,7 +804,7 @@ export interface NormalizeSceneResult {
   id: string;
   name: string;
   before: { width: number; height: number; padding: number };
-  after:  { width: number; height: number; padding: number };
+  after: { width: number; height: number; padding: number };
   gridSize: number;
   gridCols: number;
   gridRows: number;
@@ -1195,9 +1195,7 @@ export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
-export type CommandHandler<TParams = unknown, TResult = unknown> = (
-  params: TParams
-) => Promise<TResult>;
+export type CommandHandler<TParams = unknown, TResult = unknown> = (params: TParams) => Promise<TResult>;
 
 export interface CommandParamsMap {
   'roll-dice': RollDiceParams;

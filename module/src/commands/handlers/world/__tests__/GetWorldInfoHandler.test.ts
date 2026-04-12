@@ -6,7 +6,7 @@ function createMockCollection<T>(items: T[] = []): { size: number; forEach: jest
     size: items.length,
     forEach: jest.fn((fn: (item: T) => void) => {
       items.forEach(fn);
-    })
+    }),
   };
 }
 
@@ -17,10 +17,10 @@ function createMockPack(overrides?: Partial<FoundryPack>): FoundryPack {
       label: 'Monsters',
       type: 'Actor',
       system: 'dnd5e',
-      packageName: 'dnd5e'
+      packageName: 'dnd5e',
     },
     index: { size: 350 },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -34,7 +34,7 @@ function createMockGame(overrides?: Partial<FoundryGame>): FoundryGame {
     items: createMockCollection(),
     scenes: createMockCollection(),
     packs: createMockCollection<FoundryPack>(),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -52,12 +52,14 @@ describe('getWorldInfoHandler', () => {
   });
 
   it('should return full world info with all fields populated', async () => {
-    setGame(createMockGame({
-      journal: createMockCollection([1, 2, 3]),
-      actors: createMockCollection([1, 2]),
-      items: createMockCollection([1, 2, 3, 4]),
-      scenes: createMockCollection([1])
-    }));
+    setGame(
+      createMockGame({
+        journal: createMockCollection([1, 2, 3]),
+        actors: createMockCollection([1, 2]),
+        items: createMockCollection([1, 2, 3, 4]),
+        scenes: createMockCollection([1]),
+      }),
+    );
 
     const result = await getWorldInfoHandler({} as Record<string, never>);
 
@@ -66,13 +68,13 @@ describe('getWorldInfoHandler', () => {
       title: 'Test Campaign',
       system: 'dnd5e',
       systemVersion: '4.3.0',
-      foundryVersion: '12.331'
+      foundryVersion: '12.331',
     });
     expect(result.counts).toEqual({
       journals: 3,
       actors: 2,
       items: 4,
-      scenes: 1
+      scenes: 1,
     });
     expect(result.compendiumMeta).toEqual([]);
   });
@@ -104,12 +106,14 @@ describe('getWorldInfoHandler', () => {
   });
 
   it('should return zero counts when collections are undefined', async () => {
-    setGame(createMockGame({
-      journal: undefined,
-      actors: undefined,
-      items: undefined,
-      scenes: undefined
-    }));
+    setGame(
+      createMockGame({
+        journal: undefined,
+        actors: undefined,
+        items: undefined,
+        scenes: undefined,
+      }),
+    );
 
     const result = await getWorldInfoHandler({} as Record<string, never>);
 
@@ -117,7 +121,7 @@ describe('getWorldInfoHandler', () => {
       journals: 0,
       actors: 0,
       items: 0,
-      scenes: 0
+      scenes: 0,
     });
   });
 
@@ -130,7 +134,7 @@ describe('getWorldInfoHandler', () => {
       journals: 0,
       actors: 0,
       items: 0,
-      scenes: 0
+      scenes: 0,
     });
   });
 
@@ -147,18 +151,18 @@ describe('getWorldInfoHandler', () => {
       createMockPack({
         collection: 'dnd5e.monsters',
         metadata: { label: 'Monsters', type: 'Actor', system: 'dnd5e', packageName: 'dnd5e' },
-        index: { size: 350 }
+        index: { size: 350 },
       }),
       createMockPack({
         collection: 'dnd5e.spells',
         metadata: { label: 'Spells', type: 'Item', system: 'dnd5e', packageName: 'dnd5e' },
-        index: { size: 500 }
+        index: { size: 500 },
       }),
       createMockPack({
         collection: 'world.custom-tables',
         metadata: { label: 'Custom Tables', type: 'RollTable', system: undefined, packageName: 'world' },
-        index: { size: 5 }
-      })
+        index: { size: 5 },
+      }),
     ];
 
     setGame(createMockGame({ packs: createMockCollection(packs) }));
@@ -171,27 +175,27 @@ describe('getWorldInfoHandler', () => {
       label: 'Monsters',
       type: 'Actor',
       system: 'dnd5e',
-      count: 350
+      count: 350,
     });
     expect(result.compendiumMeta[1]).toEqual({
       id: 'dnd5e.spells',
       label: 'Spells',
       type: 'Item',
       system: 'dnd5e',
-      count: 500
+      count: 500,
     });
     expect(result.compendiumMeta[2]).toEqual({
       id: 'world.custom-tables',
       label: 'Custom Tables',
       type: 'RollTable',
       system: '',
-      count: 5
+      count: 5,
     });
   });
 
   it('should fallback system to empty string when pack metadata system is undefined', async () => {
     const pack = createMockPack({
-      metadata: { label: 'Custom', type: 'Actor', system: undefined, packageName: 'custom' }
+      metadata: { label: 'Custom', type: 'Actor', system: undefined, packageName: 'custom' },
     });
 
     setGame(createMockGame({ packs: createMockCollection([pack]) }));
@@ -220,7 +224,7 @@ describe('getWorldInfoHandler', () => {
       actors: undefined,
       items: undefined,
       scenes: undefined,
-      packs: undefined
+      packs: undefined,
     });
 
     const result = await getWorldInfoHandler({} as Record<string, never>);
@@ -230,13 +234,13 @@ describe('getWorldInfoHandler', () => {
       title: '',
       system: '',
       systemVersion: '',
-      foundryVersion: ''
+      foundryVersion: '',
     });
     expect(result.counts).toEqual({
       journals: 0,
       actors: 0,
       items: 0,
-      scenes: 0
+      scenes: 0,
     });
     expect(result.compendiumMeta).toEqual([]);
   });

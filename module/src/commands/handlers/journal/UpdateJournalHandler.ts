@@ -1,9 +1,5 @@
 import type { UpdateJournalParams, JournalResult } from '@/commands/types';
-import {
-  mapJournalToResult,
-  type FoundryGame,
-  type FoundryJournalUpdateData
-} from './journalTypes';
+import { mapJournalToResult, type FoundryGame, type FoundryJournalUpdateData } from './journalTypes';
 
 declare const game: FoundryGame;
 

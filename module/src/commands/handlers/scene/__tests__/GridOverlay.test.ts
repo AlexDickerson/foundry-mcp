@@ -16,8 +16,10 @@ function createMockPixi() {
     x: 0,
     y: 0,
     alpha: 1,
-    addChild: jest.fn((child: MockChild) => { children.push(child); }),
-    destroy: jest.fn()
+    addChild: jest.fn((child: MockChild) => {
+      children.push(child);
+    }),
+    destroy: jest.fn(),
   }));
 
   const MockGraphics = jest.fn().mockImplementation(() => ({
@@ -27,7 +29,7 @@ function createMockPixi() {
     alpha: 1,
     lineStyle: jest.fn(),
     moveTo: jest.fn(),
-    lineTo: jest.fn()
+    lineTo: jest.fn(),
   }));
 
   const MockText = jest.fn().mockImplementation((text: string) => ({
@@ -35,7 +37,7 @@ function createMockPixi() {
     text,
     x: 0,
     y: 0,
-    alpha: 1
+    alpha: 1,
   }));
 
   const MockTextStyle = jest.fn().mockImplementation((opts: unknown) => opts);
@@ -45,10 +47,10 @@ function createMockPixi() {
       Container: MockContainer,
       Graphics: MockGraphics,
       Text: MockText,
-      TextStyle: MockTextStyle
+      TextStyle: MockTextStyle,
     },
     children,
-    MockText
+    MockText,
   };
 }
 
@@ -60,8 +62,8 @@ function createMockCanvas(gridSize: number = 100): OverlayCanvas {
         sceneWidth: 500,
         sceneHeight: 300,
         sceneX: 0,
-        sceneY: 0
-      }
+        sceneY: 0,
+      },
     },
     stage: {
       name: 'stage',
@@ -70,8 +72,8 @@ function createMockCanvas(gridSize: number = 100): OverlayCanvas {
       alpha: 1,
       addChild: jest.fn(),
       removeChild: jest.fn(),
-      destroy: jest.fn()
-    }
+      destroy: jest.fn(),
+    },
   };
 }
 
@@ -133,7 +135,7 @@ describe('GridOverlay', () => {
 
       addGridOverlay(canvas);
 
-      const textChildren = children.filter(c => 'text' in c);
+      const textChildren = children.filter((c) => 'text' in c);
       expect(textChildren.length).toBeGreaterThan(0);
       expect(textChildren[0]?.alpha).toBe(0.65);
     });

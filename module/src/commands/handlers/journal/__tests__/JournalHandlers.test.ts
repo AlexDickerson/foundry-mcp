@@ -31,7 +31,7 @@ const createMockPage = (overrides: Partial<MockPage> = {}): MockPage => ({
   name: 'Test Page',
   type: 'text',
   update: jest.fn(),
-  ...overrides
+  ...overrides,
 });
 
 const createMockJournal = (overrides: Partial<MockJournal> = {}): MockJournal => {
@@ -42,24 +42,24 @@ const createMockJournal = (overrides: Partial<MockJournal> = {}): MockJournal =>
     folder: null,
     pages: {
       get: jest.fn().mockReturnValue(mockPage),
-      map: jest.fn().mockImplementation((fn) => [fn(mockPage)])
+      map: jest.fn().mockImplementation((fn) => [fn(mockPage)]),
     },
     update: jest.fn(),
     delete: jest.fn(),
     createEmbeddedDocuments: jest.fn(),
     deleteEmbeddedDocuments: jest.fn(),
-    ...overrides
+    ...overrides,
   };
 };
 
 const mockJournalEntry = {
-  create: jest.fn()
+  create: jest.fn(),
 };
 
 const mockGame = {
   journal: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;
@@ -82,7 +82,7 @@ describe('Journal Handlers', () => {
         id: 'journal-123',
         name: 'Test Journal',
         folder: null,
-        pages: [{ id: 'page-123', name: 'Test Page', type: 'text' }]
+        pages: [{ id: 'page-123', name: 'Test Page', type: 'text' }],
       });
     });
 
@@ -92,12 +92,12 @@ describe('Journal Handlers', () => {
 
       const result = await createJournalHandler({
         name: 'New Journal',
-        folder: 'folder-456'
+        folder: 'folder-456',
       });
 
       expect(mockJournalEntry.create).toHaveBeenCalledWith({
         name: 'New Journal',
-        folder: 'folder-456'
+        folder: 'folder-456',
       });
       expect(result.folder).toBe('folder-456');
     });
@@ -108,16 +108,18 @@ describe('Journal Handlers', () => {
 
       await createJournalHandler({
         name: 'Session Notes',
-        content: '<p>Today we explored the dungeon.</p>'
+        content: '<p>Today we explored the dungeon.</p>',
       });
 
       expect(mockJournalEntry.create).toHaveBeenCalledWith({
         name: 'Session Notes',
-        pages: [{
-          name: 'Session Notes',
-          type: 'text',
-          text: { content: '<p>Today we explored the dungeon.</p>' }
-        }]
+        pages: [
+          {
+            name: 'Session Notes',
+            type: 'text',
+            text: { content: '<p>Today we explored the dungeon.</p>' },
+          },
+        ],
       });
     });
 
@@ -128,15 +130,17 @@ describe('Journal Handlers', () => {
       await createJournalHandler({
         name: 'Map',
         content: 'ignored-for-image',
-        pageType: 'image'
+        pageType: 'image',
       });
 
       expect(mockJournalEntry.create).toHaveBeenCalledWith({
         name: 'Map',
-        pages: [{
-          name: 'Map',
-          type: 'image'
-        }]
+        pages: [
+          {
+            name: 'Map',
+            type: 'image',
+          },
+        ],
       });
     });
   });
@@ -145,9 +149,9 @@ describe('Journal Handlers', () => {
     it('throws error when journal not found', async () => {
       mockGame.journal.get.mockReturnValue(undefined);
 
-      await expect(
-        updateJournalHandler({ journalId: 'nonexistent' })
-      ).rejects.toThrow('Journal not found: nonexistent');
+      await expect(updateJournalHandler({ journalId: 'nonexistent' })).rejects.toThrow(
+        'Journal not found: nonexistent',
+      );
     });
 
     it('updates journal name', async () => {
@@ -157,7 +161,7 @@ describe('Journal Handlers', () => {
 
       await updateJournalHandler({
         journalId: 'journal-123',
-        name: 'Updated Name'
+        name: 'Updated Name',
       });
 
       expect(mockJournal.update).toHaveBeenCalledWith({ name: 'Updated Name' });
@@ -170,7 +174,7 @@ describe('Journal Handlers', () => {
 
       await updateJournalHandler({
         journalId: 'journal-123',
-        folder: 'new-folder'
+        folder: 'new-folder',
       });
 
       expect(mockJournal.update).toHaveBeenCalledWith({ folder: 'new-folder' });
@@ -183,7 +187,7 @@ describe('Journal Handlers', () => {
 
       const result = await updateJournalHandler({
         journalId: 'journal-123',
-        name: 'Updated Journal'
+        name: 'Updated Journal',
       });
 
       expect(result.name).toBe('Updated Journal');
@@ -194,9 +198,9 @@ describe('Journal Handlers', () => {
     it('throws error when journal not found', async () => {
       mockGame.journal.get.mockReturnValue(undefined);
 
-      await expect(
-        deleteJournalHandler({ journalId: 'nonexistent' })
-      ).rejects.toThrow('Journal not found: nonexistent');
+      await expect(deleteJournalHandler({ journalId: 'nonexistent' })).rejects.toThrow(
+        'Journal not found: nonexistent',
+      );
     });
 
     it('deletes journal and returns success', async () => {
@@ -215,9 +219,9 @@ describe('Journal Handlers', () => {
     it('throws error when journal not found', async () => {
       mockGame.journal.get.mockReturnValue(undefined);
 
-      await expect(
-        createJournalPageHandler({ journalId: 'nonexistent', name: 'Page' })
-      ).rejects.toThrow('Journal not found: nonexistent');
+      await expect(createJournalPageHandler({ journalId: 'nonexistent', name: 'Page' })).rejects.toThrow(
+        'Journal not found: nonexistent',
+      );
     });
 
     it('creates a text page with content', async () => {
@@ -229,21 +233,20 @@ describe('Journal Handlers', () => {
       const result = await createJournalPageHandler({
         journalId: 'journal-123',
         name: 'New Page',
-        content: '<p>Page content</p>'
+        content: '<p>Page content</p>',
       });
 
-      expect(mockJournal.createEmbeddedDocuments).toHaveBeenCalledWith(
-        'JournalEntryPage',
-        [{
+      expect(mockJournal.createEmbeddedDocuments).toHaveBeenCalledWith('JournalEntryPage', [
+        {
           name: 'New Page',
           type: 'text',
-          text: { content: '<p>Page content</p>' }
-        }]
-      );
+          text: { content: '<p>Page content</p>' },
+        },
+      ]);
       expect(result).toEqual({
         id: 'page-123',
         name: 'Test Page',
-        type: 'text'
+        type: 'text',
       });
     });
 
@@ -256,13 +259,12 @@ describe('Journal Handlers', () => {
       await createJournalPageHandler({
         journalId: 'journal-123',
         name: 'Map Page',
-        type: 'image'
+        type: 'image',
       });
 
-      expect(mockJournal.createEmbeddedDocuments).toHaveBeenCalledWith(
-        'JournalEntryPage',
-        [{ name: 'Map Page', type: 'image' }]
-      );
+      expect(mockJournal.createEmbeddedDocuments).toHaveBeenCalledWith('JournalEntryPage', [
+        { name: 'Map Page', type: 'image' },
+      ]);
     });
 
     it('throws error when page creation fails', async () => {
@@ -270,9 +272,9 @@ describe('Journal Handlers', () => {
       mockJournal.createEmbeddedDocuments.mockResolvedValue([]);
       mockGame.journal.get.mockReturnValue(mockJournal);
 
-      await expect(
-        createJournalPageHandler({ journalId: 'journal-123', name: 'Page' })
-      ).rejects.toThrow('Failed to create journal page');
+      await expect(createJournalPageHandler({ journalId: 'journal-123', name: 'Page' })).rejects.toThrow(
+        'Failed to create journal page',
+      );
     });
   });
 
@@ -283,8 +285,8 @@ describe('Journal Handlers', () => {
       await expect(
         updateJournalPageHandler({
           journalId: 'nonexistent',
-          pageId: 'page-123'
-        })
+          pageId: 'page-123',
+        }),
       ).rejects.toThrow('Journal not found: nonexistent');
     });
 
@@ -296,8 +298,8 @@ describe('Journal Handlers', () => {
       await expect(
         updateJournalPageHandler({
           journalId: 'journal-123',
-          pageId: 'nonexistent'
-        })
+          pageId: 'nonexistent',
+        }),
       ).rejects.toThrow('Page not found: nonexistent');
     });
 
@@ -311,7 +313,7 @@ describe('Journal Handlers', () => {
       await updateJournalPageHandler({
         journalId: 'journal-123',
         pageId: 'page-123',
-        name: 'Renamed Page'
+        name: 'Renamed Page',
       });
 
       expect(mockPage.update).toHaveBeenCalledWith({ name: 'Renamed Page' });
@@ -327,11 +329,11 @@ describe('Journal Handlers', () => {
       await updateJournalPageHandler({
         journalId: 'journal-123',
         pageId: 'page-123',
-        content: '<p>Updated content</p>'
+        content: '<p>Updated content</p>',
       });
 
       expect(mockPage.update).toHaveBeenCalledWith({
-        text: { content: '<p>Updated content</p>' }
+        text: { content: '<p>Updated content</p>' },
       });
     });
 
@@ -345,7 +347,7 @@ describe('Journal Handlers', () => {
       const result = await updateJournalPageHandler({
         journalId: 'journal-123',
         pageId: 'page-123',
-        name: 'Updated Page'
+        name: 'Updated Page',
       });
 
       expect(result.name).toBe('Updated Page');
@@ -359,8 +361,8 @@ describe('Journal Handlers', () => {
       await expect(
         deleteJournalPageHandler({
           journalId: 'nonexistent',
-          pageId: 'page-123'
-        })
+          pageId: 'page-123',
+        }),
       ).rejects.toThrow('Journal not found: nonexistent');
     });
 
@@ -372,8 +374,8 @@ describe('Journal Handlers', () => {
       await expect(
         deleteJournalPageHandler({
           journalId: 'journal-123',
-          pageId: 'nonexistent'
-        })
+          pageId: 'nonexistent',
+        }),
       ).rejects.toThrow('Page not found: nonexistent');
     });
 
@@ -386,13 +388,10 @@ describe('Journal Handlers', () => {
 
       const result = await deleteJournalPageHandler({
         journalId: 'journal-123',
-        pageId: 'page-123'
+        pageId: 'page-123',
       });
 
-      expect(mockJournal.deleteEmbeddedDocuments).toHaveBeenCalledWith(
-        'JournalEntryPage',
-        ['page-123']
-      );
+      expect(mockJournal.deleteEmbeddedDocuments).toHaveBeenCalledWith('JournalEntryPage', ['page-123']);
       expect(result).toEqual({ deleted: true });
     });
   });

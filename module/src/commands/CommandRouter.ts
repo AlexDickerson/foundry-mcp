@@ -1,10 +1,4 @@
-import type {
-  Command,
-  CommandResponse,
-  CommandType,
-  CommandParamsMap,
-  CommandResultMap
-} from '@/commands/types';
+import type { Command, CommandResponse, CommandType, CommandParamsMap, CommandResultMap } from '@/commands/types';
 
 type AnyHandler = (params: unknown) => Promise<unknown>;
 
@@ -17,7 +11,7 @@ export class CommandRouter {
 
   register<T extends CommandType>(
     type: T,
-    handler: (params: CommandParamsMap[T]) => Promise<CommandResultMap[T]>
+    handler: (params: CommandParamsMap[T]) => Promise<CommandResultMap[T]>,
   ): void {
     this.handlers[type] = handler as AnyHandler;
   }
@@ -29,7 +23,7 @@ export class CommandRouter {
       return {
         id: command.id,
         success: false,
-        error: `Unknown command type: ${command.type}`
+        error: `Unknown command type: ${command.type}`,
       };
     }
 
@@ -38,13 +32,13 @@ export class CommandRouter {
       return {
         id: command.id,
         success: true,
-        data: result
+        data: result,
       };
     } catch (error) {
       return {
         id: command.id,
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }

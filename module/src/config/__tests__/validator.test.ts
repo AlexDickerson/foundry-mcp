@@ -5,12 +5,12 @@ const validConfig: ModuleConfig = {
   webSocket: {
     enabled: true,
     reconnectInterval: 5000,
-    maxReconnectAttempts: 10
+    maxReconnectAttempts: 10,
   },
   logging: {
     enabled: true,
-    level: 'info'
-  }
+    level: 'info',
+  },
 };
 
 describe('validateConfig', () => {
@@ -36,7 +36,7 @@ describe('validateConfig', () => {
   it('returns false when webSocket.enabled is not boolean', () => {
     const invalid = {
       ...validConfig,
-      webSocket: { ...validConfig.webSocket, enabled: 'yes' }
+      webSocket: { ...validConfig.webSocket, enabled: 'yes' },
     };
     expect(validateConfig(invalid)).toBe(false);
   });
@@ -49,7 +49,7 @@ describe('validateConfig', () => {
   it('returns false when logging.level is invalid', () => {
     const invalid = {
       ...validConfig,
-      logging: { enabled: true, level: 'invalid' }
+      logging: { enabled: true, level: 'invalid' },
     };
     expect(validateConfig(invalid)).toBe(false);
   });

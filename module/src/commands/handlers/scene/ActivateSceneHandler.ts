@@ -14,6 +14,6 @@ export async function activateSceneHandler(params: ActivateSceneParams): Promise
   return {
     id: scene.id,
     name: scene.name,
-    active: true
+    active: true,
   };
 }

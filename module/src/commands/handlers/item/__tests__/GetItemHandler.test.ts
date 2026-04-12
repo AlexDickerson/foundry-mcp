@@ -19,13 +19,13 @@ function createMockItem(overrides?: Partial<MockItem>): MockItem {
     img: 'items/sword.webp',
     folder: { name: 'Weapons' },
     toObject: jest.fn().mockReturnValue({ system: { damage: '1d8' } }),
-    ...overrides
+    ...overrides,
   };
 }
 
 function setGame(items: Map<string, MockItem>): void {
   (globalThis as Record<string, unknown>)['game'] = {
-    items: { get: jest.fn((id: string) => items.get(id)) }
+    items: { get: jest.fn((id: string) => items.get(id)) },
   };
 }
 
@@ -37,7 +37,13 @@ describe('getItemHandler', () => {
   afterEach(clearGame);
 
   it('should return full item data', async () => {
-    const item = createMockItem({ id: 'i1', uuid: 'Item.i1', name: 'Staff', type: 'weapon', folder: { name: 'Staves' } });
+    const item = createMockItem({
+      id: 'i1',
+      uuid: 'Item.i1',
+      name: 'Staff',
+      type: 'weapon',
+      folder: { name: 'Staves' },
+    });
     setGame(new Map([['i1', item]]));
 
     const result = await getItemHandler({ itemId: 'i1' });
@@ -49,22 +55,20 @@ describe('getItemHandler', () => {
       type: 'weapon',
       img: 'items/sword.webp',
       folder: 'Staves',
-      system: { damage: '1d8' }
+      system: { damage: '1d8' },
     });
   });
 
   it('should reject when item not found', async () => {
     setGame(new Map());
 
-    await expect(getItemHandler({ itemId: 'nonexistent' }))
-      .rejects.toThrow('Item not found: nonexistent');
+    await expect(getItemHandler({ itemId: 'nonexistent' })).rejects.toThrow('Item not found: nonexistent');
   });
 
   it('should reject with descriptive error for empty itemId', async () => {
     setGame(new Map());
 
-    await expect(getItemHandler({ itemId: '' }))
-      .rejects.toThrow('Item not found: ');
+    await expect(getItemHandler({ itemId: '' })).rejects.toThrow('Item not found: ');
   });
 
   it('should pass system data through from toObject(false)', async () => {

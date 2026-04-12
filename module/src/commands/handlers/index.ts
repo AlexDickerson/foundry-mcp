@@ -15,7 +15,7 @@ export {
   updateActorHandler,
   deleteActorHandler,
   getActorsHandler,
-  getActorHandler
+  getActorHandler,
 } from '@/commands/handlers/actor';
 
 // Journal handlers
@@ -27,7 +27,7 @@ export {
   updateJournalPageHandler,
   deleteJournalPageHandler,
   getJournalsHandler,
-  getJournalHandler
+  getJournalHandler,
 } from '@/commands/handlers/journal';
 
 // Combat handlers
@@ -48,7 +48,7 @@ export {
   updateCombatantHandler,
   setCombatantDefeatedHandler,
   toggleCombatantVisibilityHandler,
-  getCombatTurnContextHandler
+  getCombatTurnContextHandler,
 } from '@/commands/handlers/combat';
 
 // Token handlers
@@ -61,7 +61,7 @@ export {
   getSceneTokensHandler,
   setPatrolHandler,
   stopPatrolHandler,
-  getPatrolsHandler
+  getPatrolsHandler,
 } from '@/commands/handlers/token';
 
 // Item handlers
@@ -74,7 +74,7 @@ export {
   updateActorItemHandler,
   deleteActorItemHandler,
   getItemsHandler,
-  getItemHandler
+  getItemHandler,
 } from '@/commands/handlers/item';
 
 // Scene handlers
@@ -89,15 +89,11 @@ export {
   normalizeSceneHandler,
   analyzeSceneHandler,
   getSceneBackgroundHandler,
-  updateSceneHandler
+  updateSceneHandler,
 } from '@/commands/handlers/scene';
 
 // World handlers
-export {
-  getWorldInfoHandler,
-  getCompendiumsHandler,
-  getCompendiumHandler
-} from '@/commands/handlers/world';
+export { getWorldInfoHandler, getCompendiumsHandler, getCompendiumHandler } from '@/commands/handlers/world';
 
 // Table handlers
 export {
@@ -107,7 +103,7 @@ export {
   resetTableHandler,
   createRollTableHandler,
   updateRollTableHandler,
-  deleteRollTableHandler
+  deleteRollTableHandler,
 } from '@/commands/handlers/table';
 
 // Effect handlers
@@ -116,5 +112,5 @@ export {
   toggleActorStatusHandler,
   addActorEffectHandler,
   removeActorEffectHandler,
-  updateActorEffectHandler
+  updateActorEffectHandler,
 } from '@/commands/handlers/effect';

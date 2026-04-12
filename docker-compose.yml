@@ -3,8 +3,8 @@ services:
     image: ghcr.io/alexdickerson/foundry-mcp:latest
     container_name: foundry
     ports:
-      - "30000:30000"   # Foundry VTT
-      - "8765:8765"     # MCP server
+      - '30000:30000' # Foundry VTT
+      - '8765:8765' # MCP server
     volumes:
       - ${FOUNDRY_DATA:-/home/alex/foundrydata}:/data
     environment:

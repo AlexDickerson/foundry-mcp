@@ -1,9 +1,5 @@
 import type { RollInitiativeParams, InitiativeRollResult } from '@/commands/types';
-import {
-  getActiveCombat,
-  type FoundryGame,
-  type RollInitiativeOptions
-} from './combatTypes';
+import { getActiveCombat, type FoundryGame, type RollInitiativeOptions } from './combatTypes';
 
 declare const game: FoundryGame;
 
@@ -30,12 +26,12 @@ export async function rollInitiativeHandler(params: RollInitiativeParams): Promi
   await combat.rollInitiative(params.combatantIds, options);
 
   // Collect results
-  const results = params.combatantIds.map(id => {
+  const results = params.combatantIds.map((id) => {
     const combatant = combat.combatants.get(id);
     return {
       combatantId: id,
       name: combatant?.name ?? 'Unknown',
-      initiative: combatant?.initiative ?? 0
+      initiative: combatant?.initiative ?? 0,
     };
   });
 

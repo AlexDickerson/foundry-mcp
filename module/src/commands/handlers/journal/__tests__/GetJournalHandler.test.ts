@@ -21,7 +21,7 @@ function createMockPage(overrides?: Partial<MockPage>): MockPage {
     name: 'Page One',
     type: 'text',
     text: { content: '<p>Content</p>', markdown: '# Content' },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -32,15 +32,17 @@ function createMockJournal(pages: MockPage[] = [], overrides?: Partial<MockJourn
     name: 'Test Journal',
     folder: { name: 'Adventures' },
     pages: {
-      forEach: jest.fn((fn: (page: MockPage) => void) => { pages.forEach(fn); })
+      forEach: jest.fn((fn: (page: MockPage) => void) => {
+        pages.forEach(fn);
+      }),
     },
-    ...overrides
+    ...overrides,
   };
 }
 
 function setGame(journals: Map<string, MockJournal>): void {
   (globalThis as Record<string, unknown>)['game'] = {
-    journal: { get: jest.fn((id: string) => journals.get(id)) }
+    journal: { get: jest.fn((id: string) => journals.get(id)) },
   };
 }
 
@@ -52,10 +54,7 @@ describe('getJournalHandler', () => {
   afterEach(clearGame);
 
   it('should return full journal with pages', async () => {
-    const pages = [
-      createMockPage({ id: 'p1', name: 'Intro' }),
-      createMockPage({ id: 'p2', name: 'Body' })
-    ];
+    const pages = [createMockPage({ id: 'p1', name: 'Intro' }), createMockPage({ id: 'p2', name: 'Body' })];
     const journal = createMockJournal(pages, { id: 'j1', uuid: 'JE.j1', name: 'Quest Log' });
     setGame(new Map([['j1', journal]]));
 
@@ -71,14 +70,13 @@ describe('getJournalHandler', () => {
   it('should reject when journal not found', async () => {
     setGame(new Map());
 
-    await expect(getJournalHandler({ journalId: 'nonexistent' }))
-      .rejects.toThrow('Journal not found: nonexistent');
+    await expect(getJournalHandler({ journalId: 'nonexistent' })).rejects.toThrow('Journal not found: nonexistent');
   });
 
   it('should return journal with multiple pages including content', async () => {
     const pages = [
       createMockPage({ id: 'p1', text: { content: '<p>Hello</p>', markdown: '# Hello' } }),
-      createMockPage({ id: 'p2', text: { content: undefined, markdown: undefined } })
+      createMockPage({ id: 'p2', text: { content: undefined, markdown: undefined } }),
     ];
     const journal = createMockJournal(pages);
     setGame(new Map([['journal-1', journal]]));
@@ -94,7 +92,6 @@ describe('getJournalHandler', () => {
   it('should reject with descriptive error for empty journalId', async () => {
     setGame(new Map());
 
-    await expect(getJournalHandler({ journalId: '' }))
-      .rejects.toThrow('Journal not found: ');
+    await expect(getJournalHandler({ journalId: '' })).rejects.toThrow('Journal not found: ');
   });
 });

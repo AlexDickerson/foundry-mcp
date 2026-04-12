@@ -81,11 +81,13 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
   // Health probe
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      ok: true,
-      foundryConnected: isFoundryConnected(),
-      activeSessions: sessions.size,
-    }));
+    res.end(
+      JSON.stringify({
+        ok: true,
+        foundryConnected: isFoundryConnected(),
+        activeSessions: sessions.size,
+      }),
+    );
     return;
   }
 

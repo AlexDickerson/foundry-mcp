@@ -33,7 +33,7 @@ describe('CommandRouter', () => {
       const mockResult: RollResult = {
         total: 15,
         formula: '2d6+3',
-        dice: [{ type: 'd6', count: 2, results: [5, 7] }]
+        dice: [{ type: 'd6', count: 2, results: [5, 7] }],
       };
 
       router.register('roll-dice', jest.fn().mockResolvedValue(mockResult));
@@ -41,7 +41,7 @@ describe('CommandRouter', () => {
       const command: Command = {
         id: 'test-123',
         type: 'roll-dice',
-        params: { formula: '2d6+3' }
+        params: { formula: '2d6+3' },
       };
 
       const response = await router.execute(command);
@@ -49,7 +49,7 @@ describe('CommandRouter', () => {
       expect(response).toEqual({
         id: 'test-123',
         success: true,
-        data: mockResult
+        data: mockResult,
       });
     });
 
@@ -57,7 +57,7 @@ describe('CommandRouter', () => {
       const command: Command = {
         id: 'test-456',
         type: 'roll-dice',
-        params: { formula: '1d20' }
+        params: { formula: '1d20' },
       };
 
       const response = await router.execute(command);
@@ -65,7 +65,7 @@ describe('CommandRouter', () => {
       expect(response).toEqual({
         id: 'test-456',
         success: false,
-        error: 'Unknown command type: roll-dice'
+        error: 'Unknown command type: roll-dice',
       });
     });
 
@@ -75,7 +75,7 @@ describe('CommandRouter', () => {
       const command: Command = {
         id: 'test-789',
         type: 'roll-dice',
-        params: { formula: 'invalid' }
+        params: { formula: 'invalid' },
       };
 
       const response = await router.execute(command);
@@ -83,7 +83,7 @@ describe('CommandRouter', () => {
       expect(response).toEqual({
         id: 'test-789',
         success: false,
-        error: 'Invalid formula'
+        error: 'Invalid formula',
       });
     });
 
@@ -93,7 +93,7 @@ describe('CommandRouter', () => {
       const command: Command = {
         id: 'test-000',
         type: 'roll-dice',
-        params: { formula: '1d20' }
+        params: { formula: '1d20' },
       };
 
       const response = await router.execute(command);
@@ -101,7 +101,7 @@ describe('CommandRouter', () => {
       expect(response).toEqual({
         id: 'test-000',
         success: false,
-        error: 'string error'
+        error: 'string error',
       });
     });
 
@@ -113,7 +113,7 @@ describe('CommandRouter', () => {
       const command: Command = {
         id: 'test-params',
         type: 'roll-dice',
-        params
+        params,
       };
 
       await router.execute(command);

@@ -1,9 +1,7 @@
 import type { UpdateActorEffectParams, UpdateEffectResult } from '@/commands/types';
 import { getGame } from './effectTypes';
 
-export async function updateActorEffectHandler(
-  params: UpdateActorEffectParams
-): Promise<UpdateEffectResult> {
+export async function updateActorEffectHandler(params: UpdateActorEffectParams): Promise<UpdateEffectResult> {
   const actor = getGame().actors.get(params.actorId);
 
   if (!actor) {
@@ -43,6 +41,6 @@ export async function updateActorEffectHandler(
   return {
     actorId: actor.id,
     effectId: params.effectId,
-    name: updatedEffect.name
+    name: updatedEffect.name,
   };
 }

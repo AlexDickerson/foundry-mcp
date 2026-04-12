@@ -2,13 +2,13 @@ const mockActivity = {
   _id: 'activity-123',
   name: 'Attack',
   type: 'attack',
-  use: jest.fn()
+  use: jest.fn(),
 };
 
 const mockActivitiesCollection = {
   contents: [mockActivity],
   get: jest.fn(),
-  find: jest.fn()
+  find: jest.fn(),
 };
 
 const mockWeapon = {
@@ -22,10 +22,10 @@ const mockWeapon = {
     quantity: 1,
     description: { value: '<p>A versatile sword.</p>' },
     damage: { base: { formula: '1d8+3', types: ['slashing'] } },
-    range: { reach: 5, units: 'ft' }
+    range: { reach: 5, units: 'ft' },
   },
   use: jest.fn(),
-  displayCard: jest.fn()
+  displayCard: jest.fn(),
 };
 
 const mockArmor = {
@@ -36,10 +36,10 @@ const mockArmor = {
   system: {
     equipped: true,
     quantity: 1,
-    description: { value: '<p>Heavy armor made of interlocking rings.</p>' }
+    description: { value: '<p>Heavy armor made of interlocking rings.</p>' },
   },
   use: jest.fn(),
-  displayCard: jest.fn()
+  displayCard: jest.fn(),
 };
 
 const mockPotion = {
@@ -50,10 +50,10 @@ const mockPotion = {
   system: {
     equipped: false,
     quantity: 3,
-    description: { value: '<p>Heals 2d4+2 HP.</p>' }
+    description: { value: '<p>Heals 2d4+2 HP.</p>' },
   },
   use: jest.fn(),
-  displayCard: jest.fn()
+  displayCard: jest.fn(),
 };
 
 const mockActor = {
@@ -61,14 +61,14 @@ const mockActor = {
   name: 'Test Hero',
   items: {
     contents: [mockWeapon, mockArmor, mockPotion],
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 const mockGame = {
   actors: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 (globalThis as Record<string, unknown>)['game'] = mockGame;
@@ -95,7 +95,7 @@ describe('getActorItemsHandler', () => {
     it('should return item details with activity info', async () => {
       const result = await getActorItemsHandler({ actorId: 'actor-123' });
 
-      const sword = result.items.find(i => i.id === 'weapon-123');
+      const sword = result.items.find((i) => i.id === 'weapon-123');
       expect(sword).toEqual({
         id: 'weapon-123',
         name: 'Longsword',
@@ -107,14 +107,14 @@ describe('getActorItemsHandler', () => {
         activityTypes: ['attack'],
         description: '<p>A versatile sword.</p>',
         damage: { base: { formula: '1d8+3', types: ['slashing'] } },
-        range: { reach: 5, units: 'ft' }
+        range: { reach: 5, units: 'ft' },
       });
     });
 
     it('should filter items by type', async () => {
       const result = await getActorItemsHandler({
         actorId: 'actor-123',
-        type: 'weapon'
+        type: 'weapon',
       });
 
       expect(result.items).toHaveLength(1);
@@ -124,18 +124,18 @@ describe('getActorItemsHandler', () => {
     it('should filter items by equipped status', async () => {
       const result = await getActorItemsHandler({
         actorId: 'actor-123',
-        equipped: true
+        equipped: true,
       });
 
       expect(result.items).toHaveLength(2);
-      expect(result.items.map(i => i.name)).toContain('Longsword');
-      expect(result.items.map(i => i.name)).toContain('Chain Mail');
+      expect(result.items.map((i) => i.name)).toContain('Longsword');
+      expect(result.items.map((i) => i.name)).toContain('Chain Mail');
     });
 
     it('should filter items by hasActivities', async () => {
       const result = await getActorItemsHandler({
         actorId: 'actor-123',
-        hasActivities: true
+        hasActivities: true,
       });
 
       expect(result.items).toHaveLength(1);
@@ -146,7 +146,7 @@ describe('getActorItemsHandler', () => {
       mockGame.actors.get.mockReturnValue({
         id: 'empty-actor',
         name: 'Empty Actor',
-        items: { contents: [] }
+        items: { contents: [] },
       });
 
       const result = await getActorItemsHandler({ actorId: 'empty-actor' });
@@ -159,9 +159,7 @@ describe('getActorItemsHandler', () => {
     it('should reject if actor not found', async () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
-      await expect(getActorItemsHandler({ actorId: 'non-existent' })).rejects.toThrow(
-        'Actor not found: non-existent'
-      );
+      await expect(getActorItemsHandler({ actorId: 'non-existent' })).rejects.toThrow('Actor not found: non-existent');
     });
   });
 });
@@ -180,10 +178,10 @@ describe('useItemHandler', () => {
           formula: '1d20 + 5',
           terms: [{ faces: 20, number: 1, results: [{ result: 13 }] }],
           isCritical: false,
-          isFumble: false
-        }
+          isFumble: false,
+        },
       ],
-      message: { id: 'msg-123' }
+      message: { id: 'msg-123' },
     });
   });
 
@@ -191,7 +189,7 @@ describe('useItemHandler', () => {
     it('should use item with first activity', async () => {
       const result = await useItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(result.itemId).toBe('weapon-123');
@@ -200,7 +198,7 @@ describe('useItemHandler', () => {
       expect(result.activityUsed).toEqual({
         id: 'activity-123',
         name: 'Attack',
-        type: 'attack'
+        type: 'attack',
       });
       expect(result.rolls).toHaveLength(1);
       expect(result.rolls[0]?.total).toBe(18);
@@ -210,7 +208,7 @@ describe('useItemHandler', () => {
       await useItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        activityId: 'activity-123'
+        activityId: 'activity-123',
       });
 
       expect(mockActivitiesCollection.get).toHaveBeenCalledWith('activity-123');
@@ -220,7 +218,7 @@ describe('useItemHandler', () => {
       await useItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        activityType: 'attack'
+        activityType: 'attack',
       });
 
       expect(mockActivitiesCollection.find).toHaveBeenCalled();
@@ -230,7 +228,7 @@ describe('useItemHandler', () => {
       await useItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        consume: false
+        consume: false,
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(
@@ -239,10 +237,10 @@ describe('useItemHandler', () => {
           scaling: false,
           concentration: { begin: false },
           create: { measuredTemplate: false },
-          event: { shiftKey: true }
+          event: { shiftKey: true },
         },
         { configure: false },
-        { create: false }
+        { create: false },
       );
     });
 
@@ -250,7 +248,7 @@ describe('useItemHandler', () => {
       await useItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        scaling: 3
+        scaling: 3,
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(
@@ -259,10 +257,10 @@ describe('useItemHandler', () => {
           scaling: 3,
           concentration: { begin: false },
           create: { measuredTemplate: false },
-          event: { shiftKey: true }
+          event: { shiftKey: true },
         },
         { configure: false },
-        { create: false }
+        { create: false },
       );
     });
 
@@ -270,7 +268,7 @@ describe('useItemHandler', () => {
       await useItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        showInChat: true
+        showInChat: true,
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(
@@ -279,17 +277,17 @@ describe('useItemHandler', () => {
           scaling: false,
           concentration: { begin: false },
           create: { measuredTemplate: false },
-          event: { shiftKey: true }
+          event: { shiftKey: true },
         },
         { configure: false },
-        { create: true }
+        { create: true },
       );
     });
 
     it('should return chatMessageId when available', async () => {
       const result = await useItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(result.chatMessageId).toBe('msg-123');
@@ -298,12 +296,10 @@ describe('useItemHandler', () => {
     it('should extract dice results from rolls', async () => {
       const result = await useItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
-      expect(result.rolls[0]?.dice).toEqual([
-        { type: 'd20', count: 1, results: [13] }
-      ]);
+      expect(result.rolls[0]?.dice).toEqual([{ type: 'd20', count: 1, results: [13] }]);
     });
 
     it('should handle item with no activities by calling displayCard', async () => {
@@ -312,7 +308,7 @@ describe('useItemHandler', () => {
 
       const result = await useItemHandler({
         actorId: 'actor-123',
-        itemId: 'potion-789'
+        itemId: 'potion-789',
       });
 
       expect(mockPotion.displayCard).toHaveBeenCalledWith({ create: false });
@@ -326,7 +322,7 @@ describe('useItemHandler', () => {
 
       const result = await useItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(result.rolls).toHaveLength(0);
@@ -341,14 +337,14 @@ describe('useItemHandler', () => {
             formula: '1d20 + 5',
             terms: [{ faces: 20, number: 1, results: [{ result: 20 }] }],
             isCritical: true,
-            isFumble: false
-          }
-        ]
+            isFumble: false,
+          },
+        ],
       });
 
       const result = await useItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(result.rolls[0]?.isCritical).toBe(true);
@@ -362,14 +358,14 @@ describe('useItemHandler', () => {
             formula: '1d20 + 5',
             terms: [{ faces: 20, number: 1, results: [{ result: 1 }] }],
             isCritical: false,
-            isFumble: true
-          }
-        ]
+            isFumble: true,
+          },
+        ],
       });
 
       const result = await useItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(result.rolls[0]?.isFumble).toBe(true);
@@ -380,17 +376,17 @@ describe('useItemHandler', () => {
     it('should throw error if actor not found', async () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
-      await expect(
-        useItemHandler({ actorId: 'non-existent', itemId: 'weapon-123' })
-      ).rejects.toThrow('Actor not found: non-existent');
+      await expect(useItemHandler({ actorId: 'non-existent', itemId: 'weapon-123' })).rejects.toThrow(
+        'Actor not found: non-existent',
+      );
     });
 
     it('should throw error if item not found', async () => {
       mockActor.items.get.mockReturnValue(undefined);
 
-      await expect(
-        useItemHandler({ actorId: 'actor-123', itemId: 'non-existent' })
-      ).rejects.toThrow('Item not found: non-existent');
+      await expect(useItemHandler({ actorId: 'actor-123', itemId: 'non-existent' })).rejects.toThrow(
+        'Item not found: non-existent',
+      );
     });
 
     it('should throw error if activity not found by id', async () => {
@@ -400,8 +396,8 @@ describe('useItemHandler', () => {
         useItemHandler({
           actorId: 'actor-123',
           itemId: 'weapon-123',
-          activityId: 'non-existent'
-        })
+          activityId: 'non-existent',
+        }),
       ).rejects.toThrow('Activity not found: non-existent');
     });
 
@@ -412,8 +408,8 @@ describe('useItemHandler', () => {
         useItemHandler({
           actorId: 'actor-123',
           itemId: 'weapon-123',
-          activityType: 'heal'
-        })
+          activityType: 'heal',
+        }),
       ).rejects.toThrow("No activity of type 'heal' found on item: Longsword");
     });
   });
@@ -426,43 +422,49 @@ const mockTargetToken2 = { setTarget: jest.fn() };
 const mockExistingTarget = { setTarget: jest.fn() };
 
 const mockScene = {
-  createEmbeddedDocuments: jest.fn().mockResolvedValue([])
+  createEmbeddedDocuments: jest.fn().mockResolvedValue([]),
 };
 
 const mockCanvas = {
   tokens: { get: jest.fn() },
-  scene: mockScene
+  scene: mockScene,
 };
 
 const mockUser = {
   id: 'user-1',
-  targets: new Set<{ setTarget: jest.Mock }>()
+  targets: new Set<{ setTarget: jest.Mock }>(),
 };
 
 const mockDrawPreview = jest.fn().mockResolvedValue([]);
 const mockTemplateDocument = {
   toObject: jest.fn().mockReturnValue({ t: 'circle', x: 0, y: 0, distance: 20, flags: {} }),
-  updateSource: jest.fn()
+  updateSource: jest.fn(),
 };
 const mockAbilityTemplate = {
   fromActivity: jest.fn().mockReturnValue([{ document: mockTemplateDocument, drawPreview: mockDrawPreview }]),
-  prototype: { drawPreview: mockDrawPreview }
+  prototype: { drawPreview: mockDrawPreview },
 };
 
 const mockModules = {
-  get: jest.fn()
+  get: jest.fn(),
 };
 
 const mockHooks = {
   once: jest.fn(),
-  off: jest.fn()
+  off: jest.fn(),
 };
 
 const mockUsageResult = {
   rolls: [
-    { total: 18, formula: '1d20+5', terms: [{ faces: 20, number: 1, results: [{ result: 13 }] }], isCritical: false, isFumble: false }
+    {
+      total: 18,
+      formula: '1d20+5',
+      terms: [{ faces: 20, number: 1, results: [{ result: 13 }] }],
+      isCritical: false,
+      isFumble: false,
+    },
   ],
-  message: { id: 'chat-msg-123' }
+  message: { id: 'chat-msg-123' },
 };
 
 describe('activateItemHandler', () => {
@@ -492,7 +494,7 @@ describe('activateItemHandler', () => {
 
     const result = await activateItemHandler({
       actorId: 'actor-123',
-      itemId: 'weapon-123'
+      itemId: 'weapon-123',
     });
 
     expect(result.rolls).toHaveLength(1);
@@ -506,7 +508,7 @@ describe('activateItemHandler', () => {
 
     await activateItemHandler({
       actorId: 'actor-123',
-      itemId: 'weapon-123'
+      itemId: 'weapon-123',
     });
 
     expect(mockActivity.use).toHaveBeenCalledWith({ create: { measuredTemplate: false } });
@@ -517,7 +519,7 @@ describe('activateItemHandler', () => {
 
     const result = await activateItemHandler({
       actorId: 'actor-123',
-      itemId: 'weapon-123'
+      itemId: 'weapon-123',
     });
 
     expect(result.rolls).toEqual([]);
@@ -529,7 +531,7 @@ describe('activateItemHandler', () => {
 
     const result = await activateItemHandler({
       actorId: 'actor-123',
-      itemId: 'weapon-123'
+      itemId: 'weapon-123',
     });
 
     expect(result.activityUsed).toEqual({ id: 'activity-123', name: 'Attack', type: 'attack' });
@@ -541,7 +543,7 @@ describe('activateItemHandler', () => {
 
     const result = await activateItemHandler({
       actorId: 'actor-123',
-      itemId: 'weapon-123'
+      itemId: 'weapon-123',
     });
 
     expect(mockWeapon.use).toHaveBeenCalledWith({ create: { measuredTemplate: false } });
@@ -555,7 +557,7 @@ describe('activateItemHandler', () => {
     await activateItemHandler({
       actorId: 'actor-123',
       itemId: 'weapon-123',
-      activityId: 'activity-123'
+      activityId: 'activity-123',
     });
 
     expect(mockActivitiesCollection.get).toHaveBeenCalledWith('activity-123');
@@ -568,7 +570,7 @@ describe('activateItemHandler', () => {
     await activateItemHandler({
       actorId: 'actor-123',
       itemId: 'weapon-123',
-      activityType: 'attack'
+      activityType: 'attack',
     });
 
     expect(mockActivitiesCollection.find).toHaveBeenCalled();
@@ -585,7 +587,7 @@ describe('activateItemHandler', () => {
     const result = await activateItemHandler({
       actorId: 'actor-123',
       itemId: 'weapon-123',
-      targetTokenIds: ['target-1', 'target-2']
+      targetTokenIds: ['target-1', 'target-2'],
     });
 
     expect(mockTargetToken1.setTarget).toHaveBeenCalledWith(true, { user: mockUser, releaseOthers: false });
@@ -601,7 +603,7 @@ describe('activateItemHandler', () => {
     await activateItemHandler({
       actorId: 'actor-123',
       itemId: 'weapon-123',
-      targetTokenIds: ['target-1']
+      targetTokenIds: ['target-1'],
     });
 
     expect(mockExistingTarget.setTarget).toHaveBeenCalledWith(false, { user: mockUser, releaseOthers: false });
@@ -612,7 +614,7 @@ describe('activateItemHandler', () => {
 
     const result = await activateItemHandler({
       actorId: 'actor-123',
-      itemId: 'weapon-123'
+      itemId: 'weapon-123',
     });
 
     expect(mockCanvas.tokens.get).not.toHaveBeenCalled();
@@ -622,11 +624,13 @@ describe('activateItemHandler', () => {
   it('throws when target token not found', async () => {
     mockCanvas.tokens.get.mockReturnValue(undefined);
 
-    await expect(activateItemHandler({
-      actorId: 'actor-123',
-      itemId: 'weapon-123',
-      targetTokenIds: ['nonexistent']
-    })).rejects.toThrow('Target token not found: nonexistent');
+    await expect(
+      activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123',
+        targetTokenIds: ['nonexistent'],
+      }),
+    ).rejects.toThrow('Target token not found: nonexistent');
   });
 
   describe('Midi-QOL integration', () => {
@@ -643,7 +647,7 @@ describe('activateItemHandler', () => {
           isFumble: false,
           hitTargets: new Set([{ id: 'target-1' }]),
           saves: new Set(),
-          failedSaves: new Set([{ id: 'target-1' }])
+          failedSaves: new Set([{ id: 'target-1' }]),
         });
         return 1;
       });
@@ -651,7 +655,7 @@ describe('activateItemHandler', () => {
 
       const result = await activateItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(mockHooks.once).toHaveBeenCalledWith('midi-qol.RollComplete', expect.any(Function));
@@ -662,7 +666,7 @@ describe('activateItemHandler', () => {
         isFumble: false,
         hitTargetIds: ['target-1'],
         saveTargetIds: [],
-        failedSaveTargetIds: ['target-1']
+        failedSaveTargetIds: ['target-1'],
       });
     });
 
@@ -675,7 +679,7 @@ describe('activateItemHandler', () => {
           isFumble: false,
           hitTargets: new Set([{ id: 'target-1' }]),
           saves: new Set(),
-          failedSaves: new Set()
+          failedSaves: new Set(),
         });
         return 1;
       });
@@ -683,7 +687,7 @@ describe('activateItemHandler', () => {
 
       const result = await activateItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(result.workflow?.isCritical).toBe(true);
@@ -695,7 +699,7 @@ describe('activateItemHandler', () => {
         callback({
           hitTargets: new Set(),
           saves: new Set([{ id: 'target-1' }, { id: 'target-2' }]),
-          failedSaves: new Set([{ id: 'target-3' }])
+          failedSaves: new Set([{ id: 'target-3' }]),
         });
         return 1;
       });
@@ -703,7 +707,7 @@ describe('activateItemHandler', () => {
 
       const result = await activateItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(result.workflow?.saveTargetIds).toEqual(['target-1', 'target-2']);
@@ -716,7 +720,7 @@ describe('activateItemHandler', () => {
 
       const resultPromise = activateItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       jest.advanceTimersByTime(30000);
@@ -731,7 +735,7 @@ describe('activateItemHandler', () => {
 
       const resultPromise = activateItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       jest.advanceTimersByTime(30000);
@@ -748,7 +752,7 @@ describe('activateItemHandler', () => {
 
       const result = await activateItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(mockHooks.once).not.toHaveBeenCalled();
@@ -761,7 +765,7 @@ describe('activateItemHandler', () => {
 
       const result = await activateItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(mockHooks.once).not.toHaveBeenCalled();
@@ -776,7 +780,7 @@ describe('activateItemHandler', () => {
       await activateItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        templatePosition: { x: 500, y: 500 }
+        templatePosition: { x: 500, y: 500 },
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(undefined);
@@ -787,7 +791,7 @@ describe('activateItemHandler', () => {
 
       await activateItemHandler({
         actorId: 'actor-123',
-        itemId: 'weapon-123'
+        itemId: 'weapon-123',
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith({ create: { measuredTemplate: false } });
@@ -802,7 +806,7 @@ describe('activateItemHandler', () => {
           isFumble: false,
           hitTargets: new Set(),
           saves: new Set([{ id: 'target-1' }]),
-          failedSaves: new Set([{ id: 'target-2' }])
+          failedSaves: new Set([{ id: 'target-2' }]),
         });
         return 1;
       });
@@ -811,7 +815,7 @@ describe('activateItemHandler', () => {
       const result = await activateItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        templatePosition: { x: 500, y: 500 }
+        templatePosition: { x: 500, y: 500 },
       });
 
       expect(result.workflow?.damageTotal).toBe(28);
@@ -825,7 +829,7 @@ describe('activateItemHandler', () => {
       await activateItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        templatePosition: { x: 300, y: 400 }
+        templatePosition: { x: 300, y: 400 },
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(undefined);
@@ -843,7 +847,7 @@ describe('activateItemHandler', () => {
         actorId: 'actor-123',
         itemId: 'weapon-123',
         targetTokenIds: ['target-1', 'target-2'],
-        templatePosition: { x: 500, y: 500 }
+        templatePosition: { x: 500, y: 500 },
       });
 
       expect(mockTargetToken1.setTarget).toHaveBeenCalled();
@@ -855,39 +859,47 @@ describe('activateItemHandler', () => {
   it('throws when actor not found', async () => {
     mockGame.actors.get.mockReturnValue(undefined);
 
-    await expect(activateItemHandler({
-      actorId: 'nonexistent',
-      itemId: 'weapon-123'
-    })).rejects.toThrow('Actor not found: nonexistent');
+    await expect(
+      activateItemHandler({
+        actorId: 'nonexistent',
+        itemId: 'weapon-123',
+      }),
+    ).rejects.toThrow('Actor not found: nonexistent');
   });
 
   it('throws when item not found', async () => {
     mockActor.items.get.mockReturnValue(undefined);
 
-    await expect(activateItemHandler({
-      actorId: 'actor-123',
-      itemId: 'nonexistent'
-    })).rejects.toThrow('Item not found: nonexistent');
+    await expect(
+      activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'nonexistent',
+      }),
+    ).rejects.toThrow('Item not found: nonexistent');
   });
 
   it('throws when activity ID not found', async () => {
     mockActivitiesCollection.get.mockReturnValue(undefined);
 
-    await expect(activateItemHandler({
-      actorId: 'actor-123',
-      itemId: 'weapon-123',
-      activityId: 'nonexistent'
-    })).rejects.toThrow('Activity not found: nonexistent');
+    await expect(
+      activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123',
+        activityId: 'nonexistent',
+      }),
+    ).rejects.toThrow('Activity not found: nonexistent');
   });
 
   it('throws when activity type not found', async () => {
     mockActivitiesCollection.find.mockReturnValue(undefined);
 
-    await expect(activateItemHandler({
-      actorId: 'actor-123',
-      itemId: 'weapon-123',
-      activityType: 'heal'
-    })).rejects.toThrow("No activity of type 'heal' found on item: Longsword");
+    await expect(
+      activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123',
+        activityType: 'heal',
+      }),
+    ).rejects.toThrow("No activity of type 'heal' found on item: Longsword");
   });
 });
 
@@ -896,7 +908,7 @@ const mockCreatedItem = {
   id: 'new-item-123',
   name: 'New Sword',
   type: 'weapon',
-  img: 'icons/weapons/swords/new-sword.png'
+  img: 'icons/weapons/swords/new-sword.png',
 };
 
 const mockCompendiumItem = {
@@ -908,14 +920,14 @@ const mockCompendiumItem = {
     name: 'Compendium Sword',
     type: 'weapon',
     img: 'icons/weapons/swords/compendium-sword.png',
-    system: { quantity: 1 }
-  })
+    system: { quantity: 1 },
+  }),
 };
 
 const mockPack = {
   collection: 'dnd5e.items',
   metadata: { type: 'Item' },
-  getDocument: jest.fn()
+  getDocument: jest.fn(),
 };
 
 const mockActorWithCrud = {
@@ -923,20 +935,20 @@ const mockActorWithCrud = {
   name: 'Test Hero',
   items: {
     contents: [mockWeapon, mockArmor, mockPotion],
-    get: jest.fn()
+    get: jest.fn(),
   },
   createEmbeddedDocuments: jest.fn(),
   updateEmbeddedDocuments: jest.fn(),
-  deleteEmbeddedDocuments: jest.fn()
+  deleteEmbeddedDocuments: jest.fn(),
 };
 
 const mockGameWithPacks = {
   actors: {
-    get: jest.fn()
+    get: jest.fn(),
   },
   packs: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 import { addItemToActorHandler } from '../AddItemToActorHandler';
@@ -956,11 +968,11 @@ describe('addItemToActorHandler', () => {
     const result = await addItemToActorHandler({
       actorId: 'actor-123',
       name: 'New Sword',
-      type: 'weapon'
+      type: 'weapon',
     });
 
     expect(mockActorWithCrud.createEmbeddedDocuments).toHaveBeenCalledWith('Item', [
-      { name: 'New Sword', type: 'weapon' }
+      { name: 'New Sword', type: 'weapon' },
     ]);
     expect(result.id).toBe('new-item-123');
     expect(result.name).toBe('New Sword');
@@ -974,7 +986,7 @@ describe('addItemToActorHandler', () => {
       name: 'Magic Sword',
       type: 'weapon',
       img: 'icons/magic-sword.png',
-      system: { quantity: 2, rarity: 'rare' }
+      system: { quantity: 2, rarity: 'rare' },
     });
 
     expect(mockActorWithCrud.createEmbeddedDocuments).toHaveBeenCalledWith('Item', [
@@ -982,17 +994,17 @@ describe('addItemToActorHandler', () => {
         name: 'Magic Sword',
         type: 'weapon',
         img: 'icons/magic-sword.png',
-        system: { quantity: 2, rarity: 'rare' }
-      }
+        system: { quantity: 2, rarity: 'rare' },
+      },
     ]);
   });
 
   it('should throw error if actor not found', async () => {
     mockGameWithPacks.actors.get.mockReturnValue(undefined);
 
-    await expect(
-      addItemToActorHandler({ actorId: 'non-existent', name: 'Sword', type: 'weapon' })
-    ).rejects.toThrow('Actor not found: non-existent');
+    await expect(addItemToActorHandler({ actorId: 'non-existent', name: 'Sword', type: 'weapon' })).rejects.toThrow(
+      'Actor not found: non-existent',
+    );
   });
 });
 
@@ -1003,19 +1015,21 @@ describe('addItemFromCompendiumHandler', () => {
     mockGameWithPacks.actors.get.mockReturnValue(mockActorWithCrud);
     mockGameWithPacks.packs.get.mockReturnValue(mockPack);
     mockPack.getDocument.mockResolvedValue(mockCompendiumItem);
-    mockActorWithCrud.createEmbeddedDocuments.mockResolvedValue([{
-      id: 'created-from-compendium',
-      name: 'Compendium Sword',
-      type: 'weapon',
-      img: 'icons/weapons/swords/compendium-sword.png'
-    }]);
+    mockActorWithCrud.createEmbeddedDocuments.mockResolvedValue([
+      {
+        id: 'created-from-compendium',
+        name: 'Compendium Sword',
+        type: 'weapon',
+        img: 'icons/weapons/swords/compendium-sword.png',
+      },
+    ]);
   });
 
   it('should add item from compendium to actor', async () => {
     const result = await addItemFromCompendiumHandler({
       actorId: 'actor-123',
       packId: 'dnd5e.items',
-      itemId: 'compendium-item-456'
+      itemId: 'compendium-item-456',
     });
 
     expect(mockPack.getDocument).toHaveBeenCalledWith('compendium-item-456');
@@ -1029,7 +1043,7 @@ describe('addItemFromCompendiumHandler', () => {
       actorId: 'actor-123',
       packId: 'dnd5e.items',
       itemId: 'compendium-item-456',
-      name: 'Custom Name'
+      name: 'Custom Name',
     });
 
     const callArgs = mockActorWithCrud.createEmbeddedDocuments.mock.calls[0] as [string, Record<string, unknown>[]];
@@ -1041,7 +1055,7 @@ describe('addItemFromCompendiumHandler', () => {
       actorId: 'actor-123',
       packId: 'dnd5e.items',
       itemId: 'compendium-item-456',
-      quantity: 5
+      quantity: 5,
     });
 
     const callArgs = mockActorWithCrud.createEmbeddedDocuments.mock.calls[0] as [string, Record<string, unknown>[]];
@@ -1056,23 +1070,23 @@ describe('addItemFromCompendiumHandler', () => {
       addItemFromCompendiumHandler({
         actorId: 'actor-123',
         packId: 'invalid-pack',
-        itemId: 'item-123'
-      })
+        itemId: 'item-123',
+      }),
     ).rejects.toThrow('Compendium pack not found: invalid-pack');
   });
 
   it('should throw error if pack is not Item type', async () => {
     mockGameWithPacks.packs.get.mockReturnValue({
       ...mockPack,
-      metadata: { type: 'Actor' }
+      metadata: { type: 'Actor' },
     });
 
     await expect(
       addItemFromCompendiumHandler({
         actorId: 'actor-123',
         packId: 'dnd5e.monsters',
-        itemId: 'item-123'
-      })
+        itemId: 'item-123',
+      }),
     ).rejects.toThrow('Compendium pack is not an Item pack: dnd5e.monsters');
   });
 
@@ -1083,8 +1097,8 @@ describe('addItemFromCompendiumHandler', () => {
       addItemFromCompendiumHandler({
         actorId: 'actor-123',
         packId: 'dnd5e.items',
-        itemId: 'non-existent'
-      })
+        itemId: 'non-existent',
+      }),
     ).rejects.toThrow('Item not found in compendium: non-existent');
   });
 });
@@ -1095,23 +1109,25 @@ describe('updateActorItemHandler', () => {
     (globalThis as Record<string, unknown>)['game'] = mockGameWithPacks;
     mockGameWithPacks.actors.get.mockReturnValue(mockActorWithCrud);
     mockActorWithCrud.items.get.mockReturnValue(mockWeapon);
-    mockActorWithCrud.updateEmbeddedDocuments.mockResolvedValue([{
-      id: 'weapon-123',
-      name: 'Updated Sword',
-      type: 'weapon',
-      img: 'icons/updated-sword.png'
-    }]);
+    mockActorWithCrud.updateEmbeddedDocuments.mockResolvedValue([
+      {
+        id: 'weapon-123',
+        name: 'Updated Sword',
+        type: 'weapon',
+        img: 'icons/updated-sword.png',
+      },
+    ]);
   });
 
   it('should update item on actor', async () => {
     const result = await updateActorItemHandler({
       actorId: 'actor-123',
       itemId: 'weapon-123',
-      name: 'Updated Sword'
+      name: 'Updated Sword',
     });
 
     expect(mockActorWithCrud.updateEmbeddedDocuments).toHaveBeenCalledWith('Item', [
-      { _id: 'weapon-123', name: 'Updated Sword' }
+      { _id: 'weapon-123', name: 'Updated Sword' },
     ]);
     expect(result.name).toBe('Updated Sword');
   });
@@ -1120,28 +1136,28 @@ describe('updateActorItemHandler', () => {
     await updateActorItemHandler({
       actorId: 'actor-123',
       itemId: 'weapon-123',
-      system: { quantity: 10 }
+      system: { quantity: 10 },
     });
 
     expect(mockActorWithCrud.updateEmbeddedDocuments).toHaveBeenCalledWith('Item', [
-      { _id: 'weapon-123', 'system.quantity': 10 }
+      { _id: 'weapon-123', 'system.quantity': 10 },
     ]);
   });
 
   it('should throw error if actor not found', async () => {
     mockGameWithPacks.actors.get.mockReturnValue(undefined);
 
-    await expect(
-      updateActorItemHandler({ actorId: 'non-existent', itemId: 'weapon-123' })
-    ).rejects.toThrow('Actor not found: non-existent');
+    await expect(updateActorItemHandler({ actorId: 'non-existent', itemId: 'weapon-123' })).rejects.toThrow(
+      'Actor not found: non-existent',
+    );
   });
 
   it('should throw error if item not found', async () => {
     mockActorWithCrud.items.get.mockReturnValue(undefined);
 
-    await expect(
-      updateActorItemHandler({ actorId: 'actor-123', itemId: 'non-existent' })
-    ).rejects.toThrow('Item not found: non-existent');
+    await expect(updateActorItemHandler({ actorId: 'actor-123', itemId: 'non-existent' })).rejects.toThrow(
+      'Item not found: non-existent',
+    );
   });
 });
 
@@ -1157,7 +1173,7 @@ describe('deleteActorItemHandler', () => {
   it('should delete item from actor', async () => {
     const result = await deleteActorItemHandler({
       actorId: 'actor-123',
-      itemId: 'weapon-123'
+      itemId: 'weapon-123',
     });
 
     expect(mockActorWithCrud.deleteEmbeddedDocuments).toHaveBeenCalledWith('Item', ['weapon-123']);
@@ -1167,16 +1183,16 @@ describe('deleteActorItemHandler', () => {
   it('should throw error if actor not found', async () => {
     mockGameWithPacks.actors.get.mockReturnValue(undefined);
 
-    await expect(
-      deleteActorItemHandler({ actorId: 'non-existent', itemId: 'weapon-123' })
-    ).rejects.toThrow('Actor not found: non-existent');
+    await expect(deleteActorItemHandler({ actorId: 'non-existent', itemId: 'weapon-123' })).rejects.toThrow(
+      'Actor not found: non-existent',
+    );
   });
 
   it('should throw error if item not found', async () => {
     mockActorWithCrud.items.get.mockReturnValue(undefined);
 
-    await expect(
-      deleteActorItemHandler({ actorId: 'actor-123', itemId: 'non-existent' })
-    ).rejects.toThrow('Item not found: non-existent');
+    await expect(deleteActorItemHandler({ actorId: 'actor-123', itemId: 'non-existent' })).rejects.toThrow(
+      'Item not found: non-existent',
+    );
   });
 });

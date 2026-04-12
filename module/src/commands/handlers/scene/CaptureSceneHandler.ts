@@ -57,8 +57,10 @@ export function captureSceneHandler(_params: CaptureSceneParams): Promise<Captur
 
   // Save current viewport
   const saved = {
-    px: stage.position.x, py: stage.position.y,
-    sx: stage.scale.x, sy: stage.scale.y
+    px: stage.position.x,
+    py: stage.position.y,
+    sx: stage.scale.x,
+    sy: stage.scale.y,
   };
 
   // Use Foundry's pan() to zoom to fit the full scene
@@ -69,7 +71,7 @@ export function captureSceneHandler(_params: CaptureSceneParams): Promise<Captur
     x: dims.sceneX + dims.sceneWidth / 2,
     y: dims.sceneY + dims.sceneHeight / 2,
     scale,
-    duration: 0
+    duration: 0,
   });
 
   const overlay = addGridOverlay(canvas as unknown as OverlayCanvas);
@@ -93,6 +95,6 @@ export function captureSceneHandler(_params: CaptureSceneParams): Promise<Captur
     image,
     mimeType: MIME_TYPE,
     width: view.width,
-    height: view.height
+    height: view.height,
   });
 }

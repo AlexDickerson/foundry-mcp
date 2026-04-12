@@ -37,10 +37,7 @@ export class WebSocketClient {
   private readonly config: Required<WebSocketClientConfig>;
   private readonly createSocket: WebSocketFactory;
 
-  constructor(
-    config: WebSocketClientConfig,
-    socketFactory?: WebSocketFactory
-  ) {
+  constructor(config: WebSocketClientConfig, socketFactory?: WebSocketFactory) {
     this.config = {
       url: config.url,
       reconnectInterval: config.reconnectInterval ?? DEFAULT_RECONNECT_INTERVAL,
@@ -139,11 +136,7 @@ export class WebSocketClient {
     }
 
     const obj = data as Record<string, unknown>;
-    return (
-      typeof obj['id'] === 'string' &&
-      typeof obj['type'] === 'string' &&
-      'params' in obj
-    );
+    return typeof obj['id'] === 'string' && typeof obj['type'] === 'string' && 'params' in obj;
   }
 
   private scheduleReconnect(): void {
@@ -154,7 +147,9 @@ export class WebSocketClient {
 
     this.reconnectAttempts++;
     const delay = this.config.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1);
-    console.log(`Foundry API Bridge | Reconnecting in ${String(delay)}ms (attempt ${String(this.reconnectAttempts)}/${String(this.config.maxReconnectAttempts)})`);
+    console.log(
+      `Foundry API Bridge | Reconnecting in ${String(delay)}ms (attempt ${String(this.reconnectAttempts)}/${String(this.config.maxReconnectAttempts)})`,
+    );
 
     this.reconnectTimer = setTimeout(() => {
       this.connect();

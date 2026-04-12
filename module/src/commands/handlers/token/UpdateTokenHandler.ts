@@ -1,10 +1,5 @@
 import type { UpdateTokenParams, MutationResult } from '@/commands/types';
-import {
-  getActiveScene,
-  getToken,
-  type FoundryGame,
-  type TokenUpdateData
-} from './tokenTypes';
+import { getActiveScene, getToken, type FoundryGame, type TokenUpdateData } from './tokenTypes';
 
 declare const game: FoundryGame;
 

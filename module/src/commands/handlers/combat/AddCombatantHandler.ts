@@ -3,7 +3,7 @@ import {
   getActiveCombat,
   mapCombatantToResult,
   type FoundryGame,
-  type FoundryCombatantCreateData
+  type FoundryCombatantCreateData,
 } from './combatTypes';
 
 declare const game: FoundryGame;
@@ -12,7 +12,7 @@ export async function addCombatantHandler(params: AddCombatantParams): Promise<C
   const combat = getActiveCombat(game, params.combatId);
 
   const combatantData: FoundryCombatantCreateData = {
-    actorId: params.actorId
+    actorId: params.actorId,
   };
 
   if (params.tokenId !== undefined) {

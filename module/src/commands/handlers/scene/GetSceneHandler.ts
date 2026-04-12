@@ -44,7 +44,7 @@ interface CollisionBackend {
   testCollision(
     origin: { x: number; y: number },
     destination: { x: number; y: number },
-    config: { type: string; mode: string }
+    config: { type: string; mode: string },
   ): boolean;
 }
 
@@ -76,8 +76,10 @@ function captureScreenshot(canvas: FoundryCanvas): SceneScreenshot | undefined {
 
     // Save current viewport
     const saved = {
-      px: stage.position.x, py: stage.position.y,
-      sx: stage.scale.x, sy: stage.scale.y
+      px: stage.position.x,
+      py: stage.position.y,
+      sx: stage.scale.x,
+      sy: stage.scale.y,
     };
 
     // Use Foundry's pan() to zoom to fit the full scene
@@ -88,7 +90,7 @@ function captureScreenshot(canvas: FoundryCanvas): SceneScreenshot | undefined {
       x: dims.sceneX + dims.sceneWidth / 2,
       y: dims.sceneY + dims.sceneHeight / 2,
       scale,
-      duration: 0
+      duration: 0,
     });
 
     const overlay = addGridOverlay(canvas as unknown as OverlayCanvas);
@@ -110,7 +112,7 @@ function captureScreenshot(canvas: FoundryCanvas): SceneScreenshot | undefined {
       image,
       mimeType: MIME_TYPE,
       width: view.width,
-      height: view.height
+      height: view.height,
     };
   } catch {
     return undefined;
@@ -128,21 +130,21 @@ export function getSceneHandler(params: GetSceneParams): Promise<SceneDetailResu
       const collisionBackend = globals.CONFIG?.Canvas?.polygonBackends?.move;
       const gridSize = scene.grid?.size ?? 100;
 
-      const walls = (scene.walls?.contents ?? []).map(w => ({
+      const walls = (scene.walls?.contents ?? []).map((w) => ({
         c: w.c,
         door: w.door,
         ds: w.ds ?? 0,
-        move: w.move
+        move: w.move,
       }));
 
-      const tokens = (scene.tokens?.contents ?? []).map(t => ({
+      const tokens = (scene.tokens?.contents ?? []).map((t) => ({
         id: t.id,
         name: t.name ?? '',
         x: t.x,
         y: t.y,
         width: t.width ?? 1,
         height: t.height ?? 1,
-        hp: t.actor?.system?.attributes?.hp
+        hp: t.actor?.system?.attributes?.hp,
       }));
 
       detail.asciiMap = generateAsciiMap({
@@ -154,7 +156,7 @@ export function getSceneHandler(params: GetSceneParams): Promise<SceneDetailResu
         sceneHeight: scene.height ?? 0,
         tokens,
         walls,
-        collisionBackend
+        collisionBackend,
       });
     }
 

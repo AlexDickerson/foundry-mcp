@@ -14,7 +14,7 @@ function createMockResult(overrides?: Partial<FoundryTableResult>): FoundryTable
     drawn: false,
     documentCollection: undefined,
     documentId: undefined,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -33,7 +33,7 @@ function createMockTable(results: FoundryTableResult[] = [], overrides?: Partial
     resetResults: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -41,8 +41,8 @@ function setGame(tables: Map<string, FoundryRollTable>): void {
   (globalThis as Record<string, unknown>)['game'] = {
     tables: {
       get: jest.fn((id: string) => tables.get(id)),
-      forEach: jest.fn()
-    }
+      forEach: jest.fn(),
+    },
   };
 }
 
@@ -57,10 +57,10 @@ describe('rollOnTableHandler', () => {
     const drawnResult = createMockResult({ _id: 'r1', text: 'Goblin Ambush' });
     const drawResponse: FoundryRollTableDraw = {
       roll: { formula: '1d6', total: 3 },
-      results: [drawnResult]
+      results: [drawnResult],
     };
     const table = createMockTable([], {
-      draw: jest.fn().mockResolvedValue(drawResponse)
+      draw: jest.fn().mockResolvedValue(drawResponse),
     });
     setGame(new Map([['table-1', table]]));
 
@@ -76,13 +76,12 @@ describe('rollOnTableHandler', () => {
   it('should reject when table not found', async () => {
     setGame(new Map());
 
-    await expect(rollOnTableHandler({ tableId: 'nonexistent' }))
-      .rejects.toThrow('Roll table not found: nonexistent');
+    await expect(rollOnTableHandler({ tableId: 'nonexistent' })).rejects.toThrow('Roll table not found: nonexistent');
   });
 
   it('should pass displayChat true by default', async () => {
     const table = createMockTable([], {
-      draw: jest.fn().mockResolvedValue({ roll: { formula: '1d6', total: 1 }, results: [] })
+      draw: jest.fn().mockResolvedValue({ roll: { formula: '1d6', total: 1 }, results: [] }),
     });
     setGame(new Map([['t1', table]]));
 
@@ -93,7 +92,7 @@ describe('rollOnTableHandler', () => {
 
   it('should pass displayChat false when specified', async () => {
     const table = createMockTable([], {
-      draw: jest.fn().mockResolvedValue({ roll: { formula: '1d6', total: 1 }, results: [] })
+      draw: jest.fn().mockResolvedValue({ roll: { formula: '1d6', total: 1 }, results: [] }),
     });
     setGame(new Map([['t1', table]]));
 
@@ -105,22 +104,22 @@ describe('rollOnTableHandler', () => {
   it('should handle multiple results from overlapping ranges', async () => {
     const results = [
       createMockResult({ _id: 'r1', text: 'Result A' }),
-      createMockResult({ _id: 'r2', text: 'Result B' })
+      createMockResult({ _id: 'r2', text: 'Result B' }),
     ];
     const table = createMockTable([], {
-      draw: jest.fn().mockResolvedValue({ roll: { formula: '1d6', total: 3 }, results })
+      draw: jest.fn().mockResolvedValue({ roll: { formula: '1d6', total: 3 }, results }),
     });
     setGame(new Map([['t1', table]]));
 
     const result = await rollOnTableHandler({ tableId: 't1' });
 
     expect(result.results).toHaveLength(2);
-    expect(result.results.map(r => r.text)).toEqual(['Result A', 'Result B']);
+    expect(result.results.map((r) => r.text)).toEqual(['Result A', 'Result B']);
   });
 
   it('should handle empty results from draw', async () => {
     const table = createMockTable([], {
-      draw: jest.fn().mockResolvedValue({ roll: { formula: '1d6', total: 7 }, results: [] })
+      draw: jest.fn().mockResolvedValue({ roll: { formula: '1d6', total: 7 }, results: [] }),
     });
     setGame(new Map([['t1', table]]));
 
@@ -131,12 +130,11 @@ describe('rollOnTableHandler', () => {
 
   it('should propagate draw errors', async () => {
     const table = createMockTable([], {
-      draw: jest.fn().mockRejectedValue(new Error('Draw failed'))
+      draw: jest.fn().mockRejectedValue(new Error('Draw failed')),
     });
     setGame(new Map([['t1', table]]));
 
-    await expect(rollOnTableHandler({ tableId: 't1' }))
-      .rejects.toThrow('Draw failed');
+    await expect(rollOnTableHandler({ tableId: 't1' })).rejects.toThrow('Draw failed');
   });
 });
 
@@ -147,11 +145,11 @@ describe('resetTableHandler', () => {
     const results = [
       createMockResult({ _id: 'r1', drawn: true }),
       createMockResult({ _id: 'r2', drawn: true }),
-      createMockResult({ _id: 'r3', drawn: false })
+      createMockResult({ _id: 'r3', drawn: false }),
     ];
     const table = createMockTable(results, {
       id: 't1',
-      resetResults: jest.fn().mockResolvedValue(undefined)
+      resetResults: jest.fn().mockResolvedValue(undefined),
     });
     setGame(new Map([['t1', table]]));
 
@@ -166,17 +164,13 @@ describe('resetTableHandler', () => {
   it('should reject when table not found', async () => {
     setGame(new Map());
 
-    await expect(resetTableHandler({ tableId: 'nonexistent' }))
-      .rejects.toThrow('Roll table not found: nonexistent');
+    await expect(resetTableHandler({ tableId: 'nonexistent' })).rejects.toThrow('Roll table not found: nonexistent');
   });
 
   it('should return resetCount 0 when no results are drawn', async () => {
-    const results = [
-      createMockResult({ drawn: false }),
-      createMockResult({ _id: 'r2', drawn: false })
-    ];
+    const results = [createMockResult({ drawn: false }), createMockResult({ _id: 'r2', drawn: false })];
     const table = createMockTable(results, {
-      resetResults: jest.fn().mockResolvedValue(undefined)
+      resetResults: jest.fn().mockResolvedValue(undefined),
     });
     setGame(new Map([['t1', table]]));
 
@@ -188,7 +182,7 @@ describe('resetTableHandler', () => {
 
   it('should return resetCount 0 for table with no results', async () => {
     const table = createMockTable([], {
-      resetResults: jest.fn().mockResolvedValue(undefined)
+      resetResults: jest.fn().mockResolvedValue(undefined),
     });
     setGame(new Map([['t1', table]]));
 

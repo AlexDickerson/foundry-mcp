@@ -4,7 +4,9 @@ import type { FoundryPack, FoundryGame } from '../worldTypes';
 function createMockCollection<T>(items: T[] = []): { size: number; forEach: jest.Mock } {
   return {
     size: items.length,
-    forEach: jest.fn((fn: (item: T) => void) => { items.forEach(fn); })
+    forEach: jest.fn((fn: (item: T) => void) => {
+      items.forEach(fn);
+    }),
   };
 }
 
@@ -13,7 +15,7 @@ function createMockPack(overrides?: Partial<FoundryPack>): FoundryPack {
     collection: 'dnd5e.monsters',
     metadata: { label: 'Monsters', type: 'Actor', system: 'dnd5e', packageName: 'dnd5e' },
     index: { size: 350 },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -26,7 +28,7 @@ function setGame(packs: FoundryPack[] | undefined): void {
     actors: undefined,
     items: undefined,
     scenes: undefined,
-    packs: packs !== undefined ? createMockCollection(packs) : undefined
+    packs: packs !== undefined ? createMockCollection(packs) : undefined,
   };
   (globalThis as Record<string, unknown>)['game'] = game;
 }
@@ -40,15 +42,30 @@ describe('getCompendiumsHandler', () => {
 
   it('should return all compendium metadata', async () => {
     setGame([
-      createMockPack({ collection: 'dnd5e.monsters', metadata: { label: 'Monsters', type: 'Actor', system: 'dnd5e', packageName: 'dnd5e' }, index: { size: 350 } }),
-      createMockPack({ collection: 'dnd5e.spells', metadata: { label: 'Spells', type: 'Item', system: 'dnd5e', packageName: 'dnd5e' }, index: { size: 500 } })
+      createMockPack({
+        collection: 'dnd5e.monsters',
+        metadata: { label: 'Monsters', type: 'Actor', system: 'dnd5e', packageName: 'dnd5e' },
+        index: { size: 350 },
+      }),
+      createMockPack({
+        collection: 'dnd5e.spells',
+        metadata: { label: 'Spells', type: 'Item', system: 'dnd5e', packageName: 'dnd5e' },
+        index: { size: 500 },
+      }),
     ]);
 
     const result = await getCompendiumsHandler({} as Record<string, never>);
 
     expect(result).toEqual([
-      { id: 'dnd5e.monsters', label: 'Monsters', type: 'Actor', system: 'dnd5e', packageName: 'dnd5e', documentCount: 350 },
-      { id: 'dnd5e.spells', label: 'Spells', type: 'Item', system: 'dnd5e', packageName: 'dnd5e', documentCount: 500 }
+      {
+        id: 'dnd5e.monsters',
+        label: 'Monsters',
+        type: 'Actor',
+        system: 'dnd5e',
+        packageName: 'dnd5e',
+        documentCount: 350,
+      },
+      { id: 'dnd5e.spells', label: 'Spells', type: 'Item', system: 'dnd5e', packageName: 'dnd5e', documentCount: 500 },
     ]);
   });
 
@@ -69,7 +86,9 @@ describe('getCompendiumsHandler', () => {
   });
 
   it('should fallback system to empty string when undefined', async () => {
-    setGame([createMockPack({ metadata: { label: 'Custom', type: 'Actor', system: undefined, packageName: 'world' } })]);
+    setGame([
+      createMockPack({ metadata: { label: 'Custom', type: 'Actor', system: undefined, packageName: 'world' } }),
+    ]);
 
     const result = await getCompendiumsHandler({} as Record<string, never>);
 

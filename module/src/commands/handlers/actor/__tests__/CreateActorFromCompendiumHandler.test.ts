@@ -7,7 +7,7 @@ const mockCompendiumActor = {
   type: 'npc',
   img: 'icons/creatures/goblin.png',
   folder: null,
-  toObject: jest.fn()
+  toObject: jest.fn(),
 };
 
 const mockCreatedActor = {
@@ -16,26 +16,26 @@ const mockCreatedActor = {
   name: 'Goblin',
   type: 'npc',
   img: 'icons/creatures/goblin.png',
-  folder: null
+  folder: null,
 };
 
 const mockPack = {
   collection: 'dnd5e.monsters',
   metadata: {
-    type: 'Actor'
+    type: 'Actor',
   },
-  getDocument: jest.fn()
+  getDocument: jest.fn(),
 };
 
 const mockGame = {
   actors: {
     documentClass: {
-      create: jest.fn()
-    }
+      create: jest.fn(),
+    },
   },
   packs: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;
@@ -50,7 +50,7 @@ describe('createActorFromCompendiumHandler', () => {
       name: 'Goblin',
       type: 'npc',
       img: 'icons/creatures/goblin.png',
-      system: { cr: 0.25 }
+      system: { cr: 0.25 },
     });
     mockGame.actors.documentClass.create.mockResolvedValue(mockCreatedActor);
   });
@@ -59,7 +59,7 @@ describe('createActorFromCompendiumHandler', () => {
     it('should create an actor from compendium', async () => {
       const result = await createActorFromCompendiumHandler({
         packId: 'dnd5e.monsters',
-        actorId: 'comp-actor-123'
+        actorId: 'comp-actor-123',
       });
 
       expect(mockGame.packs.get).toHaveBeenCalledWith('dnd5e.monsters');
@@ -69,7 +69,7 @@ describe('createActorFromCompendiumHandler', () => {
         name: 'Goblin',
         type: 'npc',
         img: 'icons/creatures/goblin.png',
-        system: { cr: 0.25 }
+        system: { cr: 0.25 },
       });
       expect(result).toEqual({
         id: 'new-actor-456',
@@ -77,7 +77,7 @@ describe('createActorFromCompendiumHandler', () => {
         name: 'Goblin',
         type: 'npc',
         img: 'icons/creatures/goblin.png',
-        folder: null
+        folder: null,
       });
     });
 
@@ -85,11 +85,11 @@ describe('createActorFromCompendiumHandler', () => {
       await createActorFromCompendiumHandler({
         packId: 'dnd5e.monsters',
         actorId: 'comp-actor-123',
-        name: 'Custom Goblin'
+        name: 'Custom Goblin',
       });
 
       expect(mockGame.actors.documentClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'Custom Goblin' })
+        expect.objectContaining({ name: 'Custom Goblin' }),
       );
     });
 
@@ -97,18 +97,18 @@ describe('createActorFromCompendiumHandler', () => {
       await createActorFromCompendiumHandler({
         packId: 'dnd5e.monsters',
         actorId: 'comp-actor-123',
-        folder: 'folder-789'
+        folder: 'folder-789',
       });
 
       expect(mockGame.actors.documentClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ folder: 'folder-789' })
+        expect.objectContaining({ folder: 'folder-789' }),
       );
     });
 
     it('should remove _id from compendium data before creating', async () => {
       await createActorFromCompendiumHandler({
         packId: 'dnd5e.monsters',
-        actorId: 'comp-actor-123'
+        actorId: 'comp-actor-123',
       });
 
       const createCall = mockGame.actors.documentClass.create.mock.calls[0][0];
@@ -118,12 +118,12 @@ describe('createActorFromCompendiumHandler', () => {
     it('should return folder name when actor has folder', async () => {
       mockGame.actors.documentClass.create.mockResolvedValue({
         ...mockCreatedActor,
-        folder: { name: 'Monsters' }
+        folder: { name: 'Monsters' },
       });
 
       const result = await createActorFromCompendiumHandler({
         packId: 'dnd5e.monsters',
-        actorId: 'comp-actor-123'
+        actorId: 'comp-actor-123',
       });
 
       expect(result.folder).toBe('Monsters');
@@ -137,22 +137,22 @@ describe('createActorFromCompendiumHandler', () => {
       await expect(
         createActorFromCompendiumHandler({
           packId: 'non-existent.pack',
-          actorId: 'comp-actor-123'
-        })
+          actorId: 'comp-actor-123',
+        }),
       ).rejects.toThrow('Compendium pack not found: non-existent.pack');
     });
 
     it('should throw error if pack is not an Actor pack', async () => {
       mockGame.packs.get.mockReturnValue({
         ...mockPack,
-        metadata: { type: 'Item' }
+        metadata: { type: 'Item' },
       });
 
       await expect(
         createActorFromCompendiumHandler({
           packId: 'dnd5e.items',
-          actorId: 'comp-actor-123'
-        })
+          actorId: 'comp-actor-123',
+        }),
       ).rejects.toThrow('Compendium pack is not an Actor pack: dnd5e.items');
     });
 
@@ -162,8 +162,8 @@ describe('createActorFromCompendiumHandler', () => {
       await expect(
         createActorFromCompendiumHandler({
           packId: 'dnd5e.monsters',
-          actorId: 'non-existent'
-        })
+          actorId: 'non-existent',
+        }),
       ).rejects.toThrow('Actor not found in compendium: non-existent');
     });
   });

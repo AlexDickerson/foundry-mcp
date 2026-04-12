@@ -22,9 +22,7 @@ declare const game: FoundryGame;
 declare const CONST: Record<string, Record<string, number>>;
 
 export async function createWallsHandler(params: CreateWallsParams): Promise<CreateWallsResult> {
-  const scene = params.sceneId
-    ? game.scenes.get(params.sceneId)
-    : game.scenes.active;
+  const scene = params.sceneId ? game.scenes.get(params.sceneId) : game.scenes.active;
 
   if (!scene) {
     throw new Error(params.sceneId ? `Scene not found: ${params.sceneId}` : 'No active scene');
@@ -34,7 +32,7 @@ export async function createWallsHandler(params: CreateWallsParams): Promise<Cre
   const moveNormal = CONST['WALL_MOVEMENT_TYPES']?.['NORMAL'] ?? 20;
   const senseNormal = CONST['WALL_SENSE_TYPES']?.['NORMAL'] ?? 20;
 
-  const wallData: Record<string, unknown>[] = params.walls.map(w => {
+  const wallData: Record<string, unknown>[] = params.walls.map((w) => {
     const d: Record<string, unknown> = { c: w.c };
     if (w.door) d['door'] = w.door;
     if (w.move !== undefined) d['move'] = w.move === 1 ? moveNormal : w.move;
@@ -51,6 +49,6 @@ export async function createWallsHandler(params: CreateWallsParams): Promise<Cre
 
   return {
     created: created.length,
-    wallIds: created.map(w => w.id),
+    wallIds: created.map((w) => w.id),
   };
 }

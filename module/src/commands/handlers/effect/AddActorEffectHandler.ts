@@ -1,9 +1,7 @@
 import type { AddActorEffectParams, AddEffectResult } from '@/commands/types';
 import { getGame, type ActiveEffectCreateData } from './effectTypes';
 
-export async function addActorEffectHandler(
-  params: AddActorEffectParams
-): Promise<AddEffectResult> {
+export async function addActorEffectHandler(params: AddActorEffectParams): Promise<AddEffectResult> {
   const actor = getGame().actors.get(params.actorId);
 
   if (!actor) {
@@ -11,7 +9,7 @@ export async function addActorEffectHandler(
   }
 
   const effectData: ActiveEffectCreateData = {
-    name: params.name
+    name: params.name,
   };
 
   if (params.img !== undefined) {
@@ -49,6 +47,6 @@ export async function addActorEffectHandler(
   return {
     actorId: actor.id,
     effectId: createdEffect._id,
-    name: createdEffect.name
+    name: createdEffect.name,
   };
 }

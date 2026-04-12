@@ -44,12 +44,9 @@ export interface EffectFoundryActor {
   statuses: Set<string>;
   toggleStatusEffect(
     statusId: string,
-    options?: { active?: boolean; overlay?: boolean }
+    options?: { active?: boolean; overlay?: boolean },
   ): Promise<FoundryActiveEffect | boolean | undefined>;
-  createEmbeddedDocuments(
-    type: 'ActiveEffect',
-    data: ActiveEffectCreateData[]
-  ): Promise<FoundryActiveEffect[] | null>;
+  createEmbeddedDocuments(type: 'ActiveEffect', data: ActiveEffectCreateData[]): Promise<FoundryActiveEffect[] | null>;
 }
 
 export interface ActiveEffectCreateData {
@@ -87,14 +84,14 @@ export function mapEffectToSummary(effect: FoundryActiveEffect): EffectSummary {
     disabled: effect.disabled,
     isTemporary,
     statuses: Array.from(effect.statuses),
-    origin: effect.origin
+    origin: effect.origin,
   };
 
   if (effect.changes.length > 0) {
-    summary.changes = effect.changes.map(c => ({
+    summary.changes = effect.changes.map((c) => ({
       key: c.key,
       value: c.value,
-      mode: c.mode
+      mode: c.mode,
     }));
   }
 

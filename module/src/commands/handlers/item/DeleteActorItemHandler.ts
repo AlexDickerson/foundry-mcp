@@ -41,6 +41,6 @@ export async function deleteActorItemHandler(params: DeleteActorItemParams): Pro
   await actor.deleteEmbeddedDocuments('Item', [params.itemId]);
 
   return {
-    deleted: true
+    deleted: true,
   };
 }

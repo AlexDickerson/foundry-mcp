@@ -7,8 +7,24 @@ import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from './acto
  * @see https://foundryvtt.wiki/en/basics/Macros
  */
 export const SKILL_KEYS = [
-  'acr', 'ani', 'arc', 'ath', 'dec', 'his', 'ins', 'itm',
-  'inv', 'med', 'nat', 'prc', 'prf', 'per', 'rel', 'slt', 'ste', 'sur'
+  'acr',
+  'ani',
+  'arc',
+  'ath',
+  'dec',
+  'his',
+  'ins',
+  'itm',
+  'inv',
+  'med',
+  'nat',
+  'prc',
+  'prf',
+  'per',
+  'rel',
+  'slt',
+  'ste',
+  'sur',
 ] as const;
 
 export type SkillKey = (typeof SKILL_KEYS)[number];
@@ -19,7 +35,7 @@ interface FoundryActor {
   rollSkill(
     config: { skill: SkillKey },
     dialog?: RollDialogConfig,
-    message?: RollMessageConfig
+    message?: RollMessageConfig,
   ): Promise<FoundryD20Roll[]>;
 }
 
@@ -51,7 +67,7 @@ export async function rollSkillHandler(params: RollSkillParams): Promise<RollRes
   const rolls = await actor.rollSkill(
     { skill: params.skill },
     { configure: false },
-    { create: params.showInChat ?? false }
+    { create: params.showInChat ?? false },
   );
 
   const roll = rolls[0];
@@ -65,7 +81,7 @@ export async function rollSkillHandler(params: RollSkillParams): Promise<RollRes
   const result: RollResult = {
     total: roll.total,
     formula: roll.formula,
-    dice
+    dice,
   };
 
   if (roll.isCritical) {

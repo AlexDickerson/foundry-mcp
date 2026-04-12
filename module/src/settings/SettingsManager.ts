@@ -13,7 +13,7 @@ export function registerSettings(): void {
     scope: 'world',
     config: false,
     type: Object,
-    default: DEFAULT_CONFIG
+    default: DEFAULT_CONFIG,
   });
 
   game.settings.register(MODULE_ID, 'wsUrl', {
@@ -24,7 +24,7 @@ export function registerSettings(): void {
     type: String,
     // foundry-mcp patch: default points at the self-hosted MCP server's Foundry endpoint instead of the upstream SaaS host. See PATCHES.md for the original value.
     default: 'ws://127.0.0.1:8765/foundry',
-    requiresReload: true
+    requiresReload: true,
   });
 
   game.settings.register(MODULE_ID, 'apiKey', {
@@ -34,7 +34,7 @@ export function registerSettings(): void {
     config: true,
     type: String,
     default: '',
-    requiresReload: true
+    requiresReload: true,
   });
 }
 
@@ -51,7 +51,7 @@ export async function registerMenu(): Promise<void> {
     hint: 'Configure WebSocket and logging settings',
     icon: 'fas fa-cog',
     type: ApiConfigForm as unknown as new () => FormApplication,
-    restricted: true
+    restricted: true,
   });
 }
 

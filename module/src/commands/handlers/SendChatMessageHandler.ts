@@ -34,7 +34,7 @@ declare const game: ChatGame;
 const STYLE_MAP: Record<string, 'IC' | 'OOC' | 'EMOTE'> = {
   ic: 'IC',
   ooc: 'OOC',
-  emote: 'EMOTE'
+  emote: 'EMOTE',
 };
 
 export async function sendChatMessageHandler(params: SendChatMessageParams): Promise<SendChatMessageResult> {
@@ -43,7 +43,7 @@ export async function sendChatMessageHandler(params: SendChatMessageParams): Pro
   }
 
   const messageData: FoundryChatMessageData = {
-    content: params.content
+    content: params.content,
   };
 
   const speaker = ChatMessage.getSpeaker();
@@ -77,6 +77,6 @@ export async function sendChatMessageHandler(params: SendChatMessageParams): Pro
 
   return {
     messageId: message.id,
-    sent: true
+    sent: true,
   };
 }

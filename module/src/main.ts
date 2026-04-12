@@ -84,7 +84,7 @@ import {
   resetTableHandler,
   createRollTableHandler,
   updateRollTableHandler,
-  deleteRollTableHandler
+  deleteRollTableHandler,
 } from '@/commands';
 
 const MODULE_VERSION = '7.7.0';
@@ -116,19 +116,24 @@ function initializeModule(): void {
     const apiKey = getApiKey();
 
     if (!wsUrl || !apiKey) {
-      console.log(`Foundry API Bridge | v${MODULE_VERSION} loaded. Configure WebSocket URL and API Key in module settings to connect.`);
+      console.log(
+        `Foundry API Bridge | v${MODULE_VERSION} loaded. Configure WebSocket URL and API Key in module settings to connect.`,
+      );
       return;
     }
 
     initializeWebSocket(config.webSocket, wsUrl, apiKey);
     console.log(`Foundry API Bridge | v${MODULE_VERSION} initialized`);
-
   } catch (error: unknown) {
     console.error('Foundry API Bridge | Initialization failed:', error);
   }
 }
 
-function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnectAttempts: number }, wsUrl: string, apiKey: string): void {
+function initializeWebSocket(
+  wsConfig: { reconnectInterval: number; maxReconnectAttempts: number },
+  wsUrl: string,
+  apiKey: string,
+): void {
   commandRouter = new CommandRouter();
 
   // Pull queries
@@ -237,7 +242,7 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   wsClient = new WebSocketClient({
     url: wsConnectUrl,
     reconnectInterval: wsConfig.reconnectInterval,
-    maxReconnectAttempts: wsConfig.maxReconnectAttempts
+    maxReconnectAttempts: wsConfig.maxReconnectAttempts,
   });
 
   wsClient.onConnect(() => {
@@ -257,8 +262,9 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   wsClient.onMessage((command) => {
     if (!commandRouter || !wsClient) return;
 
-    commandRouter.execute(command)
-      .then(response => {
+    commandRouter
+      .execute(command)
+      .then((response) => {
         wsClient?.send(response);
       })
       .catch((error: unknown) => {

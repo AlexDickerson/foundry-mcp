@@ -43,10 +43,7 @@ export interface FoundryCombat {
   endCombat(): Promise<FoundryCombat>;
   delete(): Promise<FoundryCombat>;
   activate(): Promise<void>;
-  createEmbeddedDocuments(
-    type: 'Combatant',
-    data: FoundryCombatantCreateData[]
-  ): Promise<FoundryCombatant[]>;
+  createEmbeddedDocuments(type: 'Combatant', data: FoundryCombatantCreateData[]): Promise<FoundryCombatant[]>;
   deleteEmbeddedDocuments(type: 'Combatant', ids: string[]): Promise<unknown[]>;
   rollInitiative(ids: string[], options?: RollInitiativeOptions): Promise<FoundryCombat>;
   rollAll(options?: RollInitiativeOptions): Promise<FoundryCombat>;
@@ -92,7 +89,7 @@ export function mapCombatantToResult(combatant: FoundryCombatant): CombatantResu
     img: combatant.img,
     initiative: combatant.initiative,
     defeated: combatant.defeated,
-    hidden: combatant.hidden
+    hidden: combatant.hidden,
   };
 }
 
@@ -103,7 +100,7 @@ export function mapCombatToResult(combat: FoundryCombat): CombatResult {
     turn: combat.turn,
     started: combat.started,
     combatants: combat.turns.map(mapCombatantToResult),
-    current: combat.combatant ? mapCombatantToResult(combat.combatant) : null
+    current: combat.combatant ? mapCombatantToResult(combat.combatant) : null,
   };
 }
 

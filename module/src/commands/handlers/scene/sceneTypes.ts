@@ -7,7 +7,7 @@ import type {
   SceneTileResult,
   SceneDrawingResult,
   SceneRegionResult,
-  SceneTokenSummary
+  SceneTokenSummary,
 } from '@/commands/types';
 
 export interface FoundryNote {
@@ -36,12 +36,14 @@ export interface FoundryGrid {
 export interface FoundryLight {
   x: number;
   y: number;
-  config: {
-    bright: number | undefined;
-    dim: number | undefined;
-    color: string | null | undefined;
-    angle: number | undefined;
-  } | undefined;
+  config:
+    | {
+        bright: number | undefined;
+        dim: number | undefined;
+        color: string | null | undefined;
+        angle: number | undefined;
+      }
+    | undefined;
   walls: boolean | undefined;
   hidden: boolean | undefined;
 }
@@ -60,7 +62,9 @@ export interface FoundryTile {
 export interface FoundryDrawing {
   x: number;
   y: number;
-  shape: { type: string | undefined; width: number | undefined; height: number | undefined; points: number[] | undefined } | undefined;
+  shape:
+    | { type: string | undefined; width: number | undefined; height: number | undefined; points: number[] | undefined }
+    | undefined;
   text: string | undefined;
   hidden: boolean | undefined;
   fillColor: string | null | undefined;
@@ -150,7 +154,7 @@ export function pixelToGrid(x: number, y: number, gridSize: number): { gridX: nu
   const size = gridSize > 0 ? gridSize : 100;
   return {
     gridX: Math.floor(x / size),
-    gridY: Math.floor(y / size)
+    gridY: Math.floor(y / size),
   };
 }
 
@@ -160,7 +164,7 @@ export function mapNoteToResult(note: FoundryNote): SceneNoteResult {
     y: note.y,
     text: note.text ?? '',
     label: note.label ?? '',
-    entryId: note.entryId ?? null
+    entryId: note.entryId ?? null,
   };
 }
 
@@ -169,7 +173,7 @@ export function mapWallToResult(wall: FoundryWall): SceneWallResult {
     c: wall.c,
     move: wall.move,
     sense: wall.sense,
-    door: wall.door
+    door: wall.door,
   };
 }
 
@@ -182,7 +186,7 @@ export function mapLightToResult(light: FoundryLight): SceneLightResult {
     color: light.config?.color ?? null,
     angle: light.config?.angle ?? 360,
     walls: light.walls ?? true,
-    hidden: light.hidden ?? false
+    hidden: light.hidden ?? false,
   };
 }
 
@@ -195,7 +199,7 @@ export function mapTileToResult(tile: FoundryTile): SceneTileResult {
     img: tile.texture?.src ?? '',
     hidden: tile.hidden ?? false,
     elevation: tile.elevation ?? 0,
-    rotation: tile.rotation ?? 0
+    rotation: tile.rotation ?? 0,
   };
 }
 
@@ -207,12 +211,12 @@ export function mapDrawingToResult(drawing: FoundryDrawing): SceneDrawingResult 
       type: drawing.shape?.type ?? '',
       width: drawing.shape?.width ?? 0,
       height: drawing.shape?.height ?? 0,
-      points: drawing.shape?.points ?? []
+      points: drawing.shape?.points ?? [],
     },
     text: drawing.text ?? '',
     hidden: drawing.hidden ?? false,
     fillColor: drawing.fillColor ?? null,
-    strokeColor: drawing.strokeColor ?? null
+    strokeColor: drawing.strokeColor ?? null,
   };
 }
 
@@ -221,7 +225,7 @@ export function mapRegionToResult(region: FoundryRegion): SceneRegionResult {
     id: region.id,
     name: region.name ?? '',
     color: region.color ?? null,
-    shapes: (region.shapes ?? []).map(s => ({ type: s.type ?? '' }))
+    shapes: (region.shapes ?? []).map((s) => ({ type: s.type ?? '' })),
   };
 }
 
@@ -238,7 +242,7 @@ export function mapTokenToSummary(token: FoundryToken, gridSize: number): SceneT
     elevation: token.elevation ?? 0,
     hidden: token.hidden ?? false,
     disposition: token.disposition ?? 0,
-    conditions: token.actor?.statuses ? [...token.actor.statuses] : []
+    conditions: token.actor?.statuses ? [...token.actor.statuses] : [],
   };
 
   const hp = token.actor?.system?.attributes?.hp;
@@ -268,7 +272,7 @@ export function mapSceneToDetail(scene: FoundryScene, include?: Set<string>): Sc
       size: scene.grid?.size ?? 100,
       type: scene.grid?.type ?? 1,
       units: scene.grid?.units ?? 'ft',
-      distance: scene.grid?.distance ?? 5
+      distance: scene.grid?.distance ?? 5,
     },
     darkness: scene.darkness ?? 0,
     notes: all || include.has('notes') ? (scene.notes?.contents ?? []).map(mapNoteToResult) : [],
@@ -277,8 +281,9 @@ export function mapSceneToDetail(scene: FoundryScene, include?: Set<string>): Sc
     tiles: all || include.has('tiles') ? (scene.tiles?.contents ?? []).map(mapTileToResult) : [],
     drawings: all || include.has('drawings') ? (scene.drawings?.contents ?? []).map(mapDrawingToResult) : [],
     regions: all || include.has('regions') ? (scene.regions?.contents ?? []).map(mapRegionToResult) : [],
-    tokens: all || include.has('tokens') ? (scene.tokens?.contents ?? []).map(t => mapTokenToSummary(t, gridSize)) : [],
-    asciiMap: ''
+    tokens:
+      all || include.has('tokens') ? (scene.tokens?.contents ?? []).map((t) => mapTokenToSummary(t, gridSize)) : [],
+    asciiMap: '',
   };
 }
 
@@ -287,6 +292,6 @@ export function mapSceneToSummary(scene: FoundryScene): SceneSummaryResult {
     id: scene.id,
     name: scene.name,
     active: scene.active,
-    img: scene.img ?? ''
+    img: scene.img ?? '',
   };
 }

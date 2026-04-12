@@ -3,14 +3,14 @@ import {
   mapJournalToResult,
   type JournalEntryConstructor,
   type FoundryJournalCreateData,
-  type FoundryPageCreateData
+  type FoundryPageCreateData,
 } from './journalTypes';
 
 declare const JournalEntry: JournalEntryConstructor;
 
 export async function createJournalHandler(params: CreateJournalParams): Promise<JournalResult> {
   const journalData: FoundryJournalCreateData = {
-    name: params.name
+    name: params.name,
   };
 
   if (params.folder !== undefined) {
@@ -21,7 +21,7 @@ export async function createJournalHandler(params: CreateJournalParams): Promise
     const pageType = params.pageType ?? 'text';
     const pageData: FoundryPageCreateData = {
       name: params.name,
-      type: pageType
+      type: pageType,
     };
 
     if (pageType === 'text') {

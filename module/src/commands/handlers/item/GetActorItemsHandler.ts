@@ -12,10 +12,10 @@ function mapItemToSummary(item: FoundryItem): ItemDetailSummary {
     equipped: item.system.equipped ?? false,
     quantity: item.system.quantity ?? 1,
     hasActivities: activities.length > 0,
-    activityTypes: activities.map(a => a.type),
+    activityTypes: activities.map((a) => a.type),
     description: item.system.description?.value ?? '',
     damage: item.system.damage ?? null,
-    range: item.system.range ?? null
+    range: item.system.range ?? null,
   };
 }
 
@@ -29,15 +29,15 @@ export function getActorItemsHandler(params: GetActorItemsParams): Promise<Actor
   let items = actor.items.contents;
 
   if (params.type) {
-    items = items.filter(item => item.type === params.type);
+    items = items.filter((item) => item.type === params.type);
   }
 
   if (params.equipped !== undefined) {
-    items = items.filter(item => (item.system.equipped ?? false) === params.equipped);
+    items = items.filter((item) => (item.system.equipped ?? false) === params.equipped);
   }
 
   if (params.hasActivities !== undefined) {
-    items = items.filter(item => {
+    items = items.filter((item) => {
       const hasActs = (item.system.activities?.contents.length ?? 0) > 0;
       return hasActs === params.hasActivities;
     });
@@ -46,6 +46,6 @@ export function getActorItemsHandler(params: GetActorItemsParams): Promise<Actor
   return Promise.resolve({
     actorId: actor.id,
     actorName: actor.name,
-    items: items.map(mapItemToSummary)
+    items: items.map(mapItemToSummary),
   });
 }

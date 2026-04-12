@@ -15,13 +15,13 @@ interface FoundryScene {
   padding: number;
   background: { src: string };
   grid: { size: number };
-  tokens:   { contents: EmbeddedDoc[] };
-  walls:    { contents: EmbeddedDoc[] };
-  lights:   { contents: EmbeddedDoc[] };
-  notes:    { contents: EmbeddedDoc[] };
-  tiles:    { contents: EmbeddedDoc[] };
+  tokens: { contents: EmbeddedDoc[] };
+  walls: { contents: EmbeddedDoc[] };
+  lights: { contents: EmbeddedDoc[] };
+  notes: { contents: EmbeddedDoc[] };
+  tiles: { contents: EmbeddedDoc[] };
   drawings: { contents: EmbeddedDoc[] };
-  sounds:   { contents: EmbeddedDoc[] };
+  sounds: { contents: EmbeddedDoc[] };
   update(data: Record<string, unknown>): Promise<FoundryScene>;
   updateEmbeddedDocuments(type: string, updates: Record<string, unknown>[]): Promise<unknown>;
 }
@@ -40,8 +40,12 @@ declare const game: FoundryGame;
 function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = (): void => { resolve({ width: img.naturalWidth, height: img.naturalHeight }); };
-    img.onerror = (): void => { reject(new Error(`Failed to load background image: ${src}`)); };
+    img.onload = (): void => {
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = (): void => {
+      reject(new Error(`Failed to load background image: ${src}`));
+    };
     img.src = src;
   });
 }
@@ -62,7 +66,7 @@ async function shiftEmbedded(
   if (type === 'Wall') {
     const updates = docs
       .filter((d): d is EmbeddedDoc & { c: [number, number, number, number] } => d.c != null)
-      .map(d => ({
+      .map((d) => ({
         _id: d.id,
         c: [d.c[0] - dx, d.c[1] - dy, d.c[2] - dx, d.c[3] - dy],
       }));
@@ -73,7 +77,7 @@ async function shiftEmbedded(
   // Tokens, Lights, Notes, Tiles, Drawings, AmbientSounds
   const updates = docs
     .filter((d): d is EmbeddedDoc & { x: number; y: number } => d.x !== undefined && d.y !== undefined)
-    .map(d => ({
+    .map((d) => ({
       _id: d.id,
       x: d.x - dx,
       y: d.y - dy,
@@ -83,9 +87,7 @@ async function shiftEmbedded(
 }
 
 export async function normalizeSceneHandler(params: NormalizeSceneParams): Promise<NormalizeSceneResult> {
-  const scene = params.sceneId
-    ? game.scenes.get(params.sceneId)
-    : game.scenes.active;
+  const scene = params.sceneId ? game.scenes.get(params.sceneId) : game.scenes.active;
 
   if (!scene) {
     throw new Error(params.sceneId ? `Scene not found: ${params.sceneId}` : 'No active scene');
@@ -132,12 +134,12 @@ export async function normalizeSceneHandler(params: NormalizeSceneParams): Promi
 
   // Shift all embedded documents to compensate for removed padding
   const collections: [string, EmbeddedDoc[]][] = [
-    ['Token',        scene.tokens.contents],
-    ['Wall',         scene.walls.contents],
+    ['Token', scene.tokens.contents],
+    ['Wall', scene.walls.contents],
     ['AmbientLight', scene.lights.contents],
-    ['Note',         scene.notes.contents],
-    ['Tile',         scene.tiles.contents],
-    ['Drawing',      scene.drawings.contents],
+    ['Note', scene.notes.contents],
+    ['Tile', scene.tiles.contents],
+    ['Drawing', scene.drawings.contents],
     ['AmbientSound', scene.sounds.contents],
   ];
 

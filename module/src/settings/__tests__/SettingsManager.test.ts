@@ -2,7 +2,7 @@ import { DEFAULT_CONFIG } from '@/config/defaults';
 import type { ModuleConfig } from '@/config/types';
 
 jest.mock('@/ui/ApiConfigForm', () => ({
-  ApiConfigForm: class MockApiConfigForm {}
+  ApiConfigForm: class MockApiConfigForm {},
 }));
 
 import { registerSettings, registerMenu, getConfig, setConfig } from '@/settings/SettingsManager';
@@ -11,11 +11,11 @@ const mockSettings = {
   register: jest.fn(),
   registerMenu: jest.fn(),
   get: jest.fn(),
-  set: jest.fn()
+  set: jest.fn(),
 };
 
 (global as unknown as Record<string, unknown>)['game'] = {
-  settings: mockSettings
+  settings: mockSettings,
 };
 
 describe('SettingsManager', () => {
@@ -27,17 +27,13 @@ describe('SettingsManager', () => {
     it('should register config setting with correct parameters', () => {
       registerSettings();
 
-      expect(mockSettings.register).toHaveBeenCalledWith(
-        'foundry-api-bridge',
-        'config',
-        {
-          name: 'Module Configuration',
-          scope: 'world',
-          config: false,
-          type: Object,
-          default: DEFAULT_CONFIG
-        }
-      );
+      expect(mockSettings.register).toHaveBeenCalledWith('foundry-api-bridge', 'config', {
+        name: 'Module Configuration',
+        scope: 'world',
+        config: false,
+        type: Object,
+        default: DEFAULT_CONFIG,
+      });
     });
 
     it('should register wsUrl and apiKey settings', () => {
@@ -46,12 +42,12 @@ describe('SettingsManager', () => {
       expect(mockSettings.register).toHaveBeenCalledWith(
         'foundry-api-bridge',
         'wsUrl',
-        expect.objectContaining({ name: 'WebSocket URL', type: String })
+        expect.objectContaining({ name: 'WebSocket URL', type: String }),
       );
       expect(mockSettings.register).toHaveBeenCalledWith(
         'foundry-api-bridge',
         'apiKey',
-        expect.objectContaining({ name: 'API Key', type: String })
+        expect.objectContaining({ name: 'API Key', type: String }),
       );
     });
   });
@@ -67,8 +63,8 @@ describe('SettingsManager', () => {
           name: 'Configure Module',
           label: 'Configure',
           icon: 'fas fa-cog',
-          restricted: true
-        })
+          restricted: true,
+        }),
       );
     });
   });
@@ -77,7 +73,7 @@ describe('SettingsManager', () => {
     it('should retrieve config from game.settings', () => {
       const mockConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        webSocket: { ...DEFAULT_CONFIG.webSocket, reconnectInterval: 3000 }
+        webSocket: { ...DEFAULT_CONFIG.webSocket, reconnectInterval: 3000 },
       };
 
       mockSettings.get.mockReturnValue(mockConfig);
@@ -101,7 +97,7 @@ describe('SettingsManager', () => {
     it('should save config to game.settings', async () => {
       const newConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        webSocket: { ...DEFAULT_CONFIG.webSocket, maxReconnectAttempts: 20 }
+        webSocket: { ...DEFAULT_CONFIG.webSocket, maxReconnectAttempts: 20 },
       };
 
       mockSettings.set.mockResolvedValue(newConfig);

@@ -6,7 +6,7 @@ export async function createRollTableHandler(params: CreateRollTableParams): Pro
     name: params.name,
     formula: params.formula ?? '1d20',
     replacement: params.replacement ?? true,
-    displayRoll: params.displayRoll ?? true
+    displayRoll: params.displayRoll ?? true,
   };
 
   if (params.description !== undefined) {
@@ -22,12 +22,12 @@ export async function createRollTableHandler(params: CreateRollTableParams): Pro
   }
 
   if (params.results !== undefined) {
-    tableData['results'] = params.results.map(r => {
+    tableData['results'] = params.results.map((r) => {
       const resultData: Record<string, unknown> = {
         type: r.type ?? 0,
         text: r.text,
         range: r.range,
-        weight: r.weight ?? 1
+        weight: r.weight ?? 1,
       };
 
       if (r.img !== undefined) {

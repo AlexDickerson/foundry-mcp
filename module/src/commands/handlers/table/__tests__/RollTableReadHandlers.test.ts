@@ -14,7 +14,7 @@ function createMockResult(overrides?: Partial<FoundryTableResult>): FoundryTable
     drawn: false,
     documentCollection: undefined,
     documentId: undefined,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -33,16 +33,18 @@ function createMockTable(results: FoundryTableResult[] = [], overrides?: Partial
     resetResults: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
-    ...overrides
+    ...overrides,
   };
 }
 
 function setGame(tables: FoundryRollTable[]): void {
   (globalThis as Record<string, unknown>)['game'] = {
     tables: {
-      forEach: jest.fn((fn: (t: FoundryRollTable) => void) => { tables.forEach(fn); }),
-      get: jest.fn((id: string) => tables.find(t => t.id === id))
-    }
+      forEach: jest.fn((fn: (t: FoundryRollTable) => void) => {
+        tables.forEach(fn);
+      }),
+      get: jest.fn((id: string) => tables.find((t) => t.id === id)),
+    },
   };
 }
 
@@ -57,11 +59,11 @@ describe('listRollTablesHandler', () => {
     const results = [
       createMockResult({ _id: 'r1', drawn: false }),
       createMockResult({ _id: 'r2', drawn: true }),
-      createMockResult({ _id: 'r3', drawn: true })
+      createMockResult({ _id: 'r3', drawn: true }),
     ];
     setGame([
       createMockTable(results, { id: 't1', name: 'Encounters', formula: '1d6' }),
-      createMockTable([], { id: 't2', name: 'Loot', formula: '1d100' })
+      createMockTable([], { id: 't2', name: 'Loot', formula: '1d100' }),
     ]);
 
     const result = await listRollTablesHandler({} as Record<string, never>);
@@ -75,7 +77,7 @@ describe('listRollTablesHandler', () => {
       formula: '1d6',
       replacement: true,
       totalResults: 3,
-      drawnResults: 2
+      drawnResults: 2,
     });
     expect(result[1]?.totalResults).toBe(0);
     expect(result[1]?.drawnResults).toBe(0);
@@ -106,10 +108,7 @@ describe('listRollTablesHandler', () => {
   });
 
   it('should count drawn results correctly with no drawn', async () => {
-    const results = [
-      createMockResult({ drawn: false }),
-      createMockResult({ _id: 'r2', drawn: false })
-    ];
+    const results = [createMockResult({ drawn: false }), createMockResult({ _id: 'r2', drawn: false })];
     setGame([createMockTable(results)]);
 
     const result = await listRollTablesHandler({} as Record<string, never>);
@@ -124,14 +123,24 @@ describe('getRollTableHandler', () => {
   it('should return full table with results', async () => {
     const results = [
       createMockResult({
-        _id: 'r1', type: 0, text: 'Nothing happens',
-        range: [1, 2] as [number, number], weight: 1, drawn: false
+        _id: 'r1',
+        type: 0,
+        text: 'Nothing happens',
+        range: [1, 2] as [number, number],
+        weight: 1,
+        drawn: false,
       }),
       createMockResult({
-        _id: 'r2', type: 1, text: 'Dragon',
-        range: [3, 4] as [number, number], weight: 2, drawn: true,
-        documentCollection: 'Actor', documentId: 'actor-123', img: 'dragon.webp'
-      })
+        _id: 'r2',
+        type: 1,
+        text: 'Dragon',
+        range: [3, 4] as [number, number],
+        weight: 2,
+        drawn: true,
+        documentCollection: 'Actor',
+        documentId: 'actor-123',
+        img: 'dragon.webp',
+      }),
     ];
     setGame([createMockTable(results, { id: 'table-1' })]);
 
@@ -144,22 +153,33 @@ describe('getRollTableHandler', () => {
     expect(result.displayRoll).toBe(true);
     expect(result.results).toHaveLength(2);
     expect(result.results[0]).toEqual({
-      id: 'r1', type: 0, text: 'Nothing happens', img: 'icons/creature.webp',
-      range: [1, 2], weight: 1, drawn: false,
-      documentCollection: null, documentId: null
+      id: 'r1',
+      type: 0,
+      text: 'Nothing happens',
+      img: 'icons/creature.webp',
+      range: [1, 2],
+      weight: 1,
+      drawn: false,
+      documentCollection: null,
+      documentId: null,
     });
     expect(result.results[1]).toEqual({
-      id: 'r2', type: 1, text: 'Dragon', img: 'dragon.webp',
-      range: [3, 4], weight: 2, drawn: true,
-      documentCollection: 'Actor', documentId: 'actor-123'
+      id: 'r2',
+      type: 1,
+      text: 'Dragon',
+      img: 'dragon.webp',
+      range: [3, 4],
+      weight: 2,
+      drawn: true,
+      documentCollection: 'Actor',
+      documentId: 'actor-123',
     });
   });
 
   it('should reject when table not found', async () => {
     setGame([]);
 
-    await expect(getRollTableHandler({ tableId: 'nonexistent' }))
-      .rejects.toThrow('Roll table not found: nonexistent');
+    await expect(getRollTableHandler({ tableId: 'nonexistent' })).rejects.toThrow('Roll table not found: nonexistent');
   });
 
   it('should return table with empty results', async () => {

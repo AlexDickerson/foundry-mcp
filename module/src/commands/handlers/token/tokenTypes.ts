@@ -62,10 +62,7 @@ export interface FoundryScene {
   id: string;
   name: string;
   tokens: FoundryTokensCollection;
-  createEmbeddedDocuments(
-    type: 'Token',
-    data: TokenCreateData[]
-  ): Promise<FoundryToken[]>;
+  createEmbeddedDocuments(type: 'Token', data: TokenCreateData[]): Promise<FoundryToken[]>;
   deleteEmbeddedDocuments(type: 'Token', ids: string[]): Promise<unknown[]>;
 }
 
@@ -89,7 +86,7 @@ export function mapTokenToResult(token: FoundryToken): TokenResult {
     rotation: token.rotation,
     hidden: token.hidden,
     disposition: token.disposition,
-    conditions: token.actor?.statuses ? [...token.actor.statuses] : []
+    conditions: token.actor?.statuses ? [...token.actor.statuses] : [],
   };
 
   const hp = token.actor?.system?.attributes?.hp;

@@ -26,7 +26,7 @@ declare const game: FoundryGame;
 export async function createActorHandler(params: CreateActorParams): Promise<ActorResult> {
   const actorData: Record<string, unknown> = {
     name: params.name,
-    type: params.type
+    type: params.type,
   };
 
   if (params.folder !== undefined) {
@@ -49,6 +49,6 @@ export async function createActorHandler(params: CreateActorParams): Promise<Act
     name: actor.name,
     type: actor.type,
     img: actor.img,
-    folder: actor.folder?.name ?? null
+    folder: actor.folder?.name ?? null,
   };
 }

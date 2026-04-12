@@ -1,9 +1,5 @@
 import type { RollAllInitiativeParams, InitiativeRollResult } from '@/commands/types';
-import {
-  getActiveCombat,
-  type FoundryGame,
-  type RollInitiativeOptions
-} from './combatTypes';
+import { getActiveCombat, type FoundryGame, type RollInitiativeOptions } from './combatTypes';
 
 declare const game: FoundryGame;
 
@@ -27,11 +23,11 @@ export async function rollAllInitiativeHandler(params: RollAllInitiativeParams):
 
   // Collect results for all combatants with initiative
   const results = combat.combatants.contents
-    .filter(c => c.initiative !== null)
-    .map(combatant => ({
+    .filter((c) => c.initiative !== null)
+    .map((combatant) => ({
       combatantId: combatant.id,
       name: combatant.name,
-      initiative: combatant.initiative ?? 0
+      initiative: combatant.initiative ?? 0,
     }));
 
   return { results };

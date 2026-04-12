@@ -46,7 +46,7 @@ const createMockToken = (overrides: Partial<MockToken> = {}): MockToken => {
     rotation: 0,
     hidden: false,
     texture: {
-      src: 'icons/token.png'
+      src: 'icons/token.png',
     },
     disposition: 1,
     actor: {
@@ -54,14 +54,14 @@ const createMockToken = (overrides: Partial<MockToken> = {}): MockToken => {
       system: {
         attributes: {
           hp: { value: 25, max: 30 },
-          ac: { value: 15 }
-        }
+          ac: { value: 15 },
+        },
       },
-      statuses: new Set<string>()
+      statuses: new Set<string>(),
     },
     update: jest.fn(),
     delete: jest.fn(),
-    ...overrides
+    ...overrides,
   };
   token.update.mockImplementation((data) => Promise.resolve({ ...token, ...data }));
   token.delete.mockResolvedValue(token);
@@ -75,10 +75,10 @@ const createMockScene = (overrides: Partial<MockScene> = {}): MockScene => {
     name: 'Test Scene',
     tokens: {
       get: jest.fn().mockReturnValue(mockToken),
-      contents: [mockToken]
+      contents: [mockToken],
     },
     createEmbeddedDocuments: jest.fn(),
-    deleteEmbeddedDocuments: jest.fn().mockResolvedValue([])
+    deleteEmbeddedDocuments: jest.fn().mockResolvedValue([]),
   };
 
   return { ...baseScene, ...overrides };
@@ -92,8 +92,8 @@ const mockGame: {
 } = {
   scenes: {
     get: jest.fn(),
-    active: null
-  }
+    active: null,
+  },
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;
@@ -114,14 +114,16 @@ describe('Token Handlers', () => {
       const result = await createTokenHandler({
         actorId: 'actor-456',
         x: 100,
-        y: 200
+        y: 200,
       });
 
-      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Token', [{
-        actorId: 'actor-456',
-        x: 100,
-        y: 200
-      }]);
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Token', [
+        {
+          actorId: 'actor-456',
+          x: 100,
+          y: 200,
+        },
+      ]);
       expect(result).toEqual({
         id: 'token-123',
         name: 'Test Token',
@@ -134,7 +136,7 @@ describe('Token Handlers', () => {
         disposition: 1,
         hp: { value: 25, max: 30 },
         ac: 15,
-        conditions: []
+        conditions: [],
       });
     });
 
@@ -148,7 +150,7 @@ describe('Token Handlers', () => {
         sceneId: 'specific-scene',
         actorId: 'actor-456',
         x: 100,
-        y: 200
+        y: 200,
       });
 
       expect(mockGame.scenes.get).toHaveBeenCalledWith('specific-scene');
@@ -168,39 +170,45 @@ describe('Token Handlers', () => {
         hidden: true,
         elevation: 10,
         rotation: 45,
-        scale: 1.5
+        scale: 1.5,
       });
 
-      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Token', [{
-        actorId: 'actor-456',
-        x: 100,
-        y: 200,
-        hidden: true,
-        elevation: 10,
-        rotation: 45,
-        scale: 1.5
-      }]);
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Token', [
+        {
+          actorId: 'actor-456',
+          x: 100,
+          y: 200,
+          hidden: true,
+          elevation: 10,
+          rotation: 45,
+          scale: 1.5,
+        },
+      ]);
     });
 
     it('throws error when no active scene', async () => {
       mockGame.scenes.active = null;
 
-      await expect(createTokenHandler({
-        actorId: 'actor-456',
-        x: 100,
-        y: 200
-      })).rejects.toThrow('No active scene');
+      await expect(
+        createTokenHandler({
+          actorId: 'actor-456',
+          x: 100,
+          y: 200,
+        }),
+      ).rejects.toThrow('No active scene');
     });
 
     it('throws error when scene not found', async () => {
       mockGame.scenes.get.mockReturnValue(undefined);
 
-      await expect(createTokenHandler({
-        sceneId: 'nonexistent',
-        actorId: 'actor-456',
-        x: 100,
-        y: 200
-      })).rejects.toThrow('Scene not found: nonexistent');
+      await expect(
+        createTokenHandler({
+          sceneId: 'nonexistent',
+          actorId: 'actor-456',
+          x: 100,
+          y: 200,
+        }),
+      ).rejects.toThrow('Scene not found: nonexistent');
     });
 
     it('throws error when token creation fails', async () => {
@@ -208,11 +216,13 @@ describe('Token Handlers', () => {
       mockScene.createEmbeddedDocuments.mockResolvedValue([]);
       mockGame.scenes.active = mockScene;
 
-      await expect(createTokenHandler({
-        actorId: 'actor-456',
-        x: 100,
-        y: 200
-      })).rejects.toThrow('Failed to create token');
+      await expect(
+        createTokenHandler({
+          actorId: 'actor-456',
+          x: 100,
+          y: 200,
+        }),
+      ).rejects.toThrow('Failed to create token');
     });
   });
 
@@ -224,7 +234,7 @@ describe('Token Handlers', () => {
       mockGame.scenes.active = mockScene;
 
       const result = await deleteTokenHandler({
-        tokenId: 'token-123'
+        tokenId: 'token-123',
       });
 
       expect(mockToken.delete).toHaveBeenCalled();
@@ -239,7 +249,7 @@ describe('Token Handlers', () => {
 
       const result = await deleteTokenHandler({
         sceneId: 'specific-scene',
-        tokenId: 'token-123'
+        tokenId: 'token-123',
       });
 
       expect(mockGame.scenes.get).toHaveBeenCalledWith('specific-scene');
@@ -252,9 +262,11 @@ describe('Token Handlers', () => {
       mockScene.tokens.get.mockReturnValue(undefined);
       mockGame.scenes.active = mockScene;
 
-      await expect(deleteTokenHandler({
-        tokenId: 'nonexistent'
-      })).rejects.toThrow('Token not found: nonexistent');
+      await expect(
+        deleteTokenHandler({
+          tokenId: 'nonexistent',
+        }),
+      ).rejects.toThrow('Token not found: nonexistent');
     });
   });
 
@@ -268,13 +280,10 @@ describe('Token Handlers', () => {
       const result = await moveTokenHandler({
         tokenId: 'token-123',
         x: 300,
-        y: 400
+        y: 400,
       });
 
-      expect(mockToken.update).toHaveBeenCalledWith(
-        { x: 300, y: 400 },
-        { animate: true }
-      );
+      expect(mockToken.update).toHaveBeenCalledWith({ x: 300, y: 400 }, { animate: true });
       expect(result.id).toBe('token-123');
     });
 
@@ -289,13 +298,10 @@ describe('Token Handlers', () => {
         x: 300,
         y: 400,
         elevation: 20,
-        rotation: 90
+        rotation: 90,
       });
 
-      expect(mockToken.update).toHaveBeenCalledWith(
-        { x: 300, y: 400, elevation: 20, rotation: 90 },
-        { animate: true }
-      );
+      expect(mockToken.update).toHaveBeenCalledWith({ x: 300, y: 400, elevation: 20, rotation: 90 }, { animate: true });
     });
 
     it('moves token without animation', async () => {
@@ -308,13 +314,10 @@ describe('Token Handlers', () => {
         tokenId: 'token-123',
         x: 300,
         y: 400,
-        animate: false
+        animate: false,
       });
 
-      expect(mockToken.update).toHaveBeenCalledWith(
-        { x: 300, y: 400 },
-        { animate: false }
-      );
+      expect(mockToken.update).toHaveBeenCalledWith({ x: 300, y: 400 }, { animate: false });
     });
 
     it('throws error when token not found', async () => {
@@ -322,11 +325,13 @@ describe('Token Handlers', () => {
       mockScene.tokens.get.mockReturnValue(undefined);
       mockGame.scenes.active = mockScene;
 
-      await expect(moveTokenHandler({
-        tokenId: 'nonexistent',
-        x: 300,
-        y: 400
-      })).rejects.toThrow('Token not found: nonexistent');
+      await expect(
+        moveTokenHandler({
+          tokenId: 'nonexistent',
+          x: 300,
+          y: 400,
+        }),
+      ).rejects.toThrow('Token not found: nonexistent');
     });
 
     it('uses direct move when collision backend is unavailable', async () => {
@@ -340,7 +345,7 @@ describe('Token Handlers', () => {
       const result = await moveTokenHandler({
         tokenId: 'token-123',
         x: 500,
-        y: 600
+        y: 600,
       });
 
       expect(mockToken.update).toHaveBeenCalledTimes(1);
@@ -349,13 +354,13 @@ describe('Token Handlers', () => {
 
     it('uses direct move when path is clear', async () => {
       const mockCollision = {
-        testCollision: jest.fn().mockReturnValue(false)
+        testCollision: jest.fn().mockReturnValue(false),
       };
       (global as Record<string, unknown>)['CONFIG'] = {
-        Canvas: { polygonBackends: { move: mockCollision } }
+        Canvas: { polygonBackends: { move: mockCollision } },
       };
       (global as Record<string, unknown>)['canvas'] = {
-        scene: { grid: { size: 100 } }
+        scene: { grid: { size: 100 } },
       };
 
       const mockToken = createMockToken({ x: 100, y: 100 });
@@ -366,14 +371,11 @@ describe('Token Handlers', () => {
       await moveTokenHandler({
         tokenId: 'token-123',
         x: 300,
-        y: 100
+        y: 100,
       });
 
       expect(mockToken.update).toHaveBeenCalledTimes(1);
-      expect(mockToken.update).toHaveBeenCalledWith(
-        { x: 300, y: 100 },
-        { animate: true }
-      );
+      expect(mockToken.update).toHaveBeenCalledWith({ x: 300, y: 100 }, { animate: true });
 
       delete (global as Record<string, unknown>)['CONFIG'];
       delete (global as Record<string, unknown>)['canvas'];
@@ -385,13 +387,13 @@ describe('Token Handlers', () => {
           if (origin.x === 150 && origin.y === 150 && dest.x === 350 && dest.y === 150) return true;
           if (origin.x === 150 && dest.x === 250 && origin.y === 150 && dest.y === 150) return true;
           return false;
-        })
+        }),
       };
       (global as Record<string, unknown>)['CONFIG'] = {
-        Canvas: { polygonBackends: { move: mockCollision } }
+        Canvas: { polygonBackends: { move: mockCollision } },
       };
       (global as Record<string, unknown>)['canvas'] = {
-        scene: { grid: { size: 100 } }
+        scene: { grid: { size: 100 } },
       };
 
       const mockToken = createMockToken({ x: 100, y: 100 });
@@ -407,7 +409,7 @@ describe('Token Handlers', () => {
       const result = await moveTokenHandler({
         tokenId: 'token-123',
         x: 300,
-        y: 100
+        y: 100,
       });
 
       expect(mockToken.update.mock.calls.length).toBeGreaterThan(1);
@@ -420,13 +422,13 @@ describe('Token Handlers', () => {
     it('throws error when path is completely blocked', async () => {
       // Block ALL movement from starting cell
       const mockCollision = {
-        testCollision: jest.fn().mockReturnValue(true)
+        testCollision: jest.fn().mockReturnValue(true),
       };
       (global as Record<string, unknown>)['CONFIG'] = {
-        Canvas: { polygonBackends: { move: mockCollision } }
+        Canvas: { polygonBackends: { move: mockCollision } },
       };
       (global as Record<string, unknown>)['canvas'] = {
-        scene: { grid: { size: 100 } }
+        scene: { grid: { size: 100 } },
       };
 
       const mockToken = createMockToken({ x: 100, y: 100 });
@@ -434,11 +436,13 @@ describe('Token Handlers', () => {
       mockScene.tokens.get.mockReturnValue(mockToken);
       mockGame.scenes.active = mockScene;
 
-      await expect(moveTokenHandler({
-        tokenId: 'token-123',
-        x: 500,
-        y: 500
-      })).rejects.toThrow('Path blocked');
+      await expect(
+        moveTokenHandler({
+          tokenId: 'token-123',
+          x: 500,
+          y: 500,
+        }),
+      ).rejects.toThrow('Path blocked');
 
       delete (global as Record<string, unknown>)['CONFIG'];
       delete (global as Record<string, unknown>)['canvas'];
@@ -450,13 +454,13 @@ describe('Token Handlers', () => {
           if (Math.abs(dest.x - origin.x) > 150) return true;
           if (origin.x === 150 && dest.x === 250 && origin.y === 150 && dest.y === 150) return true;
           return false;
-        })
+        }),
       };
       (global as Record<string, unknown>)['CONFIG'] = {
-        Canvas: { polygonBackends: { move: mockCollision } }
+        Canvas: { polygonBackends: { move: mockCollision } },
       };
       (global as Record<string, unknown>)['canvas'] = {
-        scene: { grid: { size: 100 } }
+        scene: { grid: { size: 100 } },
       };
 
       const mockToken = createMockToken({ x: 100, y: 100 });
@@ -473,7 +477,7 @@ describe('Token Handlers', () => {
         x: 300,
         y: 100,
         elevation: 10,
-        rotation: 45
+        rotation: 45,
       });
 
       // Last update call should include elevation and rotation
@@ -496,12 +500,12 @@ describe('Token Handlers', () => {
       const result = await updateTokenHandler({
         tokenId: 'token-123',
         hidden: true,
-        elevation: 15
+        elevation: 15,
       });
 
       expect(mockToken.update).toHaveBeenCalledWith({
         hidden: true,
-        elevation: 15
+        elevation: 15,
       });
       expect(result.id).toBe('token-123');
     });
@@ -521,7 +525,7 @@ describe('Token Handlers', () => {
         name: 'New Name',
         displayName: 50,
         disposition: -1,
-        lockRotation: true
+        lockRotation: true,
       });
 
       expect(mockToken.update).toHaveBeenCalledWith({
@@ -532,7 +536,7 @@ describe('Token Handlers', () => {
         name: 'New Name',
         displayName: 50,
         disposition: -1,
-        lockRotation: true
+        lockRotation: true,
       });
     });
 
@@ -543,7 +547,7 @@ describe('Token Handlers', () => {
       mockGame.scenes.active = mockScene;
 
       const result = await updateTokenHandler({
-        tokenId: 'token-123'
+        tokenId: 'token-123',
       });
 
       expect(mockToken.update).not.toHaveBeenCalled();
@@ -555,10 +559,12 @@ describe('Token Handlers', () => {
       mockScene.tokens.get.mockReturnValue(undefined);
       mockGame.scenes.active = mockScene;
 
-      await expect(updateTokenHandler({
-        tokenId: 'nonexistent',
-        hidden: true
-      })).rejects.toThrow('Token not found: nonexistent');
+      await expect(
+        updateTokenHandler({
+          tokenId: 'nonexistent',
+          hidden: true,
+        }),
+      ).rejects.toThrow('Token not found: nonexistent');
     });
   });
 
@@ -569,8 +575,8 @@ describe('Token Handlers', () => {
       const mockScene = createMockScene({
         tokens: {
           get: jest.fn(),
-          contents: [mockToken1, mockToken2]
-        }
+          contents: [mockToken1, mockToken2],
+        },
       });
       mockGame.scenes.active = mockScene;
 
@@ -592,7 +598,7 @@ describe('Token Handlers', () => {
             disposition: 1,
             hp: { value: 25, max: 30 },
             ac: 15,
-            conditions: []
+            conditions: [],
           },
           {
             id: 'token-2',
@@ -604,9 +610,9 @@ describe('Token Handlers', () => {
             rotation: 0,
             hidden: false,
             disposition: 1,
-            conditions: []
-          }
-        ]
+            conditions: [],
+          },
+        ],
       });
     });
 
@@ -617,13 +623,13 @@ describe('Token Handlers', () => {
         name: 'Specific Scene',
         tokens: {
           get: jest.fn(),
-          contents: [mockToken]
-        }
+          contents: [mockToken],
+        },
       });
       mockGame.scenes.get.mockReturnValue(mockScene);
 
       const result = await getSceneTokensHandler({
-        sceneId: 'specific-scene'
+        sceneId: 'specific-scene',
       });
 
       expect(mockGame.scenes.get).toHaveBeenCalledWith('specific-scene');
@@ -635,8 +641,8 @@ describe('Token Handlers', () => {
       const mockScene = createMockScene({
         tokens: {
           get: jest.fn(),
-          contents: []
-        }
+          contents: [],
+        },
       });
       mockGame.scenes.active = mockScene;
 
@@ -654,9 +660,11 @@ describe('Token Handlers', () => {
     it('throws error when scene not found', async () => {
       mockGame.scenes.get.mockReturnValue(undefined);
 
-      await expect(getSceneTokensHandler({
-        sceneId: 'nonexistent'
-      })).rejects.toThrow('Scene not found: nonexistent');
+      await expect(
+        getSceneTokensHandler({
+          sceneId: 'nonexistent',
+        }),
+      ).rejects.toThrow('Scene not found: nonexistent');
     });
   });
 });

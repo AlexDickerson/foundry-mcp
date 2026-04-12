@@ -53,6 +53,6 @@ export async function updateActorHandler(params: UpdateActorParams): Promise<Act
     name: updatedActor.name,
     type: updatedActor.type,
     img: updatedActor.img,
-    folder: updatedActor.folder?.name ?? null
+    folder: updatedActor.folder?.name ?? null,
   };
 }

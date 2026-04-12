@@ -31,7 +31,7 @@ function mapWorldItemToData(item: FoundryWorldItem): ItemData {
     type: item.type,
     img: item.img ?? '',
     folder: item.folder?.name ?? null,
-    system: item.toObject(false).system
+    system: item.toObject(false).system,
   };
 }
 
@@ -41,7 +41,7 @@ export function getItemsHandler(_params: GetItemsParams): Promise<ItemData[]> {
   const game = getGame();
   const items: ItemData[] = [];
 
-  game.items?.forEach(item => {
+  game.items?.forEach((item) => {
     items.push(mapWorldItemToData(item));
   });
 

@@ -1,15 +1,9 @@
 import type { CreateJournalPageParams, JournalPageResult } from '@/commands/types';
-import {
-  mapPageToResult,
-  type FoundryGame,
-  type FoundryPageCreateData
-} from './journalTypes';
+import { mapPageToResult, type FoundryGame, type FoundryPageCreateData } from './journalTypes';
 
 declare const game: FoundryGame;
 
-export async function createJournalPageHandler(
-  params: CreateJournalPageParams
-): Promise<JournalPageResult> {
+export async function createJournalPageHandler(params: CreateJournalPageParams): Promise<JournalPageResult> {
   const journal = game.journal.get(params.journalId);
 
   if (!journal) {
@@ -19,7 +13,7 @@ export async function createJournalPageHandler(
   const pageType = params.type ?? 'text';
   const pageData: FoundryPageCreateData = {
     name: params.name,
-    type: pageType
+    type: pageType,
   };
 
   if (pageType === 'text' && params.content !== undefined) {

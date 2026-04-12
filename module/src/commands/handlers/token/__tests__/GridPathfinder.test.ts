@@ -9,7 +9,7 @@ function createCollision(walls: WallSegment[] = []): CollisionChecker {
         if (segmentsIntersect(origin, dest, a, b)) return true;
       }
       return false;
-    })
+    }),
   };
 }
 
@@ -19,8 +19,7 @@ function segmentsIntersect(p1: Point, p2: Point, p3: Point, p4: Point): boolean 
   const d3 = direction(p1, p2, p3);
   const d4 = direction(p1, p2, p4);
 
-  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
-      ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
     return true;
   }
   return false;
@@ -36,7 +35,7 @@ function verticalWall(gx: number, gy: number, gridSize: number): WallSegment {
   const wx = (gx + 1) * gridSize;
   return [
     { x: wx, y: gy * gridSize },
-    { x: wx, y: (gy + 1) * gridSize }
+    { x: wx, y: (gy + 1) * gridSize },
   ];
 }
 
@@ -45,7 +44,7 @@ function horizontalWall(gx: number, gy: number, gridSize: number): WallSegment {
   const wy = (gy + 1) * gridSize;
   return [
     { x: gx * gridSize, y: wy },
-    { x: (gx + 1) * gridSize, y: wy }
+    { x: (gx + 1) * gridSize, y: wy },
   ];
 }
 
@@ -54,10 +53,12 @@ const GRID = 100;
 describe('findGridPath', () => {
   it('should return empty array when start equals end', () => {
     const path = findGridPath({
-      startX: 200, startY: 300,
-      endX: 250, endY: 350,
+      startX: 200,
+      startY: 300,
+      endX: 250,
+      endY: 350,
       gridSize: GRID,
-      collision: createCollision()
+      collision: createCollision(),
     });
 
     expect(path).toEqual([]);
@@ -65,10 +66,12 @@ describe('findGridPath', () => {
 
   it('should return single waypoint for adjacent cells with clear path', () => {
     const path = findGridPath({
-      startX: 0, startY: 0,
-      endX: 100, endY: 0,
+      startX: 0,
+      startY: 0,
+      endX: 100,
+      endY: 0,
       gridSize: GRID,
-      collision: createCollision()
+      collision: createCollision(),
     });
 
     expect(path).toEqual([{ x: 100, y: 0 }]);
@@ -76,10 +79,12 @@ describe('findGridPath', () => {
 
   it('should find straight path without walls', () => {
     const path = findGridPath({
-      startX: 0, startY: 0,
-      endX: 300, endY: 0,
+      startX: 0,
+      startY: 0,
+      endX: 300,
+      endY: 0,
       gridSize: GRID,
-      collision: createCollision()
+      collision: createCollision(),
     });
 
     expect(path).not.toBeNull();
@@ -93,10 +98,12 @@ describe('findGridPath', () => {
     const collision = createCollision(walls);
 
     const path = findGridPath({
-      startX: 100, startY: 100,  // grid (1,1)
-      endX: 200, endY: 100,      // grid (2,1)
+      startX: 100,
+      startY: 100, // grid (1,1)
+      endX: 200,
+      endY: 100, // grid (2,1)
       gridSize: GRID,
-      collision
+      collision,
     });
 
     expect(path).not.toBeNull();
@@ -110,15 +117,17 @@ describe('findGridPath', () => {
       verticalWall(1, 0, GRID),
       verticalWall(1, 1, GRID),
       horizontalWall(0, 1, GRID),
-      horizontalWall(1, 1, GRID)
+      horizontalWall(1, 1, GRID),
     ];
     const collision = createCollision(walls);
 
     const path = findGridPath({
-      startX: 0, startY: 0,      // grid (0,0)
-      endX: 200, endY: 200,      // grid (2,2)
+      startX: 0,
+      startY: 0, // grid (0,0)
+      endX: 200,
+      endY: 200, // grid (2,2)
       gridSize: GRID,
-      collision
+      collision,
     });
 
     expect(path).not.toBeNull();
@@ -138,14 +147,16 @@ describe('findGridPath', () => {
         const toGY = Math.floor(dest.y / GRID);
         if (toGX === 2 && toGY === 2) return true;
         return false;
-      })
+      }),
     };
 
     const path = findGridPath({
-      startX: 200, startY: 200,  // grid (2,2) — enclosed
-      endX: 400, endY: 400,      // grid (4,4)
+      startX: 200,
+      startY: 200, // grid (2,2) — enclosed
+      endX: 400,
+      endY: 400, // grid (4,4)
       gridSize: GRID,
-      collision
+      collision,
     });
 
     expect(path).toBeNull();
@@ -153,10 +164,12 @@ describe('findGridPath', () => {
 
   it('should use diagonal movement', () => {
     const path = findGridPath({
-      startX: 0, startY: 0,      // grid (0,0)
-      endX: 200, endY: 200,      // grid (2,2)
+      startX: 0,
+      startY: 0, // grid (0,0)
+      endX: 200,
+      endY: 200, // grid (2,2)
       gridSize: GRID,
-      collision: createCollision()
+      collision: createCollision(),
     });
 
     expect(path).not.toBeNull();
@@ -173,10 +186,12 @@ describe('findGridPath', () => {
     const collision = createCollision(walls);
 
     const path = findGridPath({
-      startX: 100, startY: 100,  // grid (1,1)
-      endX: 300, endY: 100,      // grid (3,1)
+      startX: 100,
+      startY: 100, // grid (1,1)
+      endX: 300,
+      endY: 100, // grid (3,1)
       gridSize: GRID,
-      collision
+      collision,
     });
 
     expect(path).not.toBeNull();
@@ -187,11 +202,13 @@ describe('findGridPath', () => {
 
   it('should return null when maxNodes exceeded', () => {
     const path = findGridPath({
-      startX: 0, startY: 0,
-      endX: 5000, endY: 5000,    // very far
+      startX: 0,
+      startY: 0,
+      endX: 5000,
+      endY: 5000, // very far
       gridSize: GRID,
       collision: createCollision(),
-      maxNodes: 5                 // extremely low limit
+      maxNodes: 5, // extremely low limit
     });
 
     expect(path).toBeNull();
@@ -199,10 +216,12 @@ describe('findGridPath', () => {
 
   it('should find path in open space efficiently', () => {
     const path = findGridPath({
-      startX: 0, startY: 0,
-      endX: 500, endY: 0,        // 5 cells right
+      startX: 0,
+      startY: 0,
+      endX: 500,
+      endY: 0, // 5 cells right
       gridSize: GRID,
-      collision: createCollision()
+      collision: createCollision(),
     });
 
     expect(path).not.toBeNull();
@@ -213,10 +232,12 @@ describe('findGridPath', () => {
   it('should handle non-grid-aligned start position', () => {
     // Token at pixel (150, 150) is in grid cell (1,1)
     const path = findGridPath({
-      startX: 150, startY: 150,
-      endX: 300, endY: 100,      // grid (3,1)
+      startX: 150,
+      startY: 150,
+      endX: 300,
+      endY: 100, // grid (3,1)
       gridSize: GRID,
-      collision: createCollision()
+      collision: createCollision(),
     });
 
     expect(path).not.toBeNull();

@@ -2,7 +2,7 @@ import type {
   GetCombatTurnContextParams,
   CombatTurnContext,
   TurnCombatantInfo,
-  NearbyTokenInfo
+  NearbyTokenInfo,
 } from '@/commands/types';
 import { generateAsciiMap, type AsciiMapInput } from '@/commands/handlers/scene/AsciiMapGenerator';
 
@@ -60,7 +60,7 @@ interface CollisionChecker {
   testCollision(
     origin: { x: number; y: number },
     destination: { x: number; y: number },
-    config: { type: string; mode: string }
+    config: { type: string; mode: string },
   ): boolean;
 }
 
@@ -96,7 +96,7 @@ const ZOOM_RADIUS = 12;
 const DISPOSITIONS: Record<number, string> = {
   [-1]: 'hostile',
   [0]: 'neutral',
-  [1]: 'friendly'
+  [1]: 'friendly',
 };
 
 function getGlobals(): ContextGlobals {
@@ -118,9 +118,7 @@ function chebyshevDistance(ax: number, ay: number, bx: number, by: number): numb
   return Math.max(Math.abs(ax - bx), Math.abs(ay - by));
 }
 
-export function getCombatTurnContextHandler(
-  params: GetCombatTurnContextParams
-): Promise<CombatTurnContext> {
+export function getCombatTurnContextHandler(params: GetCombatTurnContextParams): Promise<CombatTurnContext> {
   try {
     const globals = getGlobals();
     const combat = getActiveCombat(globals, params.combatId);
@@ -143,7 +141,7 @@ export function getCombatTurnContextHandler(
     const gridDistance = scene.grid.distance ?? 5;
     const gridUnits = scene.grid.units ?? 'ft';
 
-    const currentToken = scene.tokens.contents.find(t => t.id === currentCombatant.tokenId);
+    const currentToken = scene.tokens.contents.find((t) => t.id === currentCombatant.tokenId);
     if (!currentToken) {
       throw new Error(`Token not found for current combatant: ${currentCombatant.tokenId}`);
     }
@@ -163,7 +161,7 @@ export function getCombatTurnContextHandler(
       name: currentCombatant.name,
       gridX: currentGridX,
       gridY: currentGridY,
-      conditions: currentToken.actor?.statuses ? [...currentToken.actor.statuses] : []
+      conditions: currentToken.actor?.statuses ? [...currentToken.actor.statuses] : [],
     };
 
     if (currentHp) currentInfo.hp = { value: currentHp.value, max: currentHp.max };
@@ -195,7 +193,7 @@ export function getCombatTurnContextHandler(
         lineOfSight = !sightBackend.testCollision(
           { x: currentCenterX, y: currentCenterY },
           { x: targetCenterX, y: targetCenterY },
-          { type: 'sight', mode: 'any' }
+          { type: 'sight', mode: 'any' },
         );
       }
 
@@ -211,7 +209,7 @@ export function getCombatTurnContextHandler(
         distanceFt,
         disposition: DISPOSITIONS[token.disposition ?? 0] ?? 'neutral',
         lineOfSight,
-        conditions: token.actor?.statuses ? [...token.actor.statuses] : []
+        conditions: token.actor?.statuses ? [...token.actor.statuses] : [],
       };
 
       if (tokenHp) info.hp = { value: tokenHp.value, max: tokenHp.max };
@@ -222,23 +220,23 @@ export function getCombatTurnContextHandler(
 
     nearbyTokens.sort((a, b) => a.distanceFt - b.distanceFt);
 
-    const walls = scene.walls.contents.map(w => ({
+    const walls = scene.walls.contents.map((w) => ({
       c: w.c,
       door: w.door,
       ds: w.ds ?? 0,
-      move: w.move
+      move: w.move,
     }));
 
     const mapTokens = scene.tokens.contents
-      .filter(t => combatantTokenIds.has(t.id))
-      .map(t => ({
+      .filter((t) => combatantTokenIds.has(t.id))
+      .map((t) => ({
         id: t.id,
         name: t.name ?? '',
         x: t.x,
         y: t.y,
         width: t.width ?? 1,
         height: t.height ?? 1,
-        hp: t.actor?.system?.attributes?.hp
+        hp: t.actor?.system?.attributes?.hp,
       }));
 
     const mapInput: AsciiMapInput = {
@@ -250,7 +248,7 @@ export function getCombatTurnContextHandler(
       walls,
       collisionBackend: moveBackend,
       center: { gx: currentGridX, gy: currentGridY },
-      radius: ZOOM_RADIUS
+      radius: ZOOM_RADIUS,
     };
 
     const asciiMap = generateAsciiMap(mapInput);
@@ -260,7 +258,7 @@ export function getCombatTurnContextHandler(
       turn: combat.turn,
       currentCombatant: currentInfo,
       nearbyTokens,
-      asciiMap
+      asciiMap,
     });
   } catch (error) {
     return Promise.reject(error instanceof Error ? error : new Error(String(error)));

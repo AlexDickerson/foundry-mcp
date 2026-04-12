@@ -7,10 +7,7 @@ export function validateConfig(config: unknown): config is ModuleConfig {
 
   const c = config as Record<string, unknown>;
 
-  return (
-    hasWebSocketConfig(c['webSocket']) &&
-    hasLoggingConfig(c['logging'])
-  );
+  return hasWebSocketConfig(c['webSocket']) && hasLoggingConfig(c['logging']);
 }
 
 function hasWebSocketConfig(value: unknown): boolean {
@@ -32,9 +29,5 @@ function hasLoggingConfig(value: unknown): boolean {
   const validLevels = ['debug', 'info', 'warn', 'error'];
   const level = logging['level'];
 
-  return (
-    typeof logging['enabled'] === 'boolean' &&
-    typeof level === 'string' &&
-    validLevels.includes(level)
-  );
+  return typeof logging['enabled'] === 'boolean' && typeof level === 'string' && validLevels.includes(level);
 }

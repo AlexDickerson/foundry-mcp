@@ -84,7 +84,7 @@ export function addGridOverlay(canvas: OverlayCanvas): PixiContainer | undefined
   const endGY = Math.ceil((dims.sceneY + dims.sceneHeight) / gridSize);
 
   const lines = new PIXI.Graphics();
-  lines.lineStyle(1, 0xFFFFFF, LINE_ALPHA);
+  lines.lineStyle(1, 0xffffff, LINE_ALPHA);
 
   for (let gx = startGX; gx <= endGX; gx++) {
     const x = gx * gridSize;
@@ -101,10 +101,10 @@ export function addGridOverlay(canvas: OverlayCanvas): PixiContainer | undefined
   const style = new PIXI.TextStyle({
     fontFamily: 'Arial',
     fontSize,
-    fill: 0xFFFFFF,
+    fill: 0xffffff,
     stroke: 0x000000,
     strokeThickness: Math.max(MIN_STROKE, Math.round(fontSize * STROKE_RATIO)),
-    letterSpacing: 0
+    letterSpacing: 0,
   });
 
   for (let gx = startGX; gx < endGX; gx++) {
