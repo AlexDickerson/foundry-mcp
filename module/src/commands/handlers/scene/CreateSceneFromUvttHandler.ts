@@ -49,18 +49,20 @@ export async function createSceneFromUvttHandler(
     },
   };
 
-  const scene = await game.scenes.documentClass.create(sceneData);
-
-  // Foundry v14 uses Scene Levels — create a default level with the background image
+  // Foundry v14: background images live on Level documents, not the Scene itself.
+  // Include a default level with the background in the creation data so the
+  // scene.background shim getter has a firstLevel to read from.
   if (params.img) {
-    await scene.createEmbeddedDocuments('Level', [
+    sceneData['levels'] = [
       {
         name: 'Ground',
         elevation: { bottom: 0, top: 20 },
         background: { src: params.img },
       },
-    ]);
+    ];
   }
+
+  const scene = await game.scenes.documentClass.create(sceneData);
 
   // 2. Convert line_of_sight to wall segments
   const moveNormal = CONST['WALL_MOVEMENT_TYPES']?.['NORMAL'] ?? 20;
