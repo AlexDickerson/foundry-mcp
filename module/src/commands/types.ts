@@ -74,6 +74,7 @@ export type CommandType =
   | 'get-scenes-list'
   | 'activate-scene'
   | 'create-scene'
+  | 'create-scene-from-uvtt'
   | 'create-walls'
   | 'delete-wall'
   | 'normalize-scene'
@@ -793,6 +794,49 @@ export interface CreateWallsResult {
   wallIds: string[];
 }
 
+export interface UvttResolution {
+  pixels_per_grid: number;
+  map_size: { x: number; y: number };
+  map_origin?: { x: number; y: number };
+}
+
+export interface UvttPortal {
+  position: { x: number; y: number };
+  bounds: Array<{ x: number; y: number }>;
+  rotation?: number;
+  closed?: boolean;
+  freestanding?: boolean;
+}
+
+export interface UvttData {
+  resolution: UvttResolution;
+  line_of_sight: Array<Array<{ x: number; y: number }>>;
+  portals?: UvttPortal[];
+}
+
+export interface CreateSceneFromUvttParams {
+  name: string;
+  img?: string;
+  uvtt: UvttData;
+  gridDistance?: number;
+  gridUnits?: string;
+  activate?: boolean;
+}
+
+export interface CreateSceneFromUvttResult {
+  id: string;
+  name: string;
+  img: string;
+  width: number;
+  height: number;
+  active: boolean;
+  wallsCreated: number;
+  doorsCreated: number;
+  gridSize: number;
+  gridCols: number;
+  gridRows: number;
+}
+
 export interface DeleteWallParams {
   sceneId?: string;
   wallId: string;
@@ -1260,6 +1304,7 @@ export interface CommandParamsMap {
   'get-scenes-list': GetScenesListParams;
   'activate-scene': ActivateSceneParams;
   'create-scene': CreateSceneParams;
+  'create-scene-from-uvtt': CreateSceneFromUvttParams;
   'create-walls': CreateWallsParams;
   'delete-wall': DeleteWallParams;
   'normalize-scene': NormalizeSceneParams;
@@ -1345,6 +1390,7 @@ export interface CommandResultMap {
   'get-scenes-list': SceneListResult;
   'activate-scene': ActivateSceneResult;
   'create-scene': CreateSceneResult;
+  'create-scene-from-uvtt': CreateSceneFromUvttResult;
   'create-walls': CreateWallsResult;
   'delete-wall': DeleteResult;
   'normalize-scene': NormalizeSceneResult;

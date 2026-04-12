@@ -72,6 +72,7 @@ import {
   getCombatTurnContextHandler,
   captureSceneHandler,
   createSceneHandler,
+  createSceneFromUvttHandler,
   createWallsHandler,
   deleteWallHandler,
   normalizeSceneHandler,
@@ -231,6 +232,7 @@ function initializeWebSocket(
   commandRouter.register('activate-scene', activateSceneHandler);
   commandRouter.register('capture-scene', captureSceneHandler);
   commandRouter.register('create-scene', createSceneHandler);
+  commandRouter.register('create-scene-from-uvtt', createSceneFromUvttHandler);
   commandRouter.register('create-walls', createWallsHandler);
   commandRouter.register('delete-wall', deleteWallHandler);
   commandRouter.register('normalize-scene', normalizeSceneHandler);

@@ -141,6 +141,48 @@ export function registerSceneTools(mcp: McpServer): void {
   );
 
   mcp.registerTool(
+    'create_scene_from_uvtt',
+    {
+      title: 'Create Scene from UVTT',
+      description:
+        'Create a Foundry scene with walls from a Universal VTT (.uvtt) file. ' +
+        'The .uvtt contains wall segments (line_of_sight) and optional doors (portals) ' +
+        'from Auto-Wall or similar tools. Upload the map image first via upload_asset, ' +
+        'then pass the parsed .uvtt JSON here along with the image path.',
+      inputSchema: {
+        name: z.string().describe('Scene name'),
+        img: z.string().optional().describe('Background image path relative to Foundry Data dir (from upload_asset)'),
+        uvtt: z
+          .object({
+            resolution: z.object({
+              pixels_per_grid: z.number().describe('Grid cell size in source image pixels'),
+              map_size: z.object({ x: z.number(), y: z.number() }).describe('Map dimensions in grid cells'),
+            }),
+            line_of_sight: z
+              .array(z.array(z.object({ x: z.number(), y: z.number() })))
+              .describe('Wall segments as pairs of grid-relative points'),
+            portals: z
+              .array(
+                z.object({
+                  position: z.object({ x: z.number(), y: z.number() }),
+                  bounds: z.array(z.object({ x: z.number(), y: z.number() })),
+                  closed: z.boolean().optional(),
+                }),
+              )
+              .optional()
+              .describe('Door segments from the .uvtt file'),
+          })
+          .describe('Parsed .uvtt JSON content'),
+        gridDistance: z.number().optional().describe('Distance per grid square (default 5)'),
+        gridUnits: z.string().optional().describe('Grid distance units (default "ft")'),
+        activate: z.boolean().optional().describe('Activate the scene after creation (default false)'),
+      },
+    },
+    async ({ name, img, uvtt, gridDistance, gridUnits, activate }): Promise<CallToolResult> =>
+      foundryTool('create-scene-from-uvtt', { name, img, uvtt, gridDistance, gridUnits, activate }),
+  );
+
+  mcp.registerTool(
     'delete_wall',
     {
       title: 'Delete Wall',

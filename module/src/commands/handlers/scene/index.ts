@@ -3,6 +3,7 @@ export { getScenesListHandler } from './GetScenesListHandler';
 export { activateSceneHandler } from './ActivateSceneHandler';
 export { captureSceneHandler } from './CaptureSceneHandler';
 export { createSceneHandler } from './CreateSceneHandler';
+export { createSceneFromUvttHandler } from './CreateSceneFromUvttHandler';
 export { createWallsHandler } from './CreateWallsHandler';
 export { deleteWallHandler } from './DeleteWallHandler';
 export { normalizeSceneHandler } from './NormalizeSceneHandler';
