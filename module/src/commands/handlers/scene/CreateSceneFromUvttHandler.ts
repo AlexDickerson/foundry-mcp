@@ -50,6 +50,8 @@ export async function createSceneFromUvttHandler(
   };
 
   if (params.img) {
+    // Set both legacy and v13+ fields for maximum compatibility
+    sceneData['img'] = params.img;
     sceneData['background'] = { src: params.img };
   }
 
