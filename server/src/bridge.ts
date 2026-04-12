@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { WebSocketServer, WebSocket } from 'ws';
 import { COMMAND_TIMEOUT_MS } from './config.js';
+import { log } from './logger.js';
 
 // ---------------------------------------------------------------------------
 // Foundry Bridge — WebSocket connection to the Foundry module
@@ -25,15 +26,30 @@ export function sendCommand(type: string, params: Record<string, unknown> = {}):
   }
 
   const id = randomUUID();
+  const t0 = Date.now();
+  log.info(`cmd >> ${type} [${id.slice(0, 8)}]`);
+
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       pendingCommands.delete(id);
+      log.error(`cmd timeout: ${type} [${id.slice(0, 8)}] after ${COMMAND_TIMEOUT_MS}ms`);
       reject(new Error(`Command '${type}' timed out after ${COMMAND_TIMEOUT_MS}ms`));
     }, COMMAND_TIMEOUT_MS);
 
     pendingCommands.set(id, {
-      resolve(data) { clearTimeout(timer); resolve(data); },
-      reject(err)   { clearTimeout(timer); reject(err); },
+      resolve(data) {
+        clearTimeout(timer);
+        const elapsed = Date.now() - t0;
+        const size = JSON.stringify(data).length;
+        log.info(`cmd << ${type} [${id.slice(0, 8)}] ${elapsed}ms ${(size / 1024).toFixed(1)}KB`);
+        resolve(data);
+      },
+      reject(err) {
+        clearTimeout(timer);
+        const elapsed = Date.now() - t0;
+        log.error(`cmd !! ${type} [${id.slice(0, 8)}] ${elapsed}ms ${err.message}`);
+        reject(err);
+      },
     });
 
     foundrySocket!.send(JSON.stringify({ id, type, params }));
@@ -53,7 +69,7 @@ export async function foundryTool(
       const { image, ...meta } = data;
       return {
         content: [
-          { type: 'text', text: JSON.stringify(meta, null, 2) },
+          { type: 'text', text: JSON.stringify(meta) },
           { type: 'image', data: image as string, mimeType: data.mimeType as string },
         ],
       };
@@ -65,13 +81,13 @@ export async function foundryTool(
       const { screenshot: _, ...rest } = data;
       return {
         content: [
-          { type: 'text', text: JSON.stringify(rest, null, 2) },
+          { type: 'text', text: JSON.stringify(rest) },
           { type: 'image', data: ss.image, mimeType: ss.mimeType },
         ],
       };
     }
 
-    return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+    return { content: [{ type: 'text', text: JSON.stringify(data) }] };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { content: [{ type: 'text', text: `Error: ${msg}` }], isError: true };
@@ -86,13 +102,13 @@ export const wss = new WebSocketServer({ noServer: true });
 
 wss.on('connection', (ws: WebSocket) => {
   if (foundrySocket) {
-    console.log('Rejecting duplicate Foundry connection');
+    log.warn('Rejecting duplicate Foundry connection');
     ws.close(4000, 'Only one Foundry module connection allowed');
     return;
   }
 
   foundrySocket = ws;
-  console.log('Foundry module connected');
+  log.info('Foundry module connected');
 
   ws.on('message', (raw: Buffer) => {
     try {
@@ -100,7 +116,10 @@ wss.on('connection', (ws: WebSocket) => {
         id: string; success: boolean; data?: unknown; error?: string;
       };
       const pending = pendingCommands.get(msg.id);
-      if (!pending) return;
+      if (!pending) {
+        log.warn(`Received response for unknown command: ${msg.id.slice(0, 8)}`);
+        return;
+      }
       pendingCommands.delete(msg.id);
       if (msg.success) {
         pending.resolve(msg.data);
@@ -108,12 +127,12 @@ wss.on('connection', (ws: WebSocket) => {
         pending.reject(new Error(msg.error ?? 'Command failed'));
       }
     } catch (err) {
-      console.error('Failed to parse Foundry message:', err);
+      log.error(`Failed to parse Foundry message: ${err}`);
     }
   });
 
   ws.on('close', () => {
-    console.log('Foundry module disconnected');
+    log.info('Foundry module disconnected');
     foundrySocket = null;
     for (const [id, pending] of pendingCommands) {
       pending.reject(new Error('Foundry module disconnected'));
@@ -121,5 +140,5 @@ wss.on('connection', (ws: WebSocket) => {
     }
   });
 
-  ws.on('error', (err: Error) => console.error('Foundry WS error:', err));
+  ws.on('error', (err: Error) => log.error(`Foundry WS error: ${err.message}`));
 });

@@ -55,6 +55,10 @@ export type CommandType =
   | 'move-token'
   | 'update-token'
   | 'get-scene-tokens'
+  | 'move-token-path'
+  | 'set-patrol'
+  | 'stop-patrol'
+  | 'get-patrols'
   | 'get-actor-items'
   | 'use-item'
   | 'add-item-to-actor'
@@ -70,6 +74,10 @@ export type CommandType =
   | 'get-scenes-list'
   | 'activate-scene'
   | 'create-scene'
+  | 'create-walls'
+  | 'delete-wall'
+  | 'normalize-scene'
+  | 'analyze-scene'
   | 'activate-item'
   | 'get-journals'
   | 'get-journal'
@@ -85,6 +93,8 @@ export type CommandType =
   | 'update-roll-table'
   | 'delete-roll-table'
   | 'capture-scene'
+  | 'get-scene-background'
+  | 'update-scene'
   | 'get-combat-turn-context';
 
 export interface RollDiceParams {
@@ -330,6 +340,70 @@ export interface GetSceneTokensParams {
   sceneId?: string;
 }
 
+// Shared waypoint for paths and patrols
+export interface TokenWaypoint {
+  x: number;
+  y: number;
+}
+
+export interface MoveTokenPathParams {
+  sceneId?: string;
+  tokenId: string;
+  waypoints: TokenWaypoint[];
+  coordType?: 'pixel' | 'grid';
+  delayMs?: number;
+  animate?: boolean;
+}
+
+export interface MoveTokenPathResult {
+  id: string;
+  steps: number;
+}
+
+export interface SetPatrolParams {
+  sceneId?: string;
+  tokenId: string;
+  waypoints: TokenWaypoint[];
+  coordType?: 'pixel' | 'grid';
+  delayMs?: number;
+  intervalMs?: number;
+  loop?: boolean;
+  animate?: boolean;
+}
+
+export interface SetPatrolResult {
+  patrolId: string;
+  tokenId: string;
+  waypoints: number;
+}
+
+export interface StopPatrolParams {
+  tokenId: string;
+}
+
+export interface StopPatrolResult {
+  stopped: boolean;
+}
+
+export interface GetPatrolsParams {
+  sceneId?: string;
+}
+
+export interface PatrolInfo {
+  patrolId: string;
+  tokenId: string;
+  tokenName: string;
+  waypoints: TokenWaypoint[];
+  currentStep: number;
+  loop: boolean;
+  delayMs: number;
+  intervalMs: number;
+}
+
+export interface GetPatrolsResult {
+  patrols: PatrolInfo[];
+}
+
 export interface InitiativeResult {
   combatantId: string;
   name: string;
@@ -396,6 +470,10 @@ export interface DeleteResult {
   deleted: boolean;
 }
 
+export interface MutationResult {
+  id: string;
+}
+
 // Combat Results
 export interface CombatantResult {
   id: string;
@@ -432,7 +510,6 @@ export interface TokenResult {
   elevation: number;
   rotation: number;
   hidden: boolean;
-  img: string;
   disposition: number;
   hp?: TokenHpData;
   ac?: number;
@@ -681,6 +758,7 @@ export interface ActivateItemResult {
 export interface GetSceneParams {
   sceneId?: string;
   includeScreenshot?: boolean;
+  include?: string[];
 }
 
 export type GetScenesListParams = Record<string, never>;
@@ -694,6 +772,57 @@ export interface CreateSceneParams {
   gridUnits?: string;
   gridDistance?: number;
   folder?: string;
+}
+
+export interface WallDefinition {
+  c: [number, number, number, number];
+  move?: number;   // 0=none, 1=normal (default 1)
+  sense?: number;  // 0=none, 1=normal (default 1)
+  door?: number;   // 0=none, 1=door, 2=secret (default 0)
+}
+
+export interface CreateWallsParams {
+  sceneId?: string;
+  walls: WallDefinition[];
+}
+
+export interface CreateWallsResult {
+  created: number;
+  wallIds: string[];
+}
+
+export interface DeleteWallParams {
+  sceneId?: string;
+  wallId: string;
+}
+
+export interface NormalizeSceneParams {
+  sceneId?: string;
+}
+
+export interface NormalizeSceneResult {
+  id: string;
+  name: string;
+  before: { width: number; height: number; padding: number };
+  after:  { width: number; height: number; padding: number };
+  gridSize: number;
+  gridCols: number;
+  gridRows: number;
+}
+
+export interface AnalyzeSceneParams {
+  sceneId?: string;
+}
+
+export interface AnalyzeSceneResult {
+  id: string;
+  name: string;
+  gridSize: number;
+  cols: number;
+  rows: number;
+  /** One character per cell, row-major. '#'=wall, '·'=floor, '~'=outside, ' '=empty */
+  grid: string;
+  legend: string;
 }
 
 export interface ActivateSceneParams {
@@ -995,6 +1124,34 @@ export interface CaptureSceneResult {
   height: number;
 }
 
+export interface UpdateSceneParams {
+  sceneId?: string;
+  background?: string;
+  name?: string;
+  darkness?: number;
+  gridSize?: number;
+  gridUnits?: string;
+  gridDistance?: number;
+}
+
+export interface UpdateSceneResult {
+  id: string;
+}
+
+export interface GetSceneBackgroundParams {
+  sceneId?: string;
+  maxDimension?: number;
+}
+
+export interface GetSceneBackgroundResult {
+  sceneId: string;
+  sceneName: string;
+  image: string;
+  mimeType: string;
+  width: number;
+  height: number;
+}
+
 // Combat Turn Context types
 export interface GetCombatTurnContextParams {
   combatId?: string;
@@ -1084,6 +1241,10 @@ export interface CommandParamsMap {
   'move-token': MoveTokenParams;
   'update-token': UpdateTokenParams;
   'get-scene-tokens': GetSceneTokensParams;
+  'move-token-path': MoveTokenPathParams;
+  'set-patrol': SetPatrolParams;
+  'stop-patrol': StopPatrolParams;
+  'get-patrols': GetPatrolsParams;
   'get-actor-items': GetActorItemsParams;
   'use-item': UseItemParams;
   'add-item-to-actor': AddItemToActorParams;
@@ -1099,6 +1260,10 @@ export interface CommandParamsMap {
   'get-scenes-list': GetScenesListParams;
   'activate-scene': ActivateSceneParams;
   'create-scene': CreateSceneParams;
+  'create-walls': CreateWallsParams;
+  'delete-wall': DeleteWallParams;
+  'normalize-scene': NormalizeSceneParams;
+  'analyze-scene': AnalyzeSceneParams;
   'activate-item': ActivateItemParams;
   'get-journals': GetJournalsParams;
   'get-journal': GetJournalParams;
@@ -1114,6 +1279,8 @@ export interface CommandParamsMap {
   'update-roll-table': UpdateRollTableParams;
   'delete-roll-table': DeleteRollTableParams;
   'capture-scene': CaptureSceneParams;
+  'get-scene-background': GetSceneBackgroundParams;
+  'update-scene': UpdateSceneParams;
   'get-combat-turn-context': GetCombatTurnContextParams;
 }
 
@@ -1156,9 +1323,13 @@ export interface CommandResultMap {
   'toggle-combatant-visibility': CombatantResult;
   'create-token': TokenResult;
   'delete-token': DeleteResult;
-  'move-token': TokenResult;
-  'update-token': TokenResult;
+  'move-token': MutationResult;
+  'update-token': MutationResult;
   'get-scene-tokens': SceneTokensResult;
+  'move-token-path': MoveTokenPathResult;
+  'set-patrol': SetPatrolResult;
+  'stop-patrol': StopPatrolResult;
+  'get-patrols': GetPatrolsResult;
   'get-actor-items': ActorItemsResult;
   'use-item': UseItemResult;
   'add-item-to-actor': ItemResult;
@@ -1174,6 +1345,10 @@ export interface CommandResultMap {
   'get-scenes-list': SceneListResult;
   'activate-scene': ActivateSceneResult;
   'create-scene': CreateSceneResult;
+  'create-walls': CreateWallsResult;
+  'delete-wall': DeleteResult;
+  'normalize-scene': NormalizeSceneResult;
+  'analyze-scene': AnalyzeSceneResult;
   'activate-item': ActivateItemResult;
   'get-journals': JournalData[];
   'get-journal': JournalData;
@@ -1189,5 +1364,7 @@ export interface CommandResultMap {
   'update-roll-table': RollTableResult;
   'delete-roll-table': DeleteResult;
   'capture-scene': CaptureSceneResult;
+  'get-scene-background': GetSceneBackgroundResult;
+  'update-scene': UpdateSceneResult;
   'get-combat-turn-context': CombatTurnContext;
 }

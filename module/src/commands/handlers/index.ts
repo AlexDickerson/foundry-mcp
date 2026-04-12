@@ -56,8 +56,12 @@ export {
   createTokenHandler,
   deleteTokenHandler,
   moveTokenHandler,
+  moveTokenPathHandler,
   updateTokenHandler,
-  getSceneTokensHandler
+  getSceneTokensHandler,
+  setPatrolHandler,
+  stopPatrolHandler,
+  getPatrolsHandler
 } from '@/commands/handlers/token';
 
 // Item handlers
@@ -79,7 +83,13 @@ export {
   getScenesListHandler,
   activateSceneHandler,
   captureSceneHandler,
-  createSceneHandler
+  createSceneHandler,
+  createWallsHandler,
+  deleteWallHandler,
+  normalizeSceneHandler,
+  analyzeSceneHandler,
+  getSceneBackgroundHandler,
+  updateSceneHandler
 } from '@/commands/handlers/scene';
 
 // World handlers

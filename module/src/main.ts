@@ -48,8 +48,12 @@ import {
   createTokenHandler,
   deleteTokenHandler,
   moveTokenHandler,
+  moveTokenPathHandler,
   updateTokenHandler,
   getSceneTokensHandler,
+  setPatrolHandler,
+  stopPatrolHandler,
+  getPatrolsHandler,
   getSceneHandler,
   getScenesListHandler,
   activateSceneHandler,
@@ -68,6 +72,12 @@ import {
   getCombatTurnContextHandler,
   captureSceneHandler,
   createSceneHandler,
+  createWallsHandler,
+  deleteWallHandler,
+  normalizeSceneHandler,
+  analyzeSceneHandler,
+  getSceneBackgroundHandler,
+  updateSceneHandler,
   listRollTablesHandler,
   getRollTableHandler,
   rollOnTableHandler,
@@ -183,7 +193,11 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('create-token', createTokenHandler);
   commandRouter.register('delete-token', deleteTokenHandler);
   commandRouter.register('move-token', moveTokenHandler);
+  commandRouter.register('move-token-path', moveTokenPathHandler);
   commandRouter.register('update-token', updateTokenHandler);
+  commandRouter.register('set-patrol', setPatrolHandler);
+  commandRouter.register('stop-patrol', stopPatrolHandler);
+  commandRouter.register('get-patrols', getPatrolsHandler);
 
   // Items
   commandRouter.register('use-item', useItemHandler);
@@ -212,6 +226,12 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('activate-scene', activateSceneHandler);
   commandRouter.register('capture-scene', captureSceneHandler);
   commandRouter.register('create-scene', createSceneHandler);
+  commandRouter.register('create-walls', createWallsHandler);
+  commandRouter.register('delete-wall', deleteWallHandler);
+  commandRouter.register('normalize-scene', normalizeSceneHandler);
+  commandRouter.register('analyze-scene', analyzeSceneHandler);
+  commandRouter.register('get-scene-background', getSceneBackgroundHandler);
+  commandRouter.register('update-scene', updateSceneHandler);
 
   const wsConnectUrl = `${wsUrl}?apiKey=${encodeURIComponent(apiKey)}`;
   wsClient = new WebSocketClient({

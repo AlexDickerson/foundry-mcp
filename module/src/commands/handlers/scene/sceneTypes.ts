@@ -105,6 +105,7 @@ export interface FoundryScene {
   name: string;
   active: boolean;
   img: string | undefined;
+  background: { src: string | undefined } | undefined;
   width: number | undefined;
   height: number | undefined;
   grid: FoundryGrid | undefined;
@@ -253,13 +254,14 @@ export function mapTokenToSummary(token: FoundryToken, gridSize: number): SceneT
   return result;
 }
 
-export function mapSceneToDetail(scene: FoundryScene): SceneDetailResult {
+export function mapSceneToDetail(scene: FoundryScene, include?: Set<string>): SceneDetailResult {
   const gridSize = scene.grid?.size ?? 100;
+  const all = !include;
   return {
     id: scene.id,
     name: scene.name,
     active: scene.active,
-    img: scene.img ?? '',
+    img: scene.background?.src ?? scene.img ?? '',
     width: scene.width ?? 0,
     height: scene.height ?? 0,
     grid: {
@@ -269,13 +271,13 @@ export function mapSceneToDetail(scene: FoundryScene): SceneDetailResult {
       distance: scene.grid?.distance ?? 5
     },
     darkness: scene.darkness ?? 0,
-    notes: (scene.notes?.contents ?? []).map(mapNoteToResult),
-    walls: (scene.walls?.contents ?? []).map(mapWallToResult),
-    lights: (scene.lights?.contents ?? []).map(mapLightToResult),
-    tiles: (scene.tiles?.contents ?? []).map(mapTileToResult),
-    drawings: (scene.drawings?.contents ?? []).map(mapDrawingToResult),
-    regions: (scene.regions?.contents ?? []).map(mapRegionToResult),
-    tokens: (scene.tokens?.contents ?? []).map(t => mapTokenToSummary(t, gridSize)),
+    notes: all || include.has('notes') ? (scene.notes?.contents ?? []).map(mapNoteToResult) : [],
+    walls: all || include.has('walls') ? (scene.walls?.contents ?? []).map(mapWallToResult) : [],
+    lights: all || include.has('lights') ? (scene.lights?.contents ?? []).map(mapLightToResult) : [],
+    tiles: all || include.has('tiles') ? (scene.tiles?.contents ?? []).map(mapTileToResult) : [],
+    drawings: all || include.has('drawings') ? (scene.drawings?.contents ?? []).map(mapDrawingToResult) : [],
+    regions: all || include.has('regions') ? (scene.regions?.contents ?? []).map(mapRegionToResult) : [],
+    tokens: all || include.has('tokens') ? (scene.tokens?.contents ?? []).map(t => mapTokenToSummary(t, gridSize)) : [],
     asciiMap: ''
   };
 }

@@ -88,7 +88,6 @@ export function mapTokenToResult(token: FoundryToken): TokenResult {
     elevation: token.elevation,
     rotation: token.rotation,
     hidden: token.hidden,
-    img: token.texture.src,
     disposition: token.disposition,
     conditions: token.actor?.statuses ? [...token.actor.statuses] : []
   };

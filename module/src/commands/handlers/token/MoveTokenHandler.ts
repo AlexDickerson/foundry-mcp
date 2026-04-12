@@ -1,8 +1,7 @@
-import type { MoveTokenParams, TokenResult } from '@/commands/types';
+import type { MoveTokenParams, MutationResult } from '@/commands/types';
 import {
   getActiveScene,
   getToken,
-  mapTokenToResult,
   type FoundryGame,
   type FoundryToken,
   type TokenUpdateData
@@ -64,7 +63,7 @@ async function moveAlongPath(
   return current;
 }
 
-export async function moveTokenHandler(params: MoveTokenParams): Promise<TokenResult> {
+export async function moveTokenHandler(params: MoveTokenParams): Promise<MutationResult> {
   const scene = getActiveScene(game, params.sceneId);
   const token = getToken(scene, params.tokenId);
   const animate = params.animate !== false;
@@ -98,7 +97,7 @@ export async function moveTokenHandler(params: MoveTokenParams): Promise<TokenRe
       if (params.rotation !== undefined) finalUpdate.rotation = params.rotation;
 
       const result = await moveAlongPath(token, scene, path, animate, finalUpdate);
-      return mapTokenToResult(result);
+      return { id: result.id };
     }
   }
 
@@ -115,5 +114,5 @@ export async function moveTokenHandler(params: MoveTokenParams): Promise<TokenRe
   }
 
   const updated = await token.update(updateData, { animate });
-  return mapTokenToResult(updated);
+  return { id: updated.id };
 }

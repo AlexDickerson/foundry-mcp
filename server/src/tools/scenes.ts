@@ -18,9 +18,11 @@ export function registerSceneTools(mcp: McpServer): void {
     inputSchema: {
       sceneId: z.string().optional().describe('Scene ID. Omit for the currently active scene.'),
       includeScreenshot: z.boolean().optional().describe('Include a base64 WebP screenshot of the canvas'),
+      include: z.array(z.enum(['tokens', 'walls', 'lights', 'notes', 'tiles', 'drawings', 'regions', 'asciiMap']))
+        .optional().describe('Sections to include in the response. Omit for all sections.'),
     },
-  }, async ({ sceneId, includeScreenshot }): Promise<CallToolResult> =>
-    foundryTool('get-scene', { sceneId, includeScreenshot }),
+  }, async ({ sceneId, includeScreenshot, include }): Promise<CallToolResult> =>
+    foundryTool('get-scene', { sceneId, includeScreenshot, include }),
   );
 
   mcp.registerTool('activate_scene', {
@@ -78,4 +80,101 @@ export function registerSceneTools(mcp: McpServer): void {
   }, async ({ name, img, width, height, gridSize, gridUnits, gridDistance }): Promise<CallToolResult> =>
     foundryTool('create-scene', { name, img, width, height, gridSize, gridUnits, gridDistance }),
   );
+
+  mcp.registerTool('create_walls', {
+    title: 'Create Walls',
+    description: 'Draw one or more wall segments on a scene. Each wall is a line from (x1,y1) to (x2,y2) in pixels. Use grid size to convert grid coords to pixels.',
+    inputSchema: {
+      sceneId: z.string().optional().describe('Scene ID. Omit for the active scene.'),
+      walls: z.array(z.object({
+        c: z.tuple([z.number(), z.number(), z.number(), z.number()]).describe('Wall coordinates [x1, y1, x2, y2] in pixels'),
+        move: z.number().optional().describe('Movement restriction: 0=none, 1=normal (default 1)'),
+        sense: z.number().optional().describe('Perception restriction: 0=none, 1=normal (default 1)'),
+        door: z.number().optional().describe('Door type: 0=none, 1=door, 2=secret (default 0)'),
+      })).describe('Array of wall segments to create'),
+    },
+  }, async ({ sceneId, walls }): Promise<CallToolResult> =>
+    foundryTool('create-walls', { sceneId, walls }),
+  );
+
+  mcp.registerTool('delete_wall', {
+    title: 'Delete Wall',
+    description: 'Delete a wall segment from a scene',
+    inputSchema: {
+      wallId: z.string().describe('Wall ID to delete'),
+      sceneId: z.string().optional().describe('Scene ID. Omit for the active scene.'),
+    },
+  }, async ({ wallId, sceneId }): Promise<CallToolResult> =>
+    foundryTool('delete-wall', { wallId, sceneId }),
+  );
+
+  mcp.registerTool('normalize_scene', {
+    title: 'Normalize Scene',
+    description:
+      'Match a scene\'s canvas dimensions to its background image and remove padding. '
+      + 'After normalization, grid coordinate (col, row) → pixel = (col * gridSize, row * gridSize) with no offset. '
+      + 'Returns the before/after dimensions and the grid column/row counts.',
+    inputSchema: {
+      sceneId: z.string().optional().describe('Scene ID. Omit for the active scene.'),
+    },
+  }, async ({ sceneId }): Promise<CallToolResult> =>
+    foundryTool('normalize-scene', { sceneId }),
+  );
+
+  mcp.registerTool('analyze_scene', {
+    title: 'Analyze Scene Layout',
+    description:
+      'Sample the background image at each grid cell and return a classified ASCII grid map. '
+      + 'Each cell is classified as: # (wall/structure), · (floor), ~ (outside/void), or space (transparent). '
+      + 'Use this to understand the map layout before placing walls, tokens, or other elements. '
+      + 'The scene should be normalized first (padding=0) for accurate coordinate mapping.',
+    inputSchema: {
+      sceneId: z.string().optional().describe('Scene ID. Omit for the active scene.'),
+    },
+  }, async ({ sceneId }): Promise<CallToolResult> =>
+    foundryTool('analyze-scene', { sceneId }),
+  );
+
+  mcp.registerTool('update_scene', {
+    title: 'Update Scene',
+    description: 'Update scene properties like background image, name, darkness, or grid settings.',
+    inputSchema: {
+      sceneId: z.string().optional().describe('Scene ID. Omit for the active scene.'),
+      background: z.string().optional().describe('Background image path relative to Foundry Data dir'),
+      name: z.string().optional().describe('Scene name'),
+      darkness: z.number().optional().describe('Darkness level 0-1'),
+      gridSize: z.number().optional().describe('Grid square size in pixels'),
+      gridUnits: z.string().optional().describe('Grid distance units'),
+      gridDistance: z.number().optional().describe('Distance per grid square'),
+    },
+  }, async ({ sceneId, background, name, darkness, gridSize, gridUnits, gridDistance }): Promise<CallToolResult> =>
+    foundryTool('update-scene', { sceneId, background, name, darkness, gridSize, gridUnits, gridDistance }),
+  );
+
+  mcp.registerTool('get_scene_background', {
+    title: 'Get Scene Background Image',
+    description:
+      'Retrieve the scene\'s background map image (without tokens or overlays). '
+      + 'Returns a WebP image scaled to fit within maxDimension pixels. '
+      + 'Use this to visually analyze the map layout, corridors, and structures.',
+    inputSchema: {
+      sceneId: z.string().optional().describe('Scene ID. Omit for the active scene.'),
+      maxDimension: z.number().optional().describe('Max width or height in pixels (default 2048)'),
+    },
+  }, async ({ sceneId, maxDimension }): Promise<CallToolResult> => {
+    try {
+      const data = await sendCommand('get-scene-background', { sceneId, maxDimension }) as Record<string, unknown>;
+      if (!data?.image) {
+        return { content: [{ type: 'text', text: 'Error: No background image returned.' }], isError: true };
+      }
+      return {
+        content: [
+          { type: 'image', data: data.image as string, mimeType: data.mimeType as string },
+        ],
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: 'text', text: `Error: ${msg}` }], isError: true };
+    }
+  });
 }

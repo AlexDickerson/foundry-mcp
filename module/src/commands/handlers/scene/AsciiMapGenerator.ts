@@ -28,6 +28,8 @@ export interface AsciiMapInput {
   gridDistance: number;
   gridUnits: string;
   sceneName: string;
+  sceneWidth?: number;
+  sceneHeight?: number;
   tokens: MapToken[];
   walls: MapWall[];
   collisionBackend?: CollisionBackend | undefined;
@@ -148,7 +150,14 @@ export function generateAsciiMap(input: AsciiMapInput): string {
     maxX = input.center.gx + r;
     minY = input.center.gy - r;
     maxY = input.center.gy + r;
+  } else if (input.sceneWidth && input.sceneHeight) {
+    // Use full scene dimensions so the map always shows the complete scene
+    minX = 0;
+    maxX = Math.floor(input.sceneWidth / gridSize) - 1;
+    minY = 0;
+    maxY = Math.floor(input.sceneHeight / gridSize) - 1;
   } else {
+    // Fallback: derive bounds from content
     minX = Infinity;
     maxX = -Infinity;
     minY = Infinity;

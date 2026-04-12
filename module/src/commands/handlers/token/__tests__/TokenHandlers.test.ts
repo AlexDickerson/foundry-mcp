@@ -276,8 +276,7 @@ describe('Token Handlers', () => {
         { x: 300, y: 400 },
         { animate: true }
       );
-      expect(result.x).toBe(300);
-      expect(result.y).toBe(400);
+      expect(result.id).toBe('token-123');
     });
 
     it('moves token with elevation and rotation', async () => {
@@ -346,7 +345,7 @@ describe('Token Handlers', () => {
       });
 
       expect(mockToken.update).toHaveBeenCalledTimes(1);
-      expect(result.x).toBe(500);
+      expect(result.id).toBe('token-123');
     });
 
     it('uses direct move when path is clear', async () => {
@@ -413,8 +412,7 @@ describe('Token Handlers', () => {
       });
 
       expect(mockToken.update.mock.calls.length).toBeGreaterThan(1);
-      expect(result.x).toBe(300);
-      expect(result.y).toBe(100);
+      expect(result.id).toBe('token-123');
 
       delete (global as Record<string, unknown>)['CONFIG'];
       delete (global as Record<string, unknown>)['canvas'];

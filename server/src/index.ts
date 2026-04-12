@@ -4,6 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { PORT, HOST } from './config.js';
 import { wss, isFoundryConnected } from './bridge.js';
+import { log } from './logger.js';
 import { registerTools } from './tools/index.js';
 
 // ---------------------------------------------------------------------------
@@ -19,7 +20,7 @@ async function createSession(): Promise<StreamableHTTPServerTransport> {
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (sessionId: string) => {
-      console.log(`MCP session created: ${sessionId}`);
+      log.info(`MCP session created: ${sessionId}`);
       sessions.set(sessionId, transport);
     },
   });
@@ -28,7 +29,7 @@ async function createSession(): Promise<StreamableHTTPServerTransport> {
     const sid = transport.sessionId;
     if (sid) {
       sessions.delete(sid);
-      console.log(`MCP session closed: ${sid}`);
+      log.info(`MCP session closed: ${sid}`);
     }
   };
 
@@ -59,12 +60,21 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
     try {
       await transport.handleRequest(req, res);
     } catch (err) {
-      console.error('MCP transport error:', err);
+      log.error(`MCP transport error: ${err}`);
       if (!res.headersSent) {
         res.writeHead(500);
         res.end('Internal server error');
       }
     }
+    return;
+  }
+
+  // Server logs
+  if (req.url?.startsWith('/logs')) {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const n = parseInt(url.searchParams.get('n') ?? '50', 10);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(log.tail(n)));
     return;
   }
 
@@ -96,8 +106,9 @@ httpServer.on('upgrade', (req, socket, head) => {
 // ---------------------------------------------------------------------------
 
 httpServer.listen(PORT, HOST, () => {
-  console.log(`foundry-mcp server listening on ${HOST}:${PORT}`);
-  console.log(`  MCP endpoint: http://${HOST}:${PORT}/mcp`);
-  console.log(`  Foundry WS:   ws://${HOST}:${PORT}/foundry`);
-  console.log(`  Health:       http://${HOST}:${PORT}/health`);
+  log.info(`foundry-mcp server listening on ${HOST}:${PORT}`);
+  log.info(`  MCP endpoint: http://${HOST}:${PORT}/mcp`);
+  log.info(`  Foundry WS:   ws://${HOST}:${PORT}/foundry`);
+  log.info(`  Health:       http://${HOST}:${PORT}/health`);
+  log.info(`  Logs:         http://${HOST}:${PORT}/logs`);
 });

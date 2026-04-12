@@ -1,15 +1,14 @@
-import type { UpdateTokenParams, TokenResult } from '@/commands/types';
+import type { UpdateTokenParams, MutationResult } from '@/commands/types';
 import {
   getActiveScene,
   getToken,
-  mapTokenToResult,
   type FoundryGame,
   type TokenUpdateData
 } from './tokenTypes';
 
 declare const game: FoundryGame;
 
-export async function updateTokenHandler(params: UpdateTokenParams): Promise<TokenResult> {
+export async function updateTokenHandler(params: UpdateTokenParams): Promise<MutationResult> {
   const scene = getActiveScene(game, params.sceneId);
   const token = getToken(scene, params.tokenId);
 
@@ -41,10 +40,10 @@ export async function updateTokenHandler(params: UpdateTokenParams): Promise<Tok
   }
 
   if (Object.keys(updateData).length === 0) {
-    return mapTokenToResult(token);
+    return { id: token.id };
   }
 
   const updated = await token.update(updateData);
 
-  return mapTokenToResult(updated);
+  return { id: updated.id };
 }
