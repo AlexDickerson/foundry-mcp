@@ -145,6 +145,7 @@ export function getSceneHandler(params: GetSceneParams): Promise<SceneDetailResu
         width: t.width ?? 1,
         height: t.height ?? 1,
         hp: t.actor?.system?.attributes?.hp,
+        disposition: t.disposition ?? 0,
       }));
 
       detail.asciiMap = generateAsciiMap({
@@ -157,6 +158,8 @@ export function getSceneHandler(params: GetSceneParams): Promise<SceneDetailResu
         tokens,
         walls,
         collisionBackend,
+        center: params.center ? { gx: params.center.x, gy: params.center.y } : undefined,
+        radius: params.radius,
       });
     }
 

@@ -28,10 +28,15 @@ export function registerSceneTools(mcp: McpServer): void {
           .array(z.enum(['tokens', 'walls', 'lights', 'notes', 'tiles', 'drawings', 'regions', 'asciiMap']))
           .optional()
           .describe('Sections to include in the response. Omit for all sections.'),
+        center: z
+          .object({ x: z.number(), y: z.number() })
+          .optional()
+          .describe('Center point in grid coordinates for a zoomed ASCII map view. Omit to show the full scene.'),
+        radius: z.number().optional().describe('Radius in grid cells around center (default 12). Only used with center.'),
       },
     },
-    async ({ sceneId, includeScreenshot, include }): Promise<CallToolResult> =>
-      foundryTool('get-scene', { sceneId, includeScreenshot, include }),
+    async ({ sceneId, includeScreenshot, include, center, radius }): Promise<CallToolResult> =>
+      foundryTool('get-scene', { sceneId, includeScreenshot, include, center, radius }),
   );
 
   mcp.registerTool(

@@ -759,6 +759,8 @@ export interface GetSceneParams {
   sceneId?: string;
   includeScreenshot?: boolean;
   include?: string[];
+  center?: { x: number; y: number };
+  radius?: number;
 }
 
 export type GetScenesListParams = Record<string, never>;
