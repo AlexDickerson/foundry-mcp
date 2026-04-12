@@ -27,7 +27,7 @@ COPY module/dist/styles ./dist/styles
 COPY module/dist/templates ./dist/templates
 
 # -- Production: layer onto felddy/foundryvtt --
-FROM felddy/foundryvtt:release
+FROM felddy/foundryvtt:14
 
 # MCP server lives at /opt/foundry-mcp
 COPY --from=build-server /app/dist        /opt/foundry-mcp/dist
