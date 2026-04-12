@@ -10,5 +10,8 @@ Thumbs.db
 # Secrets
 .env
 
+# Dependencies
+node_modules/
+
 # Claude Code
 .claude/

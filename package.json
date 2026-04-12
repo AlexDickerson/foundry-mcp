@@ -1,0 +1,27 @@
+{
+  "name": "foundry-mcp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "npm run lint --prefix module && npm run lint --prefix server",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "module/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "server/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.2"
+  }
+}
