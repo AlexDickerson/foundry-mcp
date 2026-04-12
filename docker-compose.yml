@@ -1,0 +1,14 @@
+services:
+  foundry:
+    image: ghcr.io/alexdickerson/foundry-mcp:latest
+    container_name: foundry
+    ports:
+      - "30000:30000"   # Foundry VTT
+      - "8765:8765"     # MCP server
+    volumes:
+      - ${FOUNDRY_DATA:-/home/alex/foundrydata}:/data
+    environment:
+      - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
+      - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
