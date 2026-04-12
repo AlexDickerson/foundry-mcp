@@ -1,6 +1,6 @@
 {
   "name": "foundry-api-bridge",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Foundry VTT module that exposes a WebSocket command interface to a self-hosted MCP server. Forked from foundry-api-bridge with phone-home behaviour removed.",
   "type": "module",
   "scripts": {
