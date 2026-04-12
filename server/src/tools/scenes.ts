@@ -32,7 +32,10 @@ export function registerSceneTools(mcp: McpServer): void {
           .object({ x: z.number(), y: z.number() })
           .optional()
           .describe('Center point in grid coordinates for a zoomed ASCII map view. Omit to show the full scene.'),
-        radius: z.number().optional().describe('Radius in grid cells around center (default 12). Only used with center.'),
+        radius: z
+          .number()
+          .optional()
+          .describe('Radius in grid cells around center (default 12). Only used with center.'),
       },
     },
     async ({ sceneId, includeScreenshot, include, center, radius }): Promise<CallToolResult> =>
