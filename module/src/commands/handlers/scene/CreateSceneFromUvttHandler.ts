@@ -49,17 +49,17 @@ export async function createSceneFromUvttHandler(
     },
   };
 
-  if (params.img) {
-    // Set both legacy and v13+ fields for maximum compatibility
-    sceneData['img'] = params.img;
-    sceneData['background'] = { src: params.img };
-  }
-
   const scene = await game.scenes.documentClass.create(sceneData);
 
-  // Ensure background persists — try multiple approaches for Foundry v14 compat
-  if (params.img && !scene.img) {
-    await scene.update({ img: params.img, background: { src: params.img } });
+  // Foundry v14 uses Scene Levels — create a default level with the background image
+  if (params.img) {
+    await scene.createEmbeddedDocuments('Level', [
+      {
+        name: 'Ground',
+        elevation: { bottom: 0, top: 20 },
+        background: { src: params.img },
+      },
+    ]);
   }
 
   // 2. Convert line_of_sight to wall segments
