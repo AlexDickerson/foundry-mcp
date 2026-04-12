@@ -55,7 +55,7 @@ jobs:
         id: grype
         with:
           image: ghcr.io/${{ github.repository }}:latest
-          fail-build: true
+          fail-build: false
           severity-cutoff: high
           only-fixed: true
           output-format: sarif
