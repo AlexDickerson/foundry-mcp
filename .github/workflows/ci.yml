@@ -1,72 +1,64 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
-  module:
+  lint-and-typecheck:
     runs-on: ubuntu-latest
-    defaults:
-      run:
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install module dependencies
+        run: npm ci
         working-directory: module
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: module/package-lock.json
-
-      - name: Install dependencies
+      - name: Install server dependencies
         run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npm test
-
-      - name: Build
-        run: npm run build
-
-      - name: Upload module artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: module-dist
-          path: module/dist/
-          retention-days: 7
-
-  server:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
         working-directory: server
 
+      - name: Lint module
+        run: npm run lint
+        working-directory: module
+
+      - name: Lint server
+        run: npm run lint
+        working-directory: server
+
+      - name: Type-check module
+        run: npm run type-check
+        working-directory: module
+
+      - name: Build server (type-check)
+        run: npm run build
+        working-directory: server
+
+      - name: Prettier check
+        run: npx prettier --check "module/src/**/*.ts" "server/src/**/*.ts"
+
+  test:
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: server/package-lock.json
+          node-version: 20
 
-      - name: Install dependencies
+      - name: Install module dependencies
         run: npm ci
+        working-directory: module
 
-      - name: Build
-        run: npm run build
-
-      - name: Upload server artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-dist
-          path: server/dist/
-          retention-days: 7
+      - name: Run module tests
+        run: npm test
+        working-directory: module
