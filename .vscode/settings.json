@@ -1,0 +1,25 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.rulers": [120],
+  "editor.tabSize": 2,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "module/dist": true,
+    "server/dist": true
+  },
+  "eslint.enable": true,
+  "eslint.useFlatConfig": true,
+  "eslint.workingDirectories": [
+    { "directory": "module", "changeProcessCWD": true },
+    { "directory": "server", "changeProcessCWD": true }
+  ],
+  "typescript.tsdk": "module/node_modules/typescript/lib"
+}
