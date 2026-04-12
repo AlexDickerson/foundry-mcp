@@ -69,7 +69,8 @@ function getGlobals(): CanvasGlobals {
 
 function captureScreenshot(canvas: FoundryCanvas): SceneScreenshot | undefined {
   try {
-    const dims = canvas.scene!.dimensions;
+    if (!canvas.scene) throw new Error('No active canvas scene');
+    const dims = canvas.scene.dimensions;
     const view = canvas.app.view;
     const stage = canvas.stage;
 

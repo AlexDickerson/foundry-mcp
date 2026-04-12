@@ -40,8 +40,8 @@ declare const game: FoundryGame;
 function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    img.onerror = () => reject(new Error(`Failed to load background image: ${src}`));
+    img.onload = (): void => { resolve({ width: img.naturalWidth, height: img.naturalHeight }); };
+    img.onerror = (): void => { reject(new Error(`Failed to load background image: ${src}`)); };
     img.src = src;
   });
 }
@@ -61,10 +61,10 @@ async function shiftEmbedded(
 
   if (type === 'Wall') {
     const updates = docs
-      .filter(d => d.c)
+      .filter((d): d is EmbeddedDoc & { c: [number, number, number, number] } => d.c != null)
       .map(d => ({
         _id: d.id,
-        c: [d.c![0] - dx, d.c![1] - dy, d.c![2] - dx, d.c![3] - dy],
+        c: [d.c[0] - dx, d.c[1] - dy, d.c[2] - dx, d.c[3] - dy],
       }));
     if (updates.length) await scene.updateEmbeddedDocuments(type, updates);
     return updates.length;
@@ -72,11 +72,11 @@ async function shiftEmbedded(
 
   // Tokens, Lights, Notes, Tiles, Drawings, AmbientSounds
   const updates = docs
-    .filter(d => d.x !== undefined && d.y !== undefined)
+    .filter((d): d is EmbeddedDoc & { x: number; y: number } => d.x !== undefined && d.y !== undefined)
     .map(d => ({
       _id: d.id,
-      x: d.x! - dx,
-      y: d.y! - dy,
+      x: d.x - dx,
+      y: d.y - dy,
     }));
   if (updates.length) await scene.updateEmbeddedDocuments(type, updates);
   return updates.length;
@@ -91,7 +91,7 @@ export async function normalizeSceneHandler(params: NormalizeSceneParams): Promi
     throw new Error(params.sceneId ? `Scene not found: ${params.sceneId}` : 'No active scene');
   }
 
-  const bgSrc = scene.background?.src;
+  const bgSrc = scene.background.src;
   if (!bgSrc) {
     throw new Error(`Scene "${scene.name}" has no background image`);
   }
@@ -132,18 +132,17 @@ export async function normalizeSceneHandler(params: NormalizeSceneParams): Promi
 
   // Shift all embedded documents to compensate for removed padding
   const collections: [string, EmbeddedDoc[]][] = [
-    ['Token',        scene.tokens?.contents   ?? []],
-    ['Wall',         scene.walls?.contents    ?? []],
-    ['AmbientLight', scene.lights?.contents   ?? []],
-    ['Note',         scene.notes?.contents    ?? []],
-    ['Tile',         scene.tiles?.contents    ?? []],
-    ['Drawing',      scene.drawings?.contents ?? []],
-    ['AmbientSound', scene.sounds?.contents   ?? []],
+    ['Token',        scene.tokens.contents],
+    ['Wall',         scene.walls.contents],
+    ['AmbientLight', scene.lights.contents],
+    ['Note',         scene.notes.contents],
+    ['Tile',         scene.tiles.contents],
+    ['Drawing',      scene.drawings.contents],
+    ['AmbientSound', scene.sounds.contents],
   ];
 
-  let shifted = 0;
   for (const [type, docs] of collections) {
-    shifted += await shiftEmbedded(scene, type, docs, dx, dy);
+    await shiftEmbedded(scene, type, docs, dx, dy);
   }
 
   const gridSize = scene.grid.size;

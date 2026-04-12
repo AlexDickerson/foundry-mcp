@@ -19,8 +19,8 @@ export async function getSceneBackgroundHandler(params: GetSceneBackgroundParams
   const img = new Image();
   img.crossOrigin = 'anonymous';
   await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error(`Failed to load background image: ${src}`));
+    img.onload = (): void => { resolve(); };
+    img.onerror = (): void => { reject(new Error(`Failed to load background image: ${src}`)); };
     img.src = src;
   });
 

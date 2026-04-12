@@ -17,14 +17,15 @@ export async function moveTokenPathHandler(params: MoveTokenPathParams): Promise
   const token = getToken(scene, params.tokenId);
   const animate = params.animate !== false;
   const delayMs = params.delayMs ?? 500;
-  const gridSize = (globalThis as Record<string, unknown>)['canvas']
-    ? ((globalThis as Record<string, unknown>)['canvas'] as { scene?: { grid?: { size?: number } } })?.scene?.grid?.size ?? 100
-    : 100;
+  const canvasObj = (globalThis as Record<string, unknown>)['canvas'] as
+    { scene?: { grid?: { size?: number } } } | undefined;
+  const gridSize = canvasObj?.scene?.grid?.size ?? 100;
 
   let current = token;
 
   for (let i = 0; i < params.waypoints.length; i++) {
-    const wp = params.waypoints[i]!;
+    const wp = params.waypoints[i];
+    if (!wp) break;
     const x = params.coordType === 'grid' ? wp.x * gridSize : wp.x;
     const y = params.coordType === 'grid' ? wp.y * gridSize : wp.y;
 

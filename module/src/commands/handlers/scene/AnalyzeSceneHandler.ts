@@ -89,8 +89,8 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.onload = (): void => { resolve(img); };
+    img.onerror = (): void => { reject(new Error(`Failed to load image: ${src}`)); };
     img.src = src;
   });
 }
@@ -119,10 +119,10 @@ function sampleRegion(
   let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
   const count = w * h;
   for (let i = 0; i < count; i++) {
-    rSum += data[i * 4]!;
-    gSum += data[i * 4 + 1]!;
-    bSum += data[i * 4 + 2]!;
-    aSum += data[i * 4 + 3]!;
+    rSum += data[i * 4] ?? 0;
+    gSum += data[i * 4 + 1] ?? 0;
+    bSum += data[i * 4 + 2] ?? 0;
+    aSum += data[i * 4 + 3] ?? 0;
   }
 
   return {
@@ -146,7 +146,7 @@ export async function analyzeSceneHandler(params: AnalyzeSceneParams): Promise<A
     throw new Error(params.sceneId ? `Scene not found: ${params.sceneId}` : 'No active scene');
   }
 
-  const bgSrc = scene.background?.src;
+  const bgSrc = scene.background.src;
   if (!bgSrc) {
     throw new Error(`Scene "${scene.name}" has no background image`);
   }
@@ -160,7 +160,8 @@ export async function analyzeSceneHandler(params: AnalyzeSceneParams): Promise<A
   const canvas = document.createElement('canvas');
   canvas.width = img.naturalWidth;
   canvas.height = img.naturalHeight;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Failed to create canvas context');
   ctx.drawImage(img, 0, 0);
 
   // Scale factor: image pixels may differ from scene pixels
