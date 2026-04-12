@@ -45,3 +45,6 @@ ENV FOUNDRY_DATA_DIR=/data/Data
 EXPOSE 30000 8765
 
 ENTRYPOINT ["docker-entrypoint.sh"]
+# Restore the CMD that felddy's entrypoint expects — our ENTRYPOINT
+# override resets it to empty, causing "$1: unbound variable".
+CMD ["resources/app/main.js", "--port=30000", "--headless", "--noupdate", "--dataPath=/data/Data"]
