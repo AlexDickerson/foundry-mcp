@@ -5,7 +5,11 @@
   "version": "7.7.0",
   "authors": [
     {
-      "name": "Alex Ivenkov",
+      "name": "Alex Dickerson",
+      "url": "https://github.com/AlexDickerson"
+    },
+    {
+      "name": "Alex Ivenkov (original upstream)",
       "url": "https://github.com/alexivenkov"
     }
   ],
@@ -20,5 +24,5 @@
   "styles": [
     "styles/config-form.css"
   ],
-  "url": "https://github.com/alexivenkov/foundry-api-bridge-module"
+  "url": "https://github.com/AlexDickerson/foundry-mcp"
 }

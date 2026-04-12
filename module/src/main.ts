@@ -67,6 +67,7 @@ import {
   updateActorEffectHandler,
   getCombatTurnContextHandler,
   captureSceneHandler,
+  createSceneHandler,
   listRollTablesHandler,
   getRollTableHandler,
   rollOnTableHandler,
@@ -210,6 +211,7 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   // Scene actions
   commandRouter.register('activate-scene', activateSceneHandler);
   commandRouter.register('capture-scene', captureSceneHandler);
+  commandRouter.register('create-scene', createSceneHandler);
 
   const wsConnectUrl = `${wsUrl}?apiKey=${encodeURIComponent(apiKey)}`;
   wsClient = new WebSocketClient({

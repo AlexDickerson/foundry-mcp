@@ -1,5 +1,8 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, normalize, resolve } from 'node:path';
+import { homedir } from 'node:os';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -7,8 +10,9 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { z } from 'zod/v4';
 
 const PORT = 8765;
-const HOST = '127.0.0.1';
+const HOST = '0.0.0.0';
 const COMMAND_TIMEOUT_MS = 30_000;
+const FOUNDRY_DATA_DIR = resolve(homedir(), 'foundry-dev-data', 'Data');
 
 // ---------------------------------------------------------------------------
 // Foundry Bridge — WebSocket connection to the Foundry module
@@ -86,10 +90,8 @@ wss.on('connection', (ws: WebSocket) => {
 });
 
 // ---------------------------------------------------------------------------
-// MCP Server — tool definitions
+// MCP — tool definitions & per-session server factory
 // ---------------------------------------------------------------------------
-
-const mcp = new McpServer({ name: 'foundry-mcp', version: '0.1.0' });
 
 /** Send a command to Foundry and wrap the result as an MCP tool response. */
 async function foundryTool(
@@ -129,54 +131,136 @@ async function foundryTool(
   }
 }
 
-// -- Tools --
+/** Register all Foundry tools on an McpServer instance. */
+function registerTools(mcp: McpServer): void {
+  mcp.registerTool('get_scenes_list', {
+    title: 'List Scenes',
+    description: 'List all scenes in the Foundry VTT world with id, name, active status, and thumbnail path',
+    inputSchema: {},
+  }, async (): Promise<CallToolResult> => foundryTool('get-scenes-list'));
 
-mcp.registerTool('get_scenes_list', {
-  title: 'List Scenes',
-  description: 'List all scenes in the Foundry VTT world with id, name, active status, and thumbnail path',
-  inputSchema: {},
-}, async (): Promise<CallToolResult> => foundryTool('get-scenes-list'));
+  mcp.registerTool('get_scene', {
+    title: 'Get Scene',
+    description:
+      'Get full detail for a scene: grid, tokens (with HP/AC/conditions), walls, lights, notes, '
+      + 'drawings, regions, and an ASCII tactical map. Optionally include a WebP screenshot.',
+    inputSchema: {
+      sceneId: z.string().optional().describe('Scene ID. Omit for the currently active scene.'),
+      includeScreenshot: z.boolean().optional().describe('Include a base64 WebP screenshot of the canvas'),
+    },
+  }, async ({ sceneId, includeScreenshot }): Promise<CallToolResult> =>
+    foundryTool('get-scene', { sceneId, includeScreenshot }),
+  );
 
-mcp.registerTool('get_scene', {
-  title: 'Get Scene',
-  description:
-    'Get full detail for a scene: grid, tokens (with HP/AC/conditions), walls, lights, notes, '
-    + 'drawings, regions, and an ASCII tactical map. Optionally include a WebP screenshot.',
-  inputSchema: {
-    sceneId: z.string().optional().describe('Scene ID. Omit for the currently active scene.'),
-    includeScreenshot: z.boolean().optional().describe('Include a base64 WebP screenshot of the canvas'),
-  },
-}, async ({ sceneId, includeScreenshot }): Promise<CallToolResult> =>
-  foundryTool('get-scene', { sceneId, includeScreenshot }),
-);
+  mcp.registerTool('activate_scene', {
+    title: 'Activate Scene',
+    description: 'Set a scene as the active scene visible to all players',
+    inputSchema: {
+      sceneId: z.string().describe('ID of the scene to activate'),
+    },
+  }, async ({ sceneId }): Promise<CallToolResult> =>
+    foundryTool('activate-scene', { sceneId }),
+  );
 
-mcp.registerTool('activate_scene', {
-  title: 'Activate Scene',
-  description: 'Set a scene as the active scene visible to all players',
-  inputSchema: {
-    sceneId: z.string().describe('ID of the scene to activate'),
-  },
-}, async ({ sceneId }): Promise<CallToolResult> =>
-  foundryTool('activate-scene', { sceneId }),
-);
+  mcp.registerTool('capture_scene', {
+    title: 'Capture Scene',
+    description: 'Capture a WebP screenshot of the active scene canvas (includes grid overlay)',
+    inputSchema: {},
+  }, async (): Promise<CallToolResult> => foundryTool('capture-scene'));
 
-mcp.registerTool('capture_scene', {
-  title: 'Capture Scene',
-  description: 'Capture a WebP screenshot of the active scene canvas (includes grid overlay)',
-  inputSchema: {},
-}, async (): Promise<CallToolResult> => foundryTool('capture-scene'));
+  mcp.registerTool('create_scene', {
+    title: 'Create Scene',
+    description: 'Create a new scene in Foundry VTT with optional background image and grid settings',
+    inputSchema: {
+      name: z.string().describe('Scene name'),
+      img: z.string().optional().describe('Background image path relative to Foundry Data dir (e.g. "maps/my_map.png")'),
+      width: z.number().optional().describe('Scene width in pixels'),
+      height: z.number().optional().describe('Scene height in pixels'),
+      gridSize: z.number().optional().describe('Grid square size in pixels (default 100)'),
+      gridUnits: z.string().optional().describe('Grid distance units (default "ft")'),
+      gridDistance: z.number().optional().describe('Distance per grid square (default 5)'),
+    },
+  }, async ({ name, img, width, height, gridSize, gridUnits, gridDistance }): Promise<CallToolResult> =>
+    foundryTool('create-scene', { name, img, width, height, gridSize, gridUnits, gridDistance }),
+  );
+
+  mcp.registerTool('upload_asset', {
+    title: 'Upload Asset',
+    description: 'Upload a file (image, audio, etc.) to the Foundry VTT Data directory. Returns the relative path for use in scene creation and other tools.',
+    inputSchema: {
+      path: z.string().describe('Destination path relative to Foundry Data dir (e.g. "maps/castle.png")'),
+      data: z.string().describe('Base64-encoded file content'),
+    },
+  }, async ({ path: relPath, data }): Promise<CallToolResult> => {
+    try {
+      const safePath = normalize(relPath);
+      if (safePath.startsWith('..') || safePath.includes('/..') || safePath.includes('\\..')) {
+        return { content: [{ type: 'text', text: 'Error: path must not escape the Data directory' }], isError: true };
+      }
+      const absPath = resolve(FOUNDRY_DATA_DIR, safePath);
+      if (!absPath.startsWith(FOUNDRY_DATA_DIR)) {
+        return { content: [{ type: 'text', text: 'Error: path must not escape the Data directory' }], isError: true };
+      }
+      await mkdir(dirname(absPath), { recursive: true });
+      await writeFile(absPath, Buffer.from(data, 'base64'));
+      return { content: [{ type: 'text', text: JSON.stringify({ path: safePath, bytes: Buffer.from(data, 'base64').length }) }] };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: 'text', text: `Error: ${msg}` }], isError: true };
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Session management — one transport + McpServer per MCP client
+// ---------------------------------------------------------------------------
+
+const sessions = new Map<string, StreamableHTTPServerTransport>();
+
+async function createSession(): Promise<StreamableHTTPServerTransport> {
+  const mcp = new McpServer({ name: 'foundry-mcp', version: '0.1.0' });
+  registerTools(mcp);
+
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => randomUUID(),
+    onsessioninitialized: (sessionId: string) => {
+      console.log(`MCP session created: ${sessionId}`);
+      sessions.set(sessionId, transport);
+    },
+  });
+
+  transport.onclose = () => {
+    const sid = transport.sessionId;
+    if (sid) {
+      sessions.delete(sid);
+      console.log(`MCP session closed: ${sid}`);
+    }
+  };
+
+  await mcp.connect(transport);
+  return transport;
+}
 
 // ---------------------------------------------------------------------------
 // HTTP Server — routes MCP traffic and Foundry WS upgrades
 // ---------------------------------------------------------------------------
 
-const transport = new StreamableHTTPServerTransport({
-  sessionIdGenerator: () => randomUUID(),
-});
-
 const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   // MCP Streamable HTTP endpoint
   if (req.url === '/mcp' || req.url === '/') {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    let transport: StreamableHTTPServerTransport;
+
+    if (sessionId && sessions.has(sessionId)) {
+      transport = sessions.get(sessionId)!;
+    } else if (!sessionId) {
+      transport = await createSession();
+    } else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Invalid session ID' }, id: null }));
+      return;
+    }
+
     try {
       await transport.handleRequest(req, res);
     } catch (err) {
@@ -195,6 +279,7 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
     res.end(JSON.stringify({
       ok: true,
       foundryConnected: foundrySocket?.readyState === WebSocket.OPEN,
+      activeSessions: sessions.size,
     }));
     return;
   }
@@ -214,8 +299,6 @@ httpServer.on('upgrade', (req, socket, head) => {
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
-
-await mcp.connect(transport);
 
 httpServer.listen(PORT, HOST, () => {
   console.log(`foundry-mcp server listening on ${HOST}:${PORT}`);

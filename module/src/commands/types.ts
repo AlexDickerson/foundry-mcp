@@ -69,6 +69,7 @@ export type CommandType =
   | 'get-scene'
   | 'get-scenes-list'
   | 'activate-scene'
+  | 'create-scene'
   | 'activate-item'
   | 'get-journals'
   | 'get-journal'
@@ -684,6 +685,17 @@ export interface GetSceneParams {
 
 export type GetScenesListParams = Record<string, never>;
 
+export interface CreateSceneParams {
+  name: string;
+  img?: string;
+  width?: number;
+  height?: number;
+  gridSize?: number;
+  gridUnits?: string;
+  gridDistance?: number;
+  folder?: string;
+}
+
 export interface ActivateSceneParams {
   sceneId: string;
 }
@@ -802,6 +814,15 @@ export interface SceneSummaryResult {
 
 export interface SceneListResult {
   scenes: SceneSummaryResult[];
+}
+
+export interface CreateSceneResult {
+  id: string;
+  name: string;
+  img: string;
+  width: number;
+  height: number;
+  active: boolean;
 }
 
 export interface ActivateSceneResult {
@@ -1077,6 +1098,7 @@ export interface CommandParamsMap {
   'get-scene': GetSceneParams;
   'get-scenes-list': GetScenesListParams;
   'activate-scene': ActivateSceneParams;
+  'create-scene': CreateSceneParams;
   'activate-item': ActivateItemParams;
   'get-journals': GetJournalsParams;
   'get-journal': GetJournalParams;
@@ -1151,6 +1173,7 @@ export interface CommandResultMap {
   'get-scene': SceneDetailResult;
   'get-scenes-list': SceneListResult;
   'activate-scene': ActivateSceneResult;
+  'create-scene': CreateSceneResult;
   'activate-item': ActivateItemResult;
   'get-journals': JournalData[];
   'get-journal': JournalData;
