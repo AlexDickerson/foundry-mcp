@@ -57,9 +57,9 @@ export async function createSceneFromUvttHandler(
 
   const scene = await game.scenes.documentClass.create(sceneData);
 
-  // Ensure background persists — Foundry v14 may not set it during create()
+  // Ensure background persists — try multiple approaches for Foundry v14 compat
   if (params.img && !scene.img) {
-    await scene.update({ background: { src: params.img } });
+    await scene.update({ img: params.img, background: { src: params.img } });
   }
 
   // 2. Convert line_of_sight to wall segments
