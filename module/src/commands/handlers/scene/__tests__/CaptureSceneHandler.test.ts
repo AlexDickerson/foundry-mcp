@@ -1,5 +1,16 @@
 import { captureSceneHandler } from '../CaptureSceneHandler';
 
+jest.mock('../GridOverlay', () => ({
+  addGridOverlay: jest.fn().mockReturnValue(null),
+  removeGridOverlay: jest.fn(),
+}));
+
+interface MockPixiPoint {
+  x: number;
+  y: number;
+  set: jest.Mock;
+}
+
 interface MockCanvas {
   ready: boolean;
   app: {
@@ -10,8 +21,17 @@ interface MockCanvas {
       height: number;
     };
   };
-  stage: object;
-  scene: { id: string; name: string } | null;
+  stage: {
+    position: MockPixiPoint;
+    scale: MockPixiPoint;
+  };
+  scene: {
+    id: string;
+    name: string;
+    grid: { size: number };
+    dimensions: { sceneWidth: number; sceneHeight: number; sceneX: number; sceneY: number };
+  } | null;
+  pan: jest.Mock;
 }
 
 function createMockCanvas(overrides?: Partial<MockCanvas>): MockCanvas {
@@ -25,8 +45,17 @@ function createMockCanvas(overrides?: Partial<MockCanvas>): MockCanvas {
         height: 1864
       }
     },
-    stage: {},
-    scene: { id: 'scene-1', name: 'Cragmaw Castle' },
+    stage: {
+      position: { x: 0, y: 0, set: jest.fn() },
+      scale: { x: 1, y: 1, set: jest.fn() },
+    },
+    scene: {
+      id: 'scene-1',
+      name: 'Cragmaw Castle',
+      grid: { size: 100 },
+      dimensions: { sceneWidth: 2658, sceneHeight: 1864, sceneX: 0, sceneY: 0 },
+    },
+    pan: jest.fn(),
     ...overrides
   };
 }
@@ -44,6 +73,10 @@ function clearCanvas(): void {
 }
 
 describe('captureSceneHandler', () => {
+  beforeAll(() => {
+    (globalThis as Record<string, unknown>).innerWidth = 1920;
+    (globalThis as Record<string, unknown>).innerHeight = 1080;
+  });
   afterEach(clearCanvas);
 
   it('should render stage, capture viewport and return base64 image', async () => {
@@ -73,7 +106,7 @@ describe('captureSceneHandler', () => {
 
     await captureSceneHandler({} as Record<string, never>);
 
-    expect(callOrder).toEqual(['render', 'toDataURL']);
+    expect(callOrder).toEqual(['render', 'toDataURL', 'render']);
   });
 
   it('should call toDataURL with webp and quality 0.8', async () => {

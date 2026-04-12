@@ -131,7 +131,6 @@ describe('Token Handlers', () => {
         elevation: 0,
         rotation: 0,
         hidden: false,
-        img: 'icons/token.png',
         disposition: 1,
         hp: { value: 25, max: 30 },
         ac: 15,
@@ -590,7 +589,6 @@ describe('Token Handlers', () => {
             elevation: 0,
             rotation: 0,
             hidden: false,
-            img: 'icons/token.png',
             disposition: 1,
             hp: { value: 25, max: 30 },
             ac: 15,
@@ -605,7 +603,6 @@ describe('Token Handlers', () => {
             elevation: 0,
             rotation: 0,
             hidden: false,
-            img: 'icons/token.png',
             disposition: 1,
             conditions: []
           }
