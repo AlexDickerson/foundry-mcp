@@ -1,0 +1,24 @@
+{
+  "id": "foundry-api-bridge",
+  "title": "Foundry API Bridge (Foundry MCP)",
+  "description": "Self-hosted bridge that exposes Foundry VTT to a local MCP server over WebSocket. The GM-side module receives JSON commands (rolls, combat, scenes, journals, tokens, tables, etc.) and replies with results. No outbound traffic.",
+  "version": "7.7.0",
+  "authors": [
+    {
+      "name": "Alex Ivenkov",
+      "url": "https://github.com/alexivenkov"
+    }
+  ],
+  "compatibility": {
+    "minimum": "11",
+    "verified": "13",
+    "maximum": "13"
+  },
+  "esmodules": [
+    "module.js"
+  ],
+  "styles": [
+    "styles/config-form.css"
+  ],
+  "url": "https://github.com/alexivenkov/foundry-api-bridge-module"
+}
