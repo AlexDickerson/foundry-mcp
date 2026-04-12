@@ -98,7 +98,7 @@ function stopPatrolById(tokenId: string): boolean {
   return true;
 }
 
-export function setPatrolHandler(params: SetPatrolParams): SetPatrolResult {
+export function setPatrolHandler(params: SetPatrolParams): Promise<SetPatrolResult> {
   const scene = getActiveScene(game, params.sceneId);
   const token = getToken(scene, params.tokenId);
 
@@ -130,19 +130,19 @@ export function setPatrolHandler(params: SetPatrolParams): SetPatrolResult {
   // Start the patrol
   patrol.timer = setTimeout(() => { void stepPatrol(patrol); }, patrol.delayMs);
 
-  return {
+  return Promise.resolve({
     patrolId,
     tokenId: token.id,
     waypoints: params.waypoints.length,
-  };
+  });
 }
 
-export function stopPatrolHandler(params: StopPatrolParams): StopPatrolResult {
+export function stopPatrolHandler(params: StopPatrolParams): Promise<StopPatrolResult> {
   const stopped = stopPatrolById(params.tokenId);
-  return { stopped };
+  return Promise.resolve({ stopped });
 }
 
-export function getPatrolsHandler(params: GetPatrolsParams): GetPatrolsResult {
+export function getPatrolsHandler(params: GetPatrolsParams): Promise<GetPatrolsResult> {
   const sceneId = params.sceneId ?? game.scenes.active?.id;
   const patrols: PatrolInfo[] = [];
 
@@ -164,5 +164,5 @@ export function getPatrolsHandler(params: GetPatrolsParams): GetPatrolsResult {
     });
   }
 
-  return { patrols };
+  return Promise.resolve({ patrols });
 }

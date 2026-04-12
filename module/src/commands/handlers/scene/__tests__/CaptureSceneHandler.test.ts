@@ -74,8 +74,8 @@ function clearCanvas(): void {
 
 describe('captureSceneHandler', () => {
   beforeAll(() => {
-    (globalThis as Record<string, unknown>).innerWidth = 1920;
-    (globalThis as Record<string, unknown>).innerHeight = 1080;
+    (globalThis as Record<string, unknown>)['innerWidth'] = 1920;
+    (globalThis as Record<string, unknown>)['innerHeight'] = 1080;
   });
   afterEach(clearCanvas);
 
