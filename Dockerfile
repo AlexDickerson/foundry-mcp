@@ -37,9 +37,8 @@ COPY --from=build-server /app/package.json /opt/foundry-mcp/package.json
 # Module staged for install on first boot
 COPY --from=build-module /app/dist /opt/foundry-api-bridge
 
-# Entrypoint wrapper
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Entrypoint wrapper (--chmod avoids needing root for RUN chmod)
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 ENV FOUNDRY_DATA_DIR=/data/Data
 
