@@ -15,7 +15,7 @@ function createMockResult(overrides?: Partial<FoundryTableResult>): FoundryTable
     drawn: false,
     documentCollection: undefined,
     documentId: undefined,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -34,7 +34,7 @@ function createMockTable(results: FoundryTableResult[] = [], overrides?: Partial
     resetResults: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -45,8 +45,8 @@ function setGameForCreate(): void {
     tables: {
       documentClass: { create: mockCreate },
       get: jest.fn(),
-      forEach: jest.fn()
-    }
+      forEach: jest.fn(),
+    },
   };
 }
 
@@ -55,8 +55,8 @@ function setGameForGetById(tables: Map<string, FoundryRollTable>): void {
     tables: {
       get: jest.fn((id: string) => tables.get(id)),
       forEach: jest.fn(),
-      documentClass: { create: jest.fn() }
-    }
+      documentClass: { create: jest.fn() },
+    },
   };
 }
 
@@ -81,7 +81,7 @@ describe('createRollTableHandler', () => {
       name: 'My Table',
       formula: '1d20',
       replacement: true,
-      displayRoll: true
+      displayRoll: true,
     });
     expect(result.id).toBe('new-1');
     expect(result.name).toBe('My Table');
@@ -90,7 +90,7 @@ describe('createRollTableHandler', () => {
   it('should create table with full params and results', async () => {
     const results = [
       createMockResult({ _id: 'r1', text: 'Goblin', range: [1, 3] as [number, number] }),
-      createMockResult({ _id: 'r2', text: 'Dragon', range: [4, 6] as [number, number] })
+      createMockResult({ _id: 'r2', text: 'Dragon', range: [4, 6] as [number, number] }),
     ];
     const created = createMockTable(results, { id: 'new-2', name: 'Encounters', formula: '1d6' });
     mockCreate.mockResolvedValue(created);
@@ -106,8 +106,15 @@ describe('createRollTableHandler', () => {
       folder: 'folder-1',
       results: [
         { text: 'Goblin', range: [1, 3], weight: 2 },
-        { text: 'Dragon', range: [4, 6], type: 1, documentCollection: 'Actor', documentId: 'actor-1', img: 'dragon.webp' }
-      ]
+        {
+          text: 'Dragon',
+          range: [4, 6],
+          type: 1,
+          documentCollection: 'Actor',
+          documentId: 'actor-1',
+          img: 'dragon.webp',
+        },
+      ],
     });
 
     expect(mockCreate).toHaveBeenCalledWith({
@@ -120,8 +127,16 @@ describe('createRollTableHandler', () => {
       folder: 'folder-1',
       results: [
         { type: 0, text: 'Goblin', range: [1, 3], weight: 2 },
-        { type: 1, text: 'Dragon', range: [4, 6], weight: 1, documentCollection: 'Actor', documentId: 'actor-1', img: 'dragon.webp' }
-      ]
+        {
+          type: 1,
+          text: 'Dragon',
+          range: [4, 6],
+          weight: 1,
+          documentCollection: 'Actor',
+          documentId: 'actor-1',
+          img: 'dragon.webp',
+        },
+      ],
     });
     expect(result.results).toHaveLength(2);
   });
@@ -146,7 +161,7 @@ describe('createRollTableHandler', () => {
 
     await createRollTableHandler({
       name: 'Test',
-      results: [{ text: 'Result', range: [1, 10] }]
+      results: [{ text: 'Result', range: [1, 10] }],
     });
 
     const call = mockCreate.mock.calls[0]?.[0] as Record<string, unknown>;
@@ -175,8 +190,10 @@ describe('updateRollTableHandler', () => {
 
   it('should update table fields', async () => {
     const updated = createMockTable([], {
-      id: 't1', name: 'Updated', formula: '1d100',
-      update: jest.fn()
+      id: 't1',
+      name: 'Updated',
+      formula: '1d100',
+      update: jest.fn(),
     });
     (updated.update as jest.Mock).mockResolvedValue(updated);
     setGameForGetById(new Map([['t1', updated]]));
@@ -184,12 +201,12 @@ describe('updateRollTableHandler', () => {
     const result = await updateRollTableHandler({
       tableId: 't1',
       name: 'Updated',
-      formula: '1d100'
+      formula: '1d100',
     });
 
     expect(updated.update).toHaveBeenCalledWith({
       name: 'Updated',
-      formula: '1d100'
+      formula: '1d100',
     });
     expect(result.name).toBe('Updated');
   });
@@ -197,8 +214,9 @@ describe('updateRollTableHandler', () => {
   it('should reject when table not found', async () => {
     setGameForGetById(new Map());
 
-    await expect(updateRollTableHandler({ tableId: 'nonexistent' }))
-      .rejects.toThrow('Roll table not found: nonexistent');
+    await expect(updateRollTableHandler({ tableId: 'nonexistent' })).rejects.toThrow(
+      'Roll table not found: nonexistent',
+    );
   });
 
   it('should only include provided fields in update', async () => {
@@ -223,7 +241,7 @@ describe('updateRollTableHandler', () => {
       replacement: false,
       displayRoll: false,
       description: '<p>New desc</p>',
-      img: 'new.webp'
+      img: 'new.webp',
     });
 
     expect(table.update).toHaveBeenCalledWith({
@@ -232,7 +250,7 @@ describe('updateRollTableHandler', () => {
       replacement: false,
       displayRoll: false,
       description: '<p>New desc</p>',
-      img: 'new.webp'
+      img: 'new.webp',
     });
   });
 
@@ -264,7 +282,8 @@ describe('deleteRollTableHandler', () => {
   it('should reject when table not found', async () => {
     setGameForGetById(new Map());
 
-    await expect(deleteRollTableHandler({ tableId: 'nonexistent' }))
-      .rejects.toThrow('Roll table not found: nonexistent');
+    await expect(deleteRollTableHandler({ tableId: 'nonexistent' })).rejects.toThrow(
+      'Roll table not found: nonexistent',
+    );
   });
 });

@@ -6,7 +6,7 @@ declare const game: FoundryGame;
 export function getScenesListHandler(_params: GetScenesListParams): Promise<SceneListResult> {
   try {
     const scenes: SceneSummaryResult[] = [];
-    game.scenes.forEach(scene => {
+    game.scenes.forEach((scene) => {
       scenes.push(mapSceneToSummary(scene));
     });
     return Promise.resolve({ scenes });

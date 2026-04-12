@@ -1,9 +1,7 @@
 import type { GetActorEffectsParams, ActorEffectsResult } from '@/commands/types';
 import { getGame, mapEffectToSummary } from './effectTypes';
 
-export function getActorEffectsHandler(
-  params: GetActorEffectsParams
-): Promise<ActorEffectsResult> {
+export function getActorEffectsHandler(params: GetActorEffectsParams): Promise<ActorEffectsResult> {
   const actor = getGame().actors.get(params.actorId);
 
   if (!actor) {
@@ -15,13 +13,13 @@ export function getActorEffectsHandler(
   let effects = actor.effects.contents;
 
   if (!includeDisabled) {
-    effects = effects.filter(e => !e.disabled);
+    effects = effects.filter((e) => !e.disabled);
   }
 
   return Promise.resolve({
     actorId: actor.id,
     actorName: actor.name,
     effects: effects.map(mapEffectToSummary),
-    activeStatuses: Array.from(actor.statuses)
+    activeStatuses: Array.from(actor.statuses),
   });
 }

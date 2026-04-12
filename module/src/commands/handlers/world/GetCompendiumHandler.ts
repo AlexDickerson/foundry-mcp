@@ -16,7 +16,7 @@ function mapDocument(doc: Record<string, unknown>): CompendiumDocument {
     uuid: doc['uuid'] as string,
     name: doc['name'] as string,
     type: doc['type'] as string,
-    img: (doc['img'] as string | undefined) ?? ''
+    img: (doc['img'] as string | undefined) ?? '',
   };
 
   if (doc['system'] !== undefined) {
@@ -26,13 +26,13 @@ function mapDocument(doc: Record<string, unknown>): CompendiumDocument {
   const items = doc['items'] as Map<string, Record<string, unknown>> | undefined;
   if (items !== undefined && items.size > 0) {
     result.items = [];
-    items.forEach(item => {
+    items.forEach((item) => {
       result.items?.push({
         id: item['id'] as string,
         name: item['name'] as string,
         type: item['type'] as string,
         img: (item['img'] as string | undefined) ?? '',
-        system: item['system'] as Record<string, unknown>
+        system: item['system'] as Record<string, unknown>,
       });
     });
   }
@@ -40,14 +40,14 @@ function mapDocument(doc: Record<string, unknown>): CompendiumDocument {
   const pages = doc['pages'] as Map<string, Record<string, unknown>> | undefined;
   if (pages !== undefined && pages.size > 0) {
     result.pages = [];
-    pages.forEach(page => {
+    pages.forEach((page) => {
       const text = page['text'] as { content?: string; markdown?: string } | undefined;
       result.pages?.push({
         id: page['id'] as string,
         name: page['name'] as string,
         type: page['type'] as string,
         text: text?.content ?? null,
-        markdown: text?.markdown ?? null
+        markdown: text?.markdown ?? null,
       });
     });
   }
@@ -69,7 +69,7 @@ export async function getCompendiumHandler(params: GetCompendiumParams): Promise
   }
 
   const rawDocuments = await pack.getDocuments();
-  const documents: CompendiumDocument[] = rawDocuments.map(doc => {
+  const documents: CompendiumDocument[] = rawDocuments.map((doc) => {
     return mapDocument(doc as unknown as Record<string, unknown>);
   });
 
@@ -79,6 +79,6 @@ export async function getCompendiumHandler(params: GetCompendiumParams): Promise
     type: pack.metadata.type,
     system: pack.metadata.system ?? '',
     documentCount: documents.length,
-    documents
+    documents,
   };
 }

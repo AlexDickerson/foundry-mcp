@@ -4,11 +4,7 @@ export interface Point {
 }
 
 export interface CollisionChecker {
-  testCollision(
-    origin: Point,
-    destination: Point,
-    config: { type: string; mode: string }
-  ): boolean;
+  testCollision(origin: Point, destination: Point, config: { type: string; mode: string }): boolean;
 }
 
 export interface PathfinderConfig {
@@ -31,8 +27,14 @@ interface Node {
 const DEFAULT_MAX_NODES = 2500;
 
 const DIRECTIONS: ReadonlyArray<[number, number]> = [
-  [-1, 0], [1, 0], [0, -1], [0, 1],
-  [-1, -1], [-1, 1], [1, -1], [1, 1]
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+  [-1, -1],
+  [-1, 1],
+  [1, -1],
+  [1, 1],
 ];
 
 function chebyshev(ax: number, ay: number, bx: number, by: number): number {
@@ -53,12 +55,12 @@ function isBlocked(
   toGX: number,
   toGY: number,
   gridSize: number,
-  collision: CollisionChecker
+  collision: CollisionChecker,
 ): boolean {
   return collision.testCollision(
     { x: gridCenter(fromGX, gridSize), y: gridCenter(fromGY, gridSize) },
     { x: gridCenter(toGX, gridSize), y: gridCenter(toGY, gridSize) },
-    { type: 'move', mode: 'any' }
+    { type: 'move', mode: 'any' },
   );
 }
 
@@ -77,12 +79,7 @@ function findLowestF(openSet: Node[]): number {
   return minIdx;
 }
 
-function reconstructPath(
-  cameFrom: Map<string, string>,
-  endGX: number,
-  endGY: number,
-  gridSize: number
-): Point[] {
+function reconstructPath(cameFrom: Map<string, string>, endGX: number, endGY: number, gridSize: number): Point[] {
   const path: Point[] = [];
   let key = toKey(endGX, endGY);
 
@@ -157,7 +154,7 @@ export function findGridPath(config: PathfinderConfig): Point[] | null {
       gScore.set(neighborKey, tentativeG);
 
       const f = tentativeG + chebyshev(nx, ny, endGX, endGY);
-      const existingIdx = openSet.findIndex(n => n.gx === nx && n.gy === ny);
+      const existingIdx = openSet.findIndex((n) => n.gx === nx && n.gy === ny);
 
       if (existingIdx >= 0) {
         const existing = openSet[existingIdx];

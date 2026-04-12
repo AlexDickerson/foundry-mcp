@@ -41,13 +41,13 @@ export function getActorHandler(params: GetActorParams): Promise<ActorDetailResu
   }
 
   const items: ItemSummary[] = [];
-  actor.items.forEach(item => {
+  actor.items.forEach((item) => {
     items.push({
       id: item.id,
       name: item.name,
       type: item.type,
       img: item.img ?? '',
-      system: item.toObject(false).system
+      system: item.toObject(false).system,
     });
   });
 
@@ -57,6 +57,6 @@ export function getActorHandler(params: GetActorParams): Promise<ActorDetailResu
     type: actor.type,
     img: actor.img ?? '',
     system: actor.getRollData(),
-    items
+    items,
   });
 }

@@ -39,9 +39,9 @@ function createMockToken(overrides?: Partial<MockToken>): MockToken {
     actor: {
       id: 'actor-1',
       system: { attributes: { hp: { value: 7, max: 7 }, ac: { value: 13 } } },
-      statuses: new Set<string>()
+      statuses: new Set<string>(),
     },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -51,7 +51,7 @@ function createMockCombatant(overrides?: Partial<MockCombatant>): MockCombatant 
     actorId: 'actor-1',
     tokenId: 'token-1',
     name: 'Goblin',
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -67,17 +67,22 @@ function setGlobals(options: {
   sightBackend?: { testCollision: jest.Mock } | undefined;
   moveBackend?: { testCollision: jest.Mock } | undefined;
 }): void {
-  const combat = options.combat !== undefined ? (options.combat !== null ? {
-    id: 'combat-1',
-    round: options.combat.round ?? 1,
-    turn: options.combat.turn ?? 0,
-    combatant: options.combat.combatant ?? null,
-    combatants: { contents: options.combat.combatants ?? [] }
-  } : null) : null;
+  const combat =
+    options.combat !== undefined
+      ? options.combat !== null
+        ? {
+            id: 'combat-1',
+            round: options.combat.round ?? 1,
+            turn: options.combat.turn ?? 0,
+            combatant: options.combat.combatant ?? null,
+            combatants: { contents: options.combat.combatants ?? [] },
+          }
+        : null
+      : null;
 
   (globalThis as Record<string, unknown>)['game'] = {
     combat,
-    combats: { get: jest.fn().mockReturnValue(combat) }
+    combats: { get: jest.fn().mockReturnValue(combat) },
   };
 
   (globalThis as Record<string, unknown>)['canvas'] = {
@@ -85,17 +90,17 @@ function setGlobals(options: {
       name: 'Test Scene',
       grid: { size: 100, distance: 5, units: 'ft' },
       tokens: { contents: options.tokens ?? [] },
-      walls: { contents: options.walls ?? [] }
-    }
+      walls: { contents: options.walls ?? [] },
+    },
   };
 
   (globalThis as Record<string, unknown>)['CONFIG'] = {
     Canvas: {
       polygonBackends: {
         move: options.moveBackend ?? { testCollision: jest.fn().mockReturnValue(false) },
-        sight: options.sightBackend
-      }
-    }
+        sight: options.sightBackend,
+      },
+    },
   };
 }
 
@@ -111,8 +116,16 @@ describe('getCombatTurnContextHandler', () => {
   it('should return full combat turn context', async () => {
     const currentToken = createMockToken({ id: 'token-1', name: 'Fighter', x: 500, y: 500, disposition: 1 });
     const enemyToken = createMockToken({
-      id: 'token-2', name: 'Goblin', x: 700, y: 500, disposition: -1,
-      actor: { id: 'actor-2', system: { attributes: { hp: { value: 5, max: 7 }, ac: { value: 13 } } }, statuses: new Set(['poisoned']) }
+      id: 'token-2',
+      name: 'Goblin',
+      x: 700,
+      y: 500,
+      disposition: -1,
+      actor: {
+        id: 'actor-2',
+        system: { attributes: { hp: { value: 5, max: 7 }, ac: { value: 13 } } },
+        statuses: new Set(['poisoned']),
+      },
     });
 
     const currentCombatant = createMockCombatant({ id: 'c1', tokenId: 'token-1', actorId: 'actor-1', name: 'Fighter' });
@@ -120,7 +133,7 @@ describe('getCombatTurnContextHandler', () => {
 
     setGlobals({
       combat: { round: 3, turn: 1, combatant: currentCombatant, combatants: [currentCombatant, enemyCombatant] },
-      tokens: [currentToken, enemyToken]
+      tokens: [currentToken, enemyToken],
     });
 
     const result = await getCombatTurnContextHandler({});
@@ -148,10 +161,10 @@ describe('getCombatTurnContextHandler', () => {
         combatant: createMockCombatant({ tokenId: 'token-1' }),
         combatants: [
           createMockCombatant({ tokenId: 'token-1' }),
-          createMockCombatant({ tokenId: 'token-2', actorId: 'actor-2' })
-        ]
+          createMockCombatant({ tokenId: 'token-2', actorId: 'actor-2' }),
+        ],
       },
-      tokens: [currentToken, nearbyToken]
+      tokens: [currentToken, nearbyToken],
     });
 
     const result = await getCombatTurnContextHandler({});
@@ -166,12 +179,9 @@ describe('getCombatTurnContextHandler', () => {
     setGlobals({
       combat: {
         combatant: createMockCombatant({ tokenId: 'token-1' }),
-        combatants: [
-          createMockCombatant({ tokenId: 'token-1' }),
-          createMockCombatant({ tokenId: 'token-2' })
-        ]
+        combatants: [createMockCombatant({ tokenId: 'token-1' }), createMockCombatant({ tokenId: 'token-2' })],
       },
-      tokens: [currentToken, farToken]
+      tokens: [currentToken, farToken],
     });
 
     const result = await getCombatTurnContextHandler({});
@@ -185,19 +195,16 @@ describe('getCombatTurnContextHandler', () => {
     const blockedToken = createMockToken({ id: 'token-2', x: 300, y: 100 });
 
     const sightBackend = {
-      testCollision: jest.fn().mockReturnValue(true) // blocked
+      testCollision: jest.fn().mockReturnValue(true), // blocked
     };
 
     setGlobals({
       combat: {
         combatant: createMockCombatant({ tokenId: 'token-1' }),
-        combatants: [
-          createMockCombatant({ tokenId: 'token-1' }),
-          createMockCombatant({ tokenId: 'token-2' })
-        ]
+        combatants: [createMockCombatant({ tokenId: 'token-1' }), createMockCombatant({ tokenId: 'token-2' })],
       },
       tokens: [currentToken, blockedToken],
-      sightBackend
+      sightBackend,
     });
 
     const result = await getCombatTurnContextHandler({});
@@ -206,7 +213,7 @@ describe('getCombatTurnContextHandler', () => {
     expect(sightBackend.testCollision).toHaveBeenCalledWith(
       { x: 150, y: 150 },
       { x: 350, y: 150 },
-      { type: 'sight', mode: 'any' }
+      { type: 'sight', mode: 'any' },
     );
   });
 
@@ -217,13 +224,10 @@ describe('getCombatTurnContextHandler', () => {
     setGlobals({
       combat: {
         combatant: createMockCombatant({ tokenId: 'token-1' }),
-        combatants: [
-          createMockCombatant({ tokenId: 'token-1' }),
-          createMockCombatant({ tokenId: 'token-2' })
-        ]
+        combatants: [createMockCombatant({ tokenId: 'token-1' }), createMockCombatant({ tokenId: 'token-2' })],
       },
       tokens: [currentToken, otherToken],
-      sightBackend: undefined
+      sightBackend: undefined,
     });
 
     const result = await getCombatTurnContextHandler({});
@@ -234,31 +238,28 @@ describe('getCombatTurnContextHandler', () => {
   it('should reject when no active combat', async () => {
     setGlobals({ combat: null, tokens: [] });
 
-    await expect(getCombatTurnContextHandler({}))
-      .rejects.toThrow('No active combat');
+    await expect(getCombatTurnContextHandler({})).rejects.toThrow('No active combat');
   });
 
   it('should reject when no current combatant', async () => {
     setGlobals({
       combat: { combatant: null, combatants: [] },
-      tokens: []
+      tokens: [],
     });
 
-    await expect(getCombatTurnContextHandler({}))
-      .rejects.toThrow('No current combatant');
+    await expect(getCombatTurnContextHandler({})).rejects.toThrow('No current combatant');
   });
 
   it('should reject when combatant has no token', async () => {
     setGlobals({
       combat: {
         combatant: createMockCombatant({ tokenId: null }),
-        combatants: [createMockCombatant({ tokenId: null })]
+        combatants: [createMockCombatant({ tokenId: null })],
       },
-      tokens: []
+      tokens: [],
     });
 
-    await expect(getCombatTurnContextHandler({}))
-      .rejects.toThrow('Current combatant has no token');
+    await expect(getCombatTurnContextHandler({})).rejects.toThrow('Current combatant has no token');
   });
 
   it('should sort nearby tokens by distance', async () => {
@@ -272,10 +273,10 @@ describe('getCombatTurnContextHandler', () => {
         combatants: [
           createMockCombatant({ tokenId: 'token-1' }),
           createMockCombatant({ tokenId: 'token-far' }),
-          createMockCombatant({ tokenId: 'token-near' })
-        ]
+          createMockCombatant({ tokenId: 'token-near' }),
+        ],
       },
-      tokens: [currentToken, farToken, nearToken]
+      tokens: [currentToken, farToken, nearToken],
     });
 
     const result = await getCombatTurnContextHandler({});
@@ -297,15 +298,15 @@ describe('getCombatTurnContextHandler', () => {
           createMockCombatant({ tokenId: 'token-1' }),
           createMockCombatant({ tokenId: 't-h' }),
           createMockCombatant({ tokenId: 't-n' }),
-          createMockCombatant({ tokenId: 't-f' })
-        ]
+          createMockCombatant({ tokenId: 't-f' }),
+        ],
       },
-      tokens: [currentToken, hostile, neutral, friendly]
+      tokens: [currentToken, hostile, neutral, friendly],
     });
 
     const result = await getCombatTurnContextHandler({});
 
-    const dispositions = result.nearbyTokens.map(t => t.disposition);
+    const dispositions = result.nearbyTokens.map((t) => t.disposition);
     expect(dispositions).toContain('hostile');
     expect(dispositions).toContain('neutral');
     expect(dispositions).toContain('friendly');
@@ -319,12 +320,9 @@ describe('getCombatTurnContextHandler', () => {
     setGlobals({
       combat: {
         combatant: createMockCombatant({ tokenId: 'token-1' }),
-        combatants: [
-          createMockCombatant({ tokenId: 'token-1' }),
-          createMockCombatant({ tokenId: 'token-combat' })
-        ]
+        combatants: [createMockCombatant({ tokenId: 'token-1' }), createMockCombatant({ tokenId: 'token-combat' })],
       },
-      tokens: [currentToken, combatToken, decorationToken]
+      tokens: [currentToken, combatToken, decorationToken],
     });
 
     const result = await getCombatTurnContextHandler({});
@@ -336,15 +334,19 @@ describe('getCombatTurnContextHandler', () => {
   it('should include HP and AC for current combatant', async () => {
     const currentToken = createMockToken({
       id: 'token-1',
-      actor: { id: 'a1', system: { attributes: { hp: { value: 25, max: 30 }, ac: { value: 18 } } }, statuses: new Set(['blessed']) }
+      actor: {
+        id: 'a1',
+        system: { attributes: { hp: { value: 25, max: 30 }, ac: { value: 18 } } },
+        statuses: new Set(['blessed']),
+      },
     });
 
     setGlobals({
       combat: {
         combatant: createMockCombatant({ tokenId: 'token-1' }),
-        combatants: [createMockCombatant({ tokenId: 'token-1' })]
+        combatants: [createMockCombatant({ tokenId: 'token-1' })],
       },
-      tokens: [currentToken]
+      tokens: [currentToken],
     });
 
     const result = await getCombatTurnContextHandler({});

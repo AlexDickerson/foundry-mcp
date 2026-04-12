@@ -5,13 +5,13 @@ export function getWorldInfoHandler(_params: GetWorldInfoParams): Promise<WorldI
   const game = getGame();
 
   const compendiumMeta: CompendiumMetaSummary[] = [];
-  game.packs?.forEach(pack => {
+  game.packs?.forEach((pack) => {
     compendiumMeta.push({
       id: pack.collection,
       label: pack.metadata.label,
       type: pack.metadata.type,
       system: pack.metadata.system ?? '',
-      count: pack.index.size
+      count: pack.index.size,
     });
   });
 
@@ -21,14 +21,14 @@ export function getWorldInfoHandler(_params: GetWorldInfoParams): Promise<WorldI
       title: game.world?.title ?? '',
       system: game.system?.id ?? '',
       systemVersion: game.system?.version ?? '',
-      foundryVersion: game.version ?? ''
+      foundryVersion: game.version ?? '',
     },
     counts: {
       journals: game.journal?.size ?? 0,
       actors: game.actors?.size ?? 0,
       items: game.items?.size ?? 0,
-      scenes: game.scenes?.size ?? 0
+      scenes: game.scenes?.size ?? 0,
     },
-    compendiumMeta
+    compendiumMeta,
   });
 }

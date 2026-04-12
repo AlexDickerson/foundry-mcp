@@ -6,14 +6,14 @@ export function getCompendiumsHandler(_params: GetCompendiumsParams): Promise<Co
   const game = getGame();
   const metadata: CompendiumMetadata[] = [];
 
-  game.packs?.forEach(pack => {
+  game.packs?.forEach((pack) => {
     metadata.push({
       id: pack.collection,
       label: pack.metadata.label,
       type: pack.metadata.type,
       system: pack.metadata.system ?? '',
       packageName: pack.metadata.packageName,
-      documentCount: pack.index.size
+      documentCount: pack.index.size,
     });
   });
 

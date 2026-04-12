@@ -1,15 +1,10 @@
 import type { MoveTokenPathParams, MoveTokenPathResult } from '@/commands/types';
-import {
-  getActiveScene,
-  getToken,
-  type FoundryGame,
-  type TokenUpdateData
-} from './tokenTypes';
+import { getActiveScene, getToken, type FoundryGame, type TokenUpdateData } from './tokenTypes';
 
 declare const game: FoundryGame;
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function moveTokenPathHandler(params: MoveTokenPathParams): Promise<MoveTokenPathResult> {
@@ -18,7 +13,8 @@ export async function moveTokenPathHandler(params: MoveTokenPathParams): Promise
   const animate = params.animate !== false;
   const delayMs = params.delayMs ?? 500;
   const canvasObj = (globalThis as Record<string, unknown>)['canvas'] as
-    { scene?: { grid?: { size?: number } } } | undefined;
+    | { scene?: { grid?: { size?: number } } }
+    | undefined;
   const gridSize = canvasObj?.scene?.grid?.size ?? 100;
 
   let current = token;

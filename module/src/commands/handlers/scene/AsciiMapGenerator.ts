@@ -19,7 +19,7 @@ interface CollisionBackend {
   testCollision(
     origin: { x: number; y: number },
     destination: { x: number; y: number },
-    config: { type: string; mode: string }
+    config: { type: string; mode: string },
   ): boolean;
 }
 
@@ -59,11 +59,7 @@ function classifyWall(wall: MapWall): WallType {
   return 'wall';
 }
 
-function findNearestWallType(
-  midX: number,
-  midY: number,
-  walls: MapWall[]
-): WallType {
+function findNearestWallType(midX: number, midY: number, walls: MapWall[]): WallType {
   let minDist = Infinity;
   let type: WallType = 'wall';
 
@@ -86,14 +82,22 @@ function findNearestWallType(
 
 function verticalWallChar(type: WallType): string {
   const chars: Record<WallType, string> = {
-    'wall': '|', 'door': 'D', 'door-open': 'd', 'door-locked': 'L', 'secret': '?'
+    wall: '|',
+    door: 'D',
+    'door-open': 'd',
+    'door-locked': 'L',
+    secret: '?',
   };
   return chars[type];
 }
 
 function horizontalWallStr(type: WallType): string {
   const strs: Record<WallType, string> = {
-    'wall': '---', 'door': '-D-', 'door-open': '-d-', 'door-locked': '-L-', 'secret': '-?-'
+    wall: '---',
+    door: '-D-',
+    'door-open': '-d-',
+    'door-locked': '-L-',
+    secret: '-?-',
   };
   return strs[type];
 }
@@ -126,7 +130,7 @@ export function generateAsciiMap(input: AsciiMapInput): string {
       gridX: gx,
       gridY: gy,
       size: w === 1 && h === 1 ? '1x1' : `${String(w)}x${String(h)}`,
-      hp: hpStr
+      hp: hpStr,
     });
 
     for (let dy = 0; dy < h; dy++) {
@@ -204,7 +208,10 @@ export function generateAsciiMap(input: AsciiMapInput): string {
       const cx = x * gridSize + gridSize / 2;
       const cy = y * gridSize + gridSize / 2;
 
-      const neighbors: Array<[number, number]> = [[1, 0], [0, 1]];
+      const neighbors: Array<[number, number]> = [
+        [1, 0],
+        [0, 1],
+      ];
       for (const [ndx, ndy] of neighbors) {
         const nx = (x + ndx) * gridSize + gridSize / 2;
         const ny = (y + ndy) * gridSize + gridSize / 2;
@@ -212,7 +219,7 @@ export function generateAsciiMap(input: AsciiMapInput): string {
         const blocked = collisionBackend.testCollision(
           { x: cx, y: cy },
           { x: nx, y: ny },
-          { type: 'move', mode: 'any' }
+          { type: 'move', mode: 'any' },
         );
 
         if (blocked) {

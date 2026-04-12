@@ -82,7 +82,7 @@ export function mapTableResultToData(result: FoundryTableResult): TableResultDat
     weight: result.weight,
     drawn: result.drawn,
     documentCollection: result.documentCollection ?? null,
-    documentId: result.documentId ?? null
+    documentId: result.documentId ?? null,
   };
 }
 
@@ -95,7 +95,7 @@ export function mapTableToResult(table: FoundryRollTable): RollTableResult {
     formula: table.formula,
     replacement: table.replacement,
     displayRoll: table.displayRoll,
-    results: table.results.contents.map(mapTableResultToData)
+    results: table.results.contents.map(mapTableResultToData),
   };
 }
 
@@ -109,6 +109,6 @@ export function mapTableToSummary(table: FoundryRollTable): RollTableSummary {
     formula: table.formula,
     replacement: table.replacement,
     totalResults: contents.length,
-    drawnResults: contents.filter(r => r.drawn).length
+    drawnResults: contents.filter((r) => r.drawn).length,
   };
 }

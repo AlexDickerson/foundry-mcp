@@ -9,7 +9,7 @@ interface FoundryActor {
   rollAbilityCheck(
     config: { ability: AbilityKey },
     dialog?: RollDialogConfig,
-    message?: RollMessageConfig
+    message?: RollMessageConfig,
   ): Promise<FoundryD20Roll[]>;
 }
 
@@ -41,7 +41,7 @@ export async function rollAbilityHandler(params: RollAbilityParams): Promise<Rol
   const rolls = await actor.rollAbilityCheck(
     { ability: params.ability },
     { configure: false },
-    { create: params.showInChat ?? false }
+    { create: params.showInChat ?? false },
   );
 
   const roll = rolls[0];
@@ -55,7 +55,7 @@ export async function rollAbilityHandler(params: RollAbilityParams): Promise<Rol
   const result: RollResult = {
     total: roll.total,
     formula: roll.formula,
-    dice
+    dice,
   };
 
   if (roll.isCritical) {

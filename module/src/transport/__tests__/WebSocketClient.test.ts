@@ -62,7 +62,7 @@ describe('WebSocketClient', () => {
     mockSocket = new MockWebSocket();
     client = new WebSocketClient(
       { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3 },
-      () => mockSocket
+      () => mockSocket,
     );
   });
 
@@ -187,7 +187,7 @@ describe('WebSocketClient', () => {
 
       client = new WebSocketClient(
         { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3 },
-        factoryMock
+        factoryMock,
       );
 
       client.connect();
@@ -212,7 +212,7 @@ describe('WebSocketClient', () => {
 
       client = new WebSocketClient(
         { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3 },
-        factoryMock
+        factoryMock,
       );
 
       client.connect();
@@ -228,7 +228,9 @@ describe('WebSocketClient', () => {
       jest.advanceTimersByTime(8000); // no more reconnects
 
       expect(callCount).toBe(4); // initial + 3 reconnects
-      expect(consoleSpy).toHaveBeenCalledWith('Foundry API Bridge | Max reconnect attempts reached. Use module settings to reconfigure.');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Foundry API Bridge | Max reconnect attempts reached. Use module settings to reconfigure.',
+      );
       consoleSpy.mockRestore();
     });
   });
@@ -243,32 +245,26 @@ describe('WebSocketClient', () => {
 
       client = new WebSocketClient(
         { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 5 },
-        factoryMock
+        factoryMock,
       );
 
       client.connect();
 
       // Attempt 1: delay = 1000 * 2^0 = 1000ms
       mockSocket.simulateClose();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Reconnecting in 1000ms (attempt 1/5)')
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 1000ms (attempt 1/5)'));
 
       jest.advanceTimersByTime(1000);
 
       // Attempt 2: delay = 1000 * 2^1 = 2000ms
       mockSocket.simulateClose();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Reconnecting in 2000ms (attempt 2/5)')
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 2000ms (attempt 2/5)'));
 
       jest.advanceTimersByTime(2000);
 
       // Attempt 3: delay = 1000 * 2^2 = 4000ms
       mockSocket.simulateClose();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Reconnecting in 4000ms (attempt 3/5)')
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 4000ms (attempt 3/5)'));
 
       consoleSpy.mockRestore();
     });
@@ -282,7 +278,7 @@ describe('WebSocketClient', () => {
 
       client = new WebSocketClient(
         { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3 },
-        factoryMock
+        factoryMock,
       );
 
       client.connect();
@@ -296,9 +292,7 @@ describe('WebSocketClient', () => {
 
       // Disconnect again — should start from attempt 1 again
       mockSocket.simulateClose();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Reconnecting in 1000ms (attempt 1/3)')
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 1000ms (attempt 1/3)'));
 
       consoleSpy.mockRestore();
     });
@@ -313,7 +307,7 @@ describe('WebSocketClient', () => {
 
       client = new WebSocketClient(
         { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 5 },
-        factoryMock
+        factoryMock,
       );
 
       client.connect();
@@ -335,7 +329,7 @@ describe('WebSocketClient', () => {
 
       client = new WebSocketClient(
         { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3 },
-        factoryMock
+        factoryMock,
       );
 
       // Connect, then manually disconnect
@@ -365,7 +359,7 @@ describe('WebSocketClient', () => {
       expect(messageHandler).not.toHaveBeenCalled();
       expect(consoleSpy).toHaveBeenCalledWith(
         'Foundry API Bridge | Failed to parse WebSocket message:',
-        expect.any(SyntaxError)
+        expect.any(SyntaxError),
       );
       consoleSpy.mockRestore();
     });
@@ -420,7 +414,7 @@ describe('WebSocketClient', () => {
       expect(messageHandler).toHaveBeenCalledWith({
         id: '123',
         type: 'get-combat-state',
-        params: null
+        params: null,
       });
     });
 
@@ -469,7 +463,7 @@ describe('WebSocketClient', () => {
 
       client = new WebSocketClient(
         { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3 },
-        factoryMock
+        factoryMock,
       );
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();

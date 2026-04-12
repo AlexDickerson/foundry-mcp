@@ -11,10 +11,7 @@ interface FoundryItem {
 interface FoundryActor {
   id: string;
   name: string;
-  createEmbeddedDocuments(
-    embeddedName: string,
-    data: Record<string, unknown>[]
-  ): Promise<FoundryItem[]>;
+  createEmbeddedDocuments(embeddedName: string, data: Record<string, unknown>[]): Promise<FoundryItem[]>;
 }
 
 interface ActorsCollection {
@@ -40,9 +37,7 @@ interface FoundryGame {
 
 declare const game: FoundryGame;
 
-export async function addItemFromCompendiumHandler(
-  params: AddItemFromCompendiumParams
-): Promise<ItemResult> {
+export async function addItemFromCompendiumHandler(params: AddItemFromCompendiumParams): Promise<ItemResult> {
   const actor = game.actors.get(params.actorId);
 
   if (!actor) {
@@ -94,6 +89,6 @@ export async function addItemFromCompendiumHandler(
     type: createdItem.type,
     img: createdItem.img,
     actorId: actor.id,
-    actorName: actor.name
+    actorName: actor.name,
   };
 }

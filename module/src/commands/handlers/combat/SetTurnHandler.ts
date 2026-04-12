@@ -10,7 +10,7 @@ export async function setTurnHandler(params: SetTurnParams): Promise<CombatResul
     throw new Error('Combat not started');
   }
 
-  const turnIndex = combat.turns.findIndex(t => t.id === params.combatantId);
+  const turnIndex = combat.turns.findIndex((t) => t.id === params.combatantId);
 
   if (turnIndex === -1) {
     throw new Error(`Combatant not found in turn order: ${params.combatantId}`);

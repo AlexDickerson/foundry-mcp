@@ -8,12 +8,12 @@ export async function resetTableHandler(params: ResetTableParams): Promise<Reset
     throw new Error(`Roll table not found: ${params.tableId}`);
   }
 
-  const drawnCount = table.results.contents.filter(r => r.drawn).length;
+  const drawnCount = table.results.contents.filter((r) => r.drawn).length;
   await table.resetResults();
 
   return {
     tableId: table.id,
     tableName: table.name,
-    resetCount: drawnCount
+    resetCount: drawnCount,
   };
 }

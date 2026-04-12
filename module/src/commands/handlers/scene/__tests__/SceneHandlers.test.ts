@@ -95,7 +95,7 @@ const createMockNote = (overrides: Partial<MockNote> = {}): MockNote => ({
   text: 'A mysterious door',
   label: 'Door',
   entryId: 'journal-123',
-  ...overrides
+  ...overrides,
 });
 
 const createMockWall = (overrides: Partial<MockWall> = {}): MockWall => ({
@@ -103,7 +103,7 @@ const createMockWall = (overrides: Partial<MockWall> = {}): MockWall => ({
   move: 20,
   sense: 20,
   door: 0,
-  ...overrides
+  ...overrides,
 });
 
 const createMockLight = (overrides: Partial<MockLight> = {}): MockLight => ({
@@ -112,7 +112,7 @@ const createMockLight = (overrides: Partial<MockLight> = {}): MockLight => ({
   config: { bright: 30, dim: 60, color: '#ff9900', angle: 360 },
   walls: true,
   hidden: false,
-  ...overrides
+  ...overrides,
 });
 
 const createMockTile = (overrides: Partial<MockTile> = {}): MockTile => ({
@@ -124,7 +124,7 @@ const createMockTile = (overrides: Partial<MockTile> = {}): MockTile => ({
   hidden: false,
   elevation: 0,
   rotation: 0,
-  ...overrides
+  ...overrides,
 });
 
 const createMockDrawing = (overrides: Partial<MockDrawing> = {}): MockDrawing => ({
@@ -135,7 +135,7 @@ const createMockDrawing = (overrides: Partial<MockDrawing> = {}): MockDrawing =>
   hidden: false,
   fillColor: '#00ff00',
   strokeColor: '#000000',
-  ...overrides
+  ...overrides,
 });
 
 const createMockRegion = (overrides: Partial<MockRegion> = {}): MockRegion => ({
@@ -143,7 +143,7 @@ const createMockRegion = (overrides: Partial<MockRegion> = {}): MockRegion => ({
   name: 'Trap Zone',
   color: '#ff0000',
   shapes: [{ type: 'rectangle' }],
-  ...overrides
+  ...overrides,
 });
 
 const createMockToken = (overrides: Partial<MockToken> = {}): MockToken => ({
@@ -157,9 +157,9 @@ const createMockToken = (overrides: Partial<MockToken> = {}): MockToken => ({
   actor: {
     id: 'actor-1',
     system: { attributes: { hp: { value: 7, max: 7 }, ac: { value: 13 } } },
-    statuses: new Set<string>()
+    statuses: new Set<string>(),
   },
-  ...overrides
+  ...overrides,
 });
 
 const createMockScene = (overrides: Partial<MockScene> = {}): MockScene => ({
@@ -177,9 +177,25 @@ const createMockScene = (overrides: Partial<MockScene> = {}): MockScene => ({
   tiles: { contents: [createMockTile()] },
   drawings: { contents: [createMockDrawing()] },
   regions: { contents: [createMockRegion()] },
-  tokens: { contents: [createMockToken(), createMockToken({ id: 'token-2', name: 'Fighter', x: 500, y: 500, disposition: 1, actor: { id: 'actor-2', system: { attributes: { hp: { value: 7, max: 7 }, ac: { value: 13 } } }, statuses: new Set<string>() } })] },
+  tokens: {
+    contents: [
+      createMockToken(),
+      createMockToken({
+        id: 'token-2',
+        name: 'Fighter',
+        x: 500,
+        y: 500,
+        disposition: 1,
+        actor: {
+          id: 'actor-2',
+          system: { attributes: { hp: { value: 7, max: 7 }, ac: { value: 13 } } },
+          statuses: new Set<string>(),
+        },
+      }),
+    ],
+  },
   activate: jest.fn().mockResolvedValue(undefined),
-  ...overrides
+  ...overrides,
 });
 
 const mockGame: {
@@ -192,8 +208,8 @@ const mockGame: {
   scenes: {
     get: jest.fn(),
     active: null,
-    forEach: jest.fn()
-  }
+    forEach: jest.fn(),
+  },
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;
@@ -223,13 +239,53 @@ describe('Scene Handlers', () => {
         notes: [{ x: 100, y: 200, text: 'A mysterious door', label: 'Door', entryId: 'journal-123' }],
         walls: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }],
         lights: [{ x: 500, y: 500, bright: 30, dim: 60, color: '#ff9900', angle: 360, walls: true, hidden: false }],
-        tiles: [{ x: 200, y: 300, width: 100, height: 100, img: 'tiles/table.png', hidden: false, elevation: 0, rotation: 0 }],
-        drawings: [{ x: 400, y: 400, shape: { type: 'r', width: 200, height: 100, points: [] }, text: '', hidden: false, fillColor: '#00ff00', strokeColor: '#000000' }],
+        tiles: [
+          { x: 200, y: 300, width: 100, height: 100, img: 'tiles/table.png', hidden: false, elevation: 0, rotation: 0 },
+        ],
+        drawings: [
+          {
+            x: 400,
+            y: 400,
+            shape: { type: 'r', width: 200, height: 100, points: [] },
+            text: '',
+            hidden: false,
+            fillColor: '#00ff00',
+            strokeColor: '#000000',
+          },
+        ],
         regions: [{ id: 'region-1', name: 'Trap Zone', color: '#ff0000', shapes: [{ type: 'rectangle' }] }],
         tokens: [
-          { id: 'token-1', name: 'Goblin', actorId: 'actor-1', gridX: 2, gridY: 3, x: 250, y: 350, elevation: 0, hidden: false, disposition: -1, hp: { value: 7, max: 7 }, ac: 13, conditions: [] },
-          { id: 'token-2', name: 'Fighter', actorId: 'actor-2', gridX: 5, gridY: 5, x: 500, y: 500, elevation: 0, hidden: false, disposition: 1, hp: { value: 7, max: 7 }, ac: 13, conditions: [] }
-        ]
+          {
+            id: 'token-1',
+            name: 'Goblin',
+            actorId: 'actor-1',
+            gridX: 2,
+            gridY: 3,
+            x: 250,
+            y: 350,
+            elevation: 0,
+            hidden: false,
+            disposition: -1,
+            hp: { value: 7, max: 7 },
+            ac: 13,
+            conditions: [],
+          },
+          {
+            id: 'token-2',
+            name: 'Fighter',
+            actorId: 'actor-2',
+            gridX: 5,
+            gridY: 5,
+            x: 500,
+            y: 500,
+            elevation: 0,
+            hidden: false,
+            disposition: 1,
+            hp: { value: 7, max: 7 },
+            ac: 13,
+            conditions: [],
+          },
+        ],
       });
       expect(typeof result.asciiMap).toBe('string');
     });
@@ -254,8 +310,7 @@ describe('Scene Handlers', () => {
     it('throws when scene not found by ID', async () => {
       mockGame.scenes.get.mockReturnValue(undefined);
 
-      await expect(getSceneHandler({ sceneId: 'nonexistent' }))
-        .rejects.toThrow('Scene not found: nonexistent');
+      await expect(getSceneHandler({ sceneId: 'nonexistent' })).rejects.toThrow('Scene not found: nonexistent');
     });
 
     it('handles scene with empty collections', async () => {
@@ -266,7 +321,7 @@ describe('Scene Handlers', () => {
         tiles: { contents: [] },
         drawings: { contents: [] },
         regions: { contents: [] },
-        tokens: { contents: [] }
+        tokens: { contents: [] },
       });
       mockGame.scenes.active = mockScene;
 
@@ -286,15 +341,12 @@ describe('Scene Handlers', () => {
         notes: {
           contents: [
             createMockNote({ x: 10, y: 20, text: 'Note 1', label: 'Label 1' }),
-            createMockNote({ x: 30, y: 40, text: 'Note 2', label: 'Label 2', entryId: null })
-          ]
+            createMockNote({ x: 30, y: 40, text: 'Note 2', label: 'Label 2', entryId: null }),
+          ],
         },
         walls: {
-          contents: [
-            createMockWall({ c: [0, 0, 100, 0] }),
-            createMockWall({ c: [100, 0, 100, 100], door: 1 })
-          ]
-        }
+          contents: [createMockWall({ c: [0, 0, 100, 0] }), createMockWall({ c: [100, 0, 100, 100], door: 1 })],
+        },
       });
       mockGame.scenes.active = mockScene;
 
@@ -319,7 +371,7 @@ describe('Scene Handlers', () => {
 
       expect(result.scenes).toEqual([
         { id: 'scene-1', name: 'Tavern', active: true, img: 'scenes/tavern.jpg' },
-        { id: 'scene-2', name: 'Dungeon', active: false, img: 'scenes/dungeon.jpg' }
+        { id: 'scene-2', name: 'Dungeon', active: false, img: 'scenes/dungeon.jpg' },
       ]);
     });
 
@@ -350,7 +402,7 @@ describe('Scene Handlers', () => {
         drawings: undefined,
         regions: undefined,
         tokens: undefined,
-        activate: jest.fn()
+        activate: jest.fn(),
       } as unknown as MockScene;
       mockGame.scenes.active = sparseScene;
 
@@ -387,7 +439,7 @@ describe('Scene Handlers', () => {
         drawings: null,
         regions: null,
         tokens: null,
-        activate: jest.fn()
+        activate: jest.fn(),
       } as unknown as MockScene;
       mockGame.scenes.active = sceneWithNulls;
 
@@ -404,7 +456,7 @@ describe('Scene Handlers', () => {
 
     it('handles note with null entryId (unlinked note)', async () => {
       const mockScene = createMockScene({
-        notes: { contents: [createMockNote({ entryId: null })] }
+        notes: { contents: [createMockNote({ entryId: null })] },
       });
       mockGame.scenes.active = mockScene;
 
@@ -414,9 +466,15 @@ describe('Scene Handlers', () => {
     });
 
     it('handles note with undefined text and label', async () => {
-      const noteWithUndefined = { x: 50, y: 50, text: undefined, label: undefined, entryId: null } as unknown as MockNote;
+      const noteWithUndefined = {
+        x: 50,
+        y: 50,
+        text: undefined,
+        label: undefined,
+        entryId: null,
+      } as unknown as MockNote;
       const mockScene = createMockScene({
-        notes: { contents: [noteWithUndefined] }
+        notes: { contents: [noteWithUndefined] },
       });
       mockGame.scenes.active = mockScene;
 
@@ -427,7 +485,7 @@ describe('Scene Handlers', () => {
 
     it('handles hex grid type', async () => {
       const mockScene = createMockScene({
-        grid: { size: 75, type: 2, units: 'm', distance: 1.5 }
+        grid: { size: 75, type: 2, units: 'm', distance: 1.5 },
       });
       mockGame.scenes.active = mockScene;
 
@@ -460,9 +518,9 @@ describe('Scene Handlers', () => {
           contents: [
             createMockWall({ door: 0 }),
             createMockWall({ door: 1, c: [200, 200, 300, 200] }),
-            createMockWall({ door: 2, c: [400, 400, 500, 400] })
-          ]
-        }
+            createMockWall({ door: 2, c: [400, 400, 500, 400] }),
+          ],
+        },
       });
       mockGame.scenes.active = mockScene;
 
@@ -480,9 +538,9 @@ describe('Scene Handlers', () => {
           contents: [
             createMockWall({ move: 20, sense: 20 }),
             createMockWall({ move: 0, sense: 20 }),
-            createMockWall({ move: 20, sense: 0 })
-          ]
-        }
+            createMockWall({ move: 20, sense: 0 }),
+          ],
+        },
       });
       mockGame.scenes.active = mockScene;
 
@@ -495,14 +553,12 @@ describe('Scene Handlers', () => {
 
     it('handles large number of notes and walls', async () => {
       const notes = Array.from({ length: 50 }, (_, i) =>
-        createMockNote({ x: i * 100, y: i * 100, label: `Note ${i}` })
+        createMockNote({ x: i * 100, y: i * 100, label: `Note ${i}` }),
       );
-      const walls = Array.from({ length: 200 }, (_, i) =>
-        createMockWall({ c: [i, 0, i + 100, 0] })
-      );
+      const walls = Array.from({ length: 200 }, (_, i) => createMockWall({ c: [i, 0, i + 100, 0] }));
       const mockScene = createMockScene({
         notes: { contents: notes },
-        walls: { contents: walls }
+        walls: { contents: walls },
       });
       mockGame.scenes.active = mockScene;
 
@@ -547,7 +603,7 @@ describe('Scene Handlers', () => {
 
     it('preserves scene order from forEach', async () => {
       const scenes = ['Alpha', 'Beta', 'Gamma'].map((name, i) =>
-        createMockScene({ id: `scene-${i}`, name, active: i === 0 })
+        createMockScene({ id: `scene-${i}`, name, active: i === 0 }),
       );
       mockGame.scenes.forEach.mockImplementation((fn: (scene: MockScene) => void) => {
         scenes.forEach(fn);
@@ -555,7 +611,7 @@ describe('Scene Handlers', () => {
 
       const result = await getScenesListHandler({} as Record<string, never>);
 
-      expect(result.scenes.map(s => s.name)).toEqual(['Alpha', 'Beta', 'Gamma']);
+      expect(result.scenes.map((s) => s.name)).toEqual(['Alpha', 'Beta', 'Gamma']);
     });
 
     it('includes only summary fields, not detail fields', async () => {
@@ -572,35 +628,76 @@ describe('Scene Handlers', () => {
   describe('getSceneHandler - lights, tiles, drawings, regions, tokens', () => {
     it('maps lights with config', async () => {
       const mockScene = createMockScene({
-        lights: { contents: [
-          createMockLight({ x: 100, y: 200, config: { bright: 20, dim: 40, color: '#ffffff', angle: 90 }, walls: false, hidden: true })
-        ] }
+        lights: {
+          contents: [
+            createMockLight({
+              x: 100,
+              y: 200,
+              config: { bright: 20, dim: 40, color: '#ffffff', angle: 90 },
+              walls: false,
+              hidden: true,
+            }),
+          ],
+        },
       });
       mockGame.scenes.active = mockScene;
 
       const result = await getSceneHandler({});
 
-      expect(result.lights[0]).toEqual({ x: 100, y: 200, bright: 20, dim: 40, color: '#ffffff', angle: 90, walls: false, hidden: true });
+      expect(result.lights[0]).toEqual({
+        x: 100,
+        y: 200,
+        bright: 20,
+        dim: 40,
+        color: '#ffffff',
+        angle: 90,
+        walls: false,
+        hidden: true,
+      });
     });
 
     it('maps tiles with texture', async () => {
       const mockScene = createMockScene({
-        tiles: { contents: [
-          createMockTile({ x: 0, y: 0, width: 512, height: 512, texture: { src: 'tiles/chest.png' }, elevation: 5, rotation: 45 })
-        ] }
+        tiles: {
+          contents: [
+            createMockTile({
+              x: 0,
+              y: 0,
+              width: 512,
+              height: 512,
+              texture: { src: 'tiles/chest.png' },
+              elevation: 5,
+              rotation: 45,
+            }),
+          ],
+        },
       });
       mockGame.scenes.active = mockScene;
 
       const result = await getSceneHandler({});
 
-      expect(result.tiles[0]).toEqual({ x: 0, y: 0, width: 512, height: 512, img: 'tiles/chest.png', hidden: false, elevation: 5, rotation: 45 });
+      expect(result.tiles[0]).toEqual({
+        x: 0,
+        y: 0,
+        width: 512,
+        height: 512,
+        img: 'tiles/chest.png',
+        hidden: false,
+        elevation: 5,
+        rotation: 45,
+      });
     });
 
     it('maps drawings with shape', async () => {
       const mockScene = createMockScene({
-        drawings: { contents: [
-          createMockDrawing({ shape: { type: 'p', width: 0, height: 0, points: [0, 0, 100, 0, 100, 100] }, text: 'Triangle' })
-        ] }
+        drawings: {
+          contents: [
+            createMockDrawing({
+              shape: { type: 'p', width: 0, height: 0, points: [0, 0, 100, 0, 100, 100] },
+              text: 'Triangle',
+            }),
+          ],
+        },
       });
       mockGame.scenes.active = mockScene;
 
@@ -613,25 +710,34 @@ describe('Scene Handlers', () => {
 
     it('maps regions with shapes', async () => {
       const mockScene = createMockScene({
-        regions: { contents: [
-          createMockRegion({ id: 'r1', name: 'Throne Room', shapes: [{ type: 'rectangle' }, { type: 'circle' }] })
-        ] }
+        regions: {
+          contents: [
+            createMockRegion({ id: 'r1', name: 'Throne Room', shapes: [{ type: 'rectangle' }, { type: 'circle' }] }),
+          ],
+        },
       });
       mockGame.scenes.active = mockScene;
 
       const result = await getSceneHandler({});
 
-      expect(result.regions[0]).toEqual({ id: 'r1', name: 'Throne Room', color: '#ff0000', shapes: [{ type: 'rectangle' }, { type: 'circle' }] });
+      expect(result.regions[0]).toEqual({
+        id: 'r1',
+        name: 'Throne Room',
+        color: '#ff0000',
+        shapes: [{ type: 'rectangle' }, { type: 'circle' }],
+      });
     });
 
     it('converts token pixel positions to grid coordinates', async () => {
       const mockScene = createMockScene({
         grid: { size: 100, type: 1, units: 'ft', distance: 5 },
-        tokens: { contents: [
-          createMockToken({ id: 't1', x: 250, y: 350 }),
-          createMockToken({ id: 't2', x: 0, y: 0 }),
-          createMockToken({ id: 't3', x: 99, y: 199 })
-        ] }
+        tokens: {
+          contents: [
+            createMockToken({ id: 't1', x: 250, y: 350 }),
+            createMockToken({ id: 't2', x: 0, y: 0 }),
+            createMockToken({ id: 't3', x: 99, y: 199 }),
+          ],
+        },
       });
       mockGame.scenes.active = mockScene;
 
@@ -644,9 +750,7 @@ describe('Scene Handlers', () => {
 
     it('includes token actorId, disposition, hidden', async () => {
       const mockScene = createMockScene({
-        tokens: { contents: [
-          createMockToken({ actor: { id: 'actor-abc' }, disposition: 1, hidden: true })
-        ] }
+        tokens: { contents: [createMockToken({ actor: { id: 'actor-abc' }, disposition: 1, hidden: true })] },
       });
       mockGame.scenes.active = mockScene;
 
@@ -657,7 +761,7 @@ describe('Scene Handlers', () => {
 
     it('handles token with null actor', async () => {
       const mockScene = createMockScene({
-        tokens: { contents: [createMockToken({ actor: null })] }
+        tokens: { contents: [createMockToken({ actor: null })] },
       });
       mockGame.scenes.active = mockScene;
 
@@ -669,7 +773,7 @@ describe('Scene Handlers', () => {
     it('uses grid size for grid coordinate calculation', async () => {
       const mockScene = createMockScene({
         grid: { size: 50, type: 1, units: 'ft', distance: 5 },
-        tokens: { contents: [createMockToken({ x: 150, y: 250 })] }
+        tokens: { contents: [createMockToken({ x: 150, y: 250 })] },
       });
       mockGame.scenes.active = mockScene;
 
@@ -690,15 +794,14 @@ describe('Scene Handlers', () => {
       expect(result).toEqual({
         id: 'scene-to-activate',
         name: 'New Scene',
-        active: true
+        active: true,
       });
     });
 
     it('throws when scene not found', async () => {
       mockGame.scenes.get.mockReturnValue(undefined);
 
-      await expect(activateSceneHandler({ sceneId: 'nonexistent' }))
-        .rejects.toThrow('Scene not found: nonexistent');
+      await expect(activateSceneHandler({ sceneId: 'nonexistent' })).rejects.toThrow('Scene not found: nonexistent');
     });
 
     it('propagates error when activate() rejects', async () => {
@@ -706,8 +809,7 @@ describe('Scene Handlers', () => {
       mockScene.activate.mockRejectedValue(new Error('Permission denied'));
       mockGame.scenes.get.mockReturnValue(mockScene);
 
-      await expect(activateSceneHandler({ sceneId: 'scene-123' }))
-        .rejects.toThrow('Permission denied');
+      await expect(activateSceneHandler({ sceneId: 'scene-123' })).rejects.toThrow('Permission denied');
     });
 
     it('always returns active: true after activation', async () => {

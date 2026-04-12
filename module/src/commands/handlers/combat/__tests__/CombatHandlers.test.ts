@@ -65,7 +65,7 @@ const createMockCombatant = (overrides: Partial<MockCombatant> = {}): MockCombat
     defeated: false,
     hidden: false,
     update: jest.fn(),
-    ...overrides
+    ...overrides,
   };
   combatant.update.mockImplementation((data) => Promise.resolve({ ...combatant, ...data }));
   return combatant;
@@ -82,7 +82,7 @@ const createMockCombat = (overrides: Partial<MockCombat> = {}): MockCombat => {
     combatants: {
       get: jest.fn().mockReturnValue(mockCombatant),
       map: jest.fn().mockImplementation((fn) => [fn(mockCombatant)]),
-      contents: [mockCombatant]
+      contents: [mockCombatant],
     },
     turns: [mockCombatant],
     activate: jest.fn().mockResolvedValue(undefined),
@@ -97,13 +97,15 @@ const createMockCombat = (overrides: Partial<MockCombat> = {}): MockCombat => {
     rollAll: jest.fn(),
     rollNPC: jest.fn(),
     setInitiative: jest.fn().mockResolvedValue(undefined),
-    update: jest.fn().mockResolvedValue(undefined)
+    update: jest.fn().mockResolvedValue(undefined),
   };
 
   // Self-referential mocks need to be set after object creation
   baseCombat.startCombat.mockImplementation(() => Promise.resolve({ ...baseCombat, started: true, round: 1 }));
   baseCombat.nextTurn.mockImplementation(() => Promise.resolve({ ...baseCombat, turn: baseCombat.turn + 1 }));
-  baseCombat.previousTurn.mockImplementation(() => Promise.resolve({ ...baseCombat, turn: Math.max(0, baseCombat.turn - 1) }));
+  baseCombat.previousTurn.mockImplementation(() =>
+    Promise.resolve({ ...baseCombat, turn: Math.max(0, baseCombat.turn - 1) }),
+  );
   baseCombat.rollInitiative.mockImplementation(() => Promise.resolve(baseCombat));
   baseCombat.rollAll.mockImplementation(() => Promise.resolve(baseCombat));
   baseCombat.rollNPC.mockImplementation(() => Promise.resolve(baseCombat));
@@ -112,7 +114,7 @@ const createMockCombat = (overrides: Partial<MockCombat> = {}): MockCombat => {
 };
 
 const mockCombatConstructor = {
-  create: jest.fn()
+  create: jest.fn(),
 };
 
 const mockGame: {
@@ -128,11 +130,11 @@ const mockGame: {
   combat: null,
   combats: {
     get: jest.fn(),
-    active: null
+    active: null,
   },
   scenes: {
-    active: { id: 'scene-123' }
-  }
+    active: { id: 'scene-123' },
+  },
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;
@@ -154,7 +156,7 @@ describe('Combat Handlers', () => {
       const result = await createCombatHandler({});
 
       expect(mockCombatConstructor.create).toHaveBeenCalledWith({
-        scene: 'scene-123'
+        scene: 'scene-123',
       });
       expect(result).toEqual({
         id: 'combat-123',
@@ -162,7 +164,7 @@ describe('Combat Handlers', () => {
         turn: 0,
         started: false,
         combatants: expect.any(Array),
-        current: null
+        current: null,
       });
     });
 
@@ -173,7 +175,7 @@ describe('Combat Handlers', () => {
       await createCombatHandler({ sceneId: 'custom-scene' });
 
       expect(mockCombatConstructor.create).toHaveBeenCalledWith({
-        scene: 'custom-scene'
+        scene: 'custom-scene',
       });
     });
 
@@ -198,7 +200,7 @@ describe('Combat Handlers', () => {
     it('returns combatants in result', async () => {
       const mockCombatant = createMockCombatant({ name: 'Warrior' });
       const mockCombat = createMockCombat({
-        turns: [mockCombatant]
+        turns: [mockCombatant],
       });
       mockCombatConstructor.create.mockResolvedValue(mockCombat);
 
@@ -213,7 +215,7 @@ describe('Combat Handlers', () => {
         img: 'icons/fighter.png',
         initiative: 15,
         defeated: false,
-        hidden: false
+        hidden: false,
       });
     });
 
@@ -232,17 +234,15 @@ describe('Combat Handlers', () => {
     it('throws error when no active combat and no combatId', async () => {
       mockGame.combat = null;
 
-      await expect(
-        addCombatantHandler({ actorId: 'actor-123' })
-      ).rejects.toThrow('No active combat');
+      await expect(addCombatantHandler({ actorId: 'actor-123' })).rejects.toThrow('No active combat');
     });
 
     it('throws error when combat not found by id', async () => {
       mockGame.combats.get.mockReturnValue(undefined);
 
-      await expect(
-        addCombatantHandler({ combatId: 'nonexistent', actorId: 'actor-123' })
-      ).rejects.toThrow('Combat not found: nonexistent');
+      await expect(addCombatantHandler({ combatId: 'nonexistent', actorId: 'actor-123' })).rejects.toThrow(
+        'Combat not found: nonexistent',
+      );
     });
 
     it('adds combatant to active combat', async () => {
@@ -253,10 +253,7 @@ describe('Combat Handlers', () => {
 
       const result = await addCombatantHandler({ actorId: 'actor-456' });
 
-      expect(mockCombat.createEmbeddedDocuments).toHaveBeenCalledWith(
-        'Combatant',
-        [{ actorId: 'actor-456' }]
-      );
+      expect(mockCombat.createEmbeddedDocuments).toHaveBeenCalledWith('Combatant', [{ actorId: 'actor-456' }]);
       expect(result).toEqual({
         id: 'combatant-123',
         actorId: 'actor-456',
@@ -265,7 +262,7 @@ describe('Combat Handlers', () => {
         img: 'icons/fighter.png',
         initiative: 15,
         defeated: false,
-        hidden: false
+        hidden: false,
       });
     });
 
@@ -277,7 +274,7 @@ describe('Combat Handlers', () => {
 
       await addCombatantHandler({
         combatId: 'combat-123',
-        actorId: 'actor-456'
+        actorId: 'actor-456',
       });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
@@ -292,13 +289,12 @@ describe('Combat Handlers', () => {
 
       await addCombatantHandler({
         actorId: 'actor-456',
-        tokenId: 'token-789'
+        tokenId: 'token-789',
       });
 
-      expect(mockCombat.createEmbeddedDocuments).toHaveBeenCalledWith(
-        'Combatant',
-        [{ actorId: 'actor-456', tokenId: 'token-789' }]
-      );
+      expect(mockCombat.createEmbeddedDocuments).toHaveBeenCalledWith('Combatant', [
+        { actorId: 'actor-456', tokenId: 'token-789' },
+      ]);
     });
 
     it('adds combatant with initiative', async () => {
@@ -309,13 +305,12 @@ describe('Combat Handlers', () => {
 
       await addCombatantHandler({
         actorId: 'actor-456',
-        initiative: 20
+        initiative: 20,
       });
 
-      expect(mockCombat.createEmbeddedDocuments).toHaveBeenCalledWith(
-        'Combatant',
-        [{ actorId: 'actor-456', initiative: 20 }]
-      );
+      expect(mockCombat.createEmbeddedDocuments).toHaveBeenCalledWith('Combatant', [
+        { actorId: 'actor-456', initiative: 20 },
+      ]);
     });
 
     it('adds hidden combatant', async () => {
@@ -326,13 +321,12 @@ describe('Combat Handlers', () => {
 
       await addCombatantHandler({
         actorId: 'actor-456',
-        hidden: true
+        hidden: true,
       });
 
-      expect(mockCombat.createEmbeddedDocuments).toHaveBeenCalledWith(
-        'Combatant',
-        [{ actorId: 'actor-456', hidden: true }]
-      );
+      expect(mockCombat.createEmbeddedDocuments).toHaveBeenCalledWith('Combatant', [
+        { actorId: 'actor-456', hidden: true },
+      ]);
     });
 
     it('throws error when creation fails', async () => {
@@ -340,9 +334,7 @@ describe('Combat Handlers', () => {
       mockCombat.createEmbeddedDocuments.mockResolvedValue([]);
       mockGame.combat = mockCombat;
 
-      await expect(
-        addCombatantHandler({ actorId: 'actor-456' })
-      ).rejects.toThrow('Failed to create combatant');
+      await expect(addCombatantHandler({ actorId: 'actor-456' })).rejects.toThrow('Failed to create combatant');
     });
   });
 
@@ -350,9 +342,7 @@ describe('Combat Handlers', () => {
     it('throws error when no active combat', async () => {
       mockGame.combat = null;
 
-      await expect(
-        removeCombatantHandler({ combatantId: 'combatant-123' })
-      ).rejects.toThrow('No active combat');
+      await expect(removeCombatantHandler({ combatantId: 'combatant-123' })).rejects.toThrow('No active combat');
     });
 
     it('throws error when combatant not found', async () => {
@@ -360,9 +350,9 @@ describe('Combat Handlers', () => {
       mockCombat.combatants.get.mockReturnValue(undefined);
       mockGame.combat = mockCombat;
 
-      await expect(
-        removeCombatantHandler({ combatantId: 'nonexistent' })
-      ).rejects.toThrow('Combatant not found: nonexistent');
+      await expect(removeCombatantHandler({ combatantId: 'nonexistent' })).rejects.toThrow(
+        'Combatant not found: nonexistent',
+      );
     });
 
     it('removes combatant from active combat', async () => {
@@ -371,10 +361,7 @@ describe('Combat Handlers', () => {
 
       const result = await removeCombatantHandler({ combatantId: 'combatant-123' });
 
-      expect(mockCombat.deleteEmbeddedDocuments).toHaveBeenCalledWith(
-        'Combatant',
-        ['combatant-123']
-      );
+      expect(mockCombat.deleteEmbeddedDocuments).toHaveBeenCalledWith('Combatant', ['combatant-123']);
       expect(result).toEqual({ deleted: true });
     });
 
@@ -384,7 +371,7 @@ describe('Combat Handlers', () => {
 
       await removeCombatantHandler({
         combatId: 'combat-123',
-        combatantId: 'combatant-123'
+        combatantId: 'combatant-123',
       });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
@@ -568,7 +555,7 @@ describe('Combat Handlers', () => {
         round: 3,
         turn: 2,
         started: true,
-        combatant: mockCombatant
+        combatant: mockCombatant,
       });
       mockGame.combat = mockCombat;
 
@@ -588,8 +575,8 @@ describe('Combat Handlers', () => {
           img: 'icons/fighter.png',
           initiative: 15,
           defeated: false,
-          hidden: false
-        }
+          hidden: false,
+        },
       });
     });
 
@@ -616,18 +603,14 @@ describe('Combat Handlers', () => {
     it('throws error when no active combat', async () => {
       mockGame.combat = null;
 
-      await expect(
-        rollInitiativeHandler({ combatantIds: ['combatant-123'] })
-      ).rejects.toThrow('No active combat');
+      await expect(rollInitiativeHandler({ combatantIds: ['combatant-123'] })).rejects.toThrow('No active combat');
     });
 
     it('throws error when no combatant IDs provided', async () => {
       const mockCombat = createMockCombat();
       mockGame.combat = mockCombat;
 
-      await expect(
-        rollInitiativeHandler({ combatantIds: [] })
-      ).rejects.toThrow('No combatant IDs provided');
+      await expect(rollInitiativeHandler({ combatantIds: [] })).rejects.toThrow('No combatant IDs provided');
     });
 
     it('throws error when combatant not found', async () => {
@@ -635,9 +618,9 @@ describe('Combat Handlers', () => {
       mockCombat.combatants.get.mockReturnValue(undefined);
       mockGame.combat = mockCombat;
 
-      await expect(
-        rollInitiativeHandler({ combatantIds: ['nonexistent'] })
-      ).rejects.toThrow('Combatant not found: nonexistent');
+      await expect(rollInitiativeHandler({ combatantIds: ['nonexistent'] })).rejects.toThrow(
+        'Combatant not found: nonexistent',
+      );
     });
 
     it('rolls initiative for specified combatants', async () => {
@@ -647,18 +630,15 @@ describe('Combat Handlers', () => {
       mockGame.combat = mockCombat;
 
       const result = await rollInitiativeHandler({
-        combatantIds: ['combatant-123']
+        combatantIds: ['combatant-123'],
       });
 
-      expect(mockCombat.rollInitiative).toHaveBeenCalledWith(
-        ['combatant-123'],
-        {}
-      );
+      expect(mockCombat.rollInitiative).toHaveBeenCalledWith(['combatant-123'], {});
       expect(result.results).toHaveLength(1);
       expect(result.results[0]).toEqual({
         combatantId: 'combatant-123',
         name: 'Test Fighter',
-        initiative: 18
+        initiative: 18,
       });
     });
 
@@ -670,13 +650,10 @@ describe('Combat Handlers', () => {
 
       await rollInitiativeHandler({
         combatantIds: ['combatant-123'],
-        formula: '2d6+5'
+        formula: '2d6+5',
       });
 
-      expect(mockCombat.rollInitiative).toHaveBeenCalledWith(
-        ['combatant-123'],
-        { formula: '2d6+5' }
-      );
+      expect(mockCombat.rollInitiative).toHaveBeenCalledWith(['combatant-123'], { formula: '2d6+5' });
     });
 
     it('rolls initiative for multiple combatants', async () => {
@@ -691,7 +668,7 @@ describe('Combat Handlers', () => {
       mockGame.combat = mockCombat;
 
       const result = await rollInitiativeHandler({
-        combatantIds: ['c1', 'c2']
+        combatantIds: ['c1', 'c2'],
       });
 
       expect(result.results).toHaveLength(2);
@@ -707,7 +684,7 @@ describe('Combat Handlers', () => {
 
       await rollInitiativeHandler({
         combatId: 'combat-123',
-        combatantIds: ['combatant-123']
+        combatantIds: ['combatant-123'],
       });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
@@ -719,9 +696,9 @@ describe('Combat Handlers', () => {
     it('throws error when no active combat', async () => {
       mockGame.combat = null;
 
-      await expect(
-        setInitiativeHandler({ combatantId: 'combatant-123', initiative: 20 })
-      ).rejects.toThrow('No active combat');
+      await expect(setInitiativeHandler({ combatantId: 'combatant-123', initiative: 20 })).rejects.toThrow(
+        'No active combat',
+      );
     });
 
     it('throws error when combatant not found', async () => {
@@ -729,9 +706,9 @@ describe('Combat Handlers', () => {
       mockCombat.combatants.get.mockReturnValue(undefined);
       mockGame.combat = mockCombat;
 
-      await expect(
-        setInitiativeHandler({ combatantId: 'nonexistent', initiative: 20 })
-      ).rejects.toThrow('Combatant not found: nonexistent');
+      await expect(setInitiativeHandler({ combatantId: 'nonexistent', initiative: 20 })).rejects.toThrow(
+        'Combatant not found: nonexistent',
+      );
     });
 
     it('sets initiative for combatant', async () => {
@@ -742,7 +719,7 @@ describe('Combat Handlers', () => {
 
       const result = await setInitiativeHandler({
         combatantId: 'combatant-123',
-        initiative: 20
+        initiative: 20,
       });
 
       expect(mockCombat.setInitiative).toHaveBeenCalledWith('combatant-123', 20);
@@ -754,7 +731,7 @@ describe('Combat Handlers', () => {
         img: 'icons/fighter.png',
         initiative: 20,
         defeated: false,
-        hidden: false
+        hidden: false,
       });
     });
 
@@ -767,7 +744,7 @@ describe('Combat Handlers', () => {
       await setInitiativeHandler({
         combatId: 'combat-123',
         combatantId: 'combatant-123',
-        initiative: 15
+        initiative: 15,
       });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
@@ -861,9 +838,7 @@ describe('Combat Handlers', () => {
     it('throws error when no active combat', async () => {
       mockGame.combat = null;
 
-      await expect(
-        updateCombatantHandler({ combatantId: 'combatant-123' })
-      ).rejects.toThrow('No active combat');
+      await expect(updateCombatantHandler({ combatantId: 'combatant-123' })).rejects.toThrow('No active combat');
     });
 
     it('throws error when combatant not found', async () => {
@@ -871,9 +846,9 @@ describe('Combat Handlers', () => {
       mockCombat.combatants.get.mockReturnValue(undefined);
       mockGame.combat = mockCombat;
 
-      await expect(
-        updateCombatantHandler({ combatantId: 'nonexistent' })
-      ).rejects.toThrow('Combatant not found: nonexistent');
+      await expect(updateCombatantHandler({ combatantId: 'nonexistent' })).rejects.toThrow(
+        'Combatant not found: nonexistent',
+      );
     });
 
     it('updates initiative', async () => {
@@ -884,7 +859,7 @@ describe('Combat Handlers', () => {
 
       const result = await updateCombatantHandler({
         combatantId: 'combatant-123',
-        initiative: 20
+        initiative: 20,
       });
 
       expect(mockCombatant.update).toHaveBeenCalledWith({ initiative: 20 });
@@ -899,7 +874,7 @@ describe('Combat Handlers', () => {
 
       const result = await updateCombatantHandler({
         combatantId: 'combatant-123',
-        defeated: true
+        defeated: true,
       });
 
       expect(mockCombatant.update).toHaveBeenCalledWith({ defeated: true });
@@ -914,7 +889,7 @@ describe('Combat Handlers', () => {
 
       const result = await updateCombatantHandler({
         combatantId: 'combatant-123',
-        hidden: true
+        hidden: true,
       });
 
       expect(mockCombatant.update).toHaveBeenCalledWith({ hidden: true });
@@ -931,13 +906,13 @@ describe('Combat Handlers', () => {
         combatantId: 'combatant-123',
         initiative: 20,
         defeated: true,
-        hidden: true
+        hidden: true,
       });
 
       expect(mockCombatant.update).toHaveBeenCalledWith({
         initiative: 20,
         defeated: true,
-        hidden: true
+        hidden: true,
       });
     });
 
@@ -948,7 +923,7 @@ describe('Combat Handlers', () => {
       mockGame.combat = mockCombat;
 
       const result = await updateCombatantHandler({
-        combatantId: 'combatant-123'
+        combatantId: 'combatant-123',
       });
 
       expect(mockCombatant.update).not.toHaveBeenCalled();
@@ -964,7 +939,7 @@ describe('Combat Handlers', () => {
       await updateCombatantHandler({
         combatId: 'combat-123',
         combatantId: 'combatant-123',
-        defeated: true
+        defeated: true,
       });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
@@ -976,9 +951,9 @@ describe('Combat Handlers', () => {
     it('throws error when no active combat', async () => {
       mockGame.combat = null;
 
-      await expect(
-        setCombatantDefeatedHandler({ combatantId: 'combatant-123', defeated: true })
-      ).rejects.toThrow('No active combat');
+      await expect(setCombatantDefeatedHandler({ combatantId: 'combatant-123', defeated: true })).rejects.toThrow(
+        'No active combat',
+      );
     });
 
     it('throws error when combatant not found', async () => {
@@ -986,9 +961,9 @@ describe('Combat Handlers', () => {
       mockCombat.combatants.get.mockReturnValue(undefined);
       mockGame.combat = mockCombat;
 
-      await expect(
-        setCombatantDefeatedHandler({ combatantId: 'nonexistent', defeated: true })
-      ).rejects.toThrow('Combatant not found: nonexistent');
+      await expect(setCombatantDefeatedHandler({ combatantId: 'nonexistent', defeated: true })).rejects.toThrow(
+        'Combatant not found: nonexistent',
+      );
     });
 
     it('marks combatant as defeated', async () => {
@@ -999,7 +974,7 @@ describe('Combat Handlers', () => {
 
       const result = await setCombatantDefeatedHandler({
         combatantId: 'combatant-123',
-        defeated: true
+        defeated: true,
       });
 
       expect(mockCombatant.update).toHaveBeenCalledWith({ defeated: true });
@@ -1014,7 +989,7 @@ describe('Combat Handlers', () => {
 
       const result = await setCombatantDefeatedHandler({
         combatantId: 'combatant-123',
-        defeated: false
+        defeated: false,
       });
 
       expect(mockCombatant.update).toHaveBeenCalledWith({ defeated: false });
@@ -1030,7 +1005,7 @@ describe('Combat Handlers', () => {
       await setCombatantDefeatedHandler({
         combatId: 'combat-123',
         combatantId: 'combatant-123',
-        defeated: true
+        defeated: true,
       });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
@@ -1041,9 +1016,9 @@ describe('Combat Handlers', () => {
     it('throws error when no active combat', async () => {
       mockGame.combat = null;
 
-      await expect(
-        toggleCombatantVisibilityHandler({ combatantId: 'combatant-123' })
-      ).rejects.toThrow('No active combat');
+      await expect(toggleCombatantVisibilityHandler({ combatantId: 'combatant-123' })).rejects.toThrow(
+        'No active combat',
+      );
     });
 
     it('throws error when combatant not found', async () => {
@@ -1051,9 +1026,9 @@ describe('Combat Handlers', () => {
       mockCombat.combatants.get.mockReturnValue(undefined);
       mockGame.combat = mockCombat;
 
-      await expect(
-        toggleCombatantVisibilityHandler({ combatantId: 'nonexistent' })
-      ).rejects.toThrow('Combatant not found: nonexistent');
+      await expect(toggleCombatantVisibilityHandler({ combatantId: 'nonexistent' })).rejects.toThrow(
+        'Combatant not found: nonexistent',
+      );
     });
 
     it('hides visible combatant', async () => {
@@ -1063,7 +1038,7 @@ describe('Combat Handlers', () => {
       mockGame.combat = mockCombat;
 
       const result = await toggleCombatantVisibilityHandler({
-        combatantId: 'combatant-123'
+        combatantId: 'combatant-123',
       });
 
       expect(mockCombatant.update).toHaveBeenCalledWith({ hidden: true });
@@ -1077,7 +1052,7 @@ describe('Combat Handlers', () => {
       mockGame.combat = mockCombat;
 
       const result = await toggleCombatantVisibilityHandler({
-        combatantId: 'combatant-123'
+        combatantId: 'combatant-123',
       });
 
       expect(mockCombatant.update).toHaveBeenCalledWith({ hidden: false });
@@ -1092,7 +1067,7 @@ describe('Combat Handlers', () => {
 
       await toggleCombatantVisibilityHandler({
         combatId: 'combat-123',
-        combatantId: 'combatant-123'
+        combatantId: 'combatant-123',
       });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
@@ -1109,7 +1084,7 @@ describe('Combat Handlers', () => {
         round: 1,
         turn: 0,
         turns: [combatant1, combatant2],
-        combatant: combatant1
+        combatant: combatant1,
       });
       mockGame.combat = mockCombat;
 
@@ -1125,7 +1100,7 @@ describe('Combat Handlers', () => {
         started: true,
         turn: 1,
         turns: [combatant1, combatant2],
-        combatant: combatant2
+        combatant: combatant2,
       });
       mockGame.combat = mockCombat;
 
@@ -1138,26 +1113,26 @@ describe('Combat Handlers', () => {
       const mockCombat = createMockCombat({ started: false });
       mockGame.combat = mockCombat;
 
-      await expect(setTurnHandler({ combatantId: 'c1' }))
-        .rejects.toThrow('Combat not started');
+      await expect(setTurnHandler({ combatantId: 'c1' })).rejects.toThrow('Combat not started');
     });
 
     it('throws when combatant not in turn order', async () => {
       const mockCombat = createMockCombat({
         started: true,
-        turns: [createMockCombatant({ id: 'c1' })]
+        turns: [createMockCombatant({ id: 'c1' })],
       });
       mockGame.combat = mockCombat;
 
-      await expect(setTurnHandler({ combatantId: 'nonexistent' }))
-        .rejects.toThrow('Combatant not found in turn order: nonexistent');
+      await expect(setTurnHandler({ combatantId: 'nonexistent' })).rejects.toThrow(
+        'Combatant not found in turn order: nonexistent',
+      );
     });
 
     it('uses specific combat when combatId provided', async () => {
       const combatant1 = createMockCombatant({ id: 'c1' });
       const mockCombat = createMockCombat({
         started: true,
-        turns: [combatant1]
+        turns: [combatant1],
       });
       mockGame.combats.get.mockReturnValue(mockCombat);
 

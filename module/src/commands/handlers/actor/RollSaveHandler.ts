@@ -9,7 +9,7 @@ interface FoundryActor {
   rollSavingThrow(
     config: { ability: AbilityKey },
     dialog?: RollDialogConfig,
-    message?: RollMessageConfig
+    message?: RollMessageConfig,
   ): Promise<FoundryD20Roll[]>;
 }
 
@@ -41,7 +41,7 @@ export async function rollSaveHandler(params: RollSaveParams): Promise<RollResul
   const rolls = await actor.rollSavingThrow(
     { ability: params.ability },
     { configure: false },
-    { create: params.showInChat ?? false }
+    { create: params.showInChat ?? false },
   );
 
   const roll = rolls[0];
@@ -55,7 +55,7 @@ export async function rollSaveHandler(params: RollSaveParams): Promise<RollResul
   const result: RollResult = {
     total: roll.total,
     formula: roll.formula,
-    dice
+    dice,
   };
 
   if (roll.isCritical) {

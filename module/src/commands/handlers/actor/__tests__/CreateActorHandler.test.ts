@@ -6,15 +6,15 @@ const mockCreatedActor = {
   name: 'Test Character',
   type: 'character',
   img: 'icons/svg/mystery-man.svg',
-  folder: null
+  folder: null,
 };
 
 const mockGame = {
   actors: {
     documentClass: {
-      create: jest.fn()
-    }
-  }
+      create: jest.fn(),
+    },
+  },
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;
@@ -29,12 +29,12 @@ describe('createActorHandler', () => {
     it('should create an actor with required fields', async () => {
       const result = await createActorHandler({
         name: 'Test Character',
-        type: 'character'
+        type: 'character',
       });
 
       expect(mockGame.actors.documentClass.create).toHaveBeenCalledWith({
         name: 'Test Character',
-        type: 'character'
+        type: 'character',
       });
       expect(result).toEqual({
         id: 'new-actor-123',
@@ -42,7 +42,7 @@ describe('createActorHandler', () => {
         name: 'Test Character',
         type: 'character',
         img: 'icons/svg/mystery-man.svg',
-        folder: null
+        folder: null,
       });
     });
 
@@ -50,13 +50,13 @@ describe('createActorHandler', () => {
       await createActorHandler({
         name: 'Test Character',
         type: 'character',
-        folder: 'folder-123'
+        folder: 'folder-123',
       });
 
       expect(mockGame.actors.documentClass.create).toHaveBeenCalledWith({
         name: 'Test Character',
         type: 'character',
-        folder: 'folder-123'
+        folder: 'folder-123',
       });
     });
 
@@ -64,32 +64,32 @@ describe('createActorHandler', () => {
       await createActorHandler({
         name: 'Test Character',
         type: 'character',
-        img: 'path/to/image.png'
+        img: 'path/to/image.png',
       });
 
       expect(mockGame.actors.documentClass.create).toHaveBeenCalledWith({
         name: 'Test Character',
         type: 'character',
-        img: 'path/to/image.png'
+        img: 'path/to/image.png',
       });
     });
 
     it('should pass system data when provided', async () => {
       const systemData = {
         abilities: { str: { value: 18 } },
-        attributes: { hp: { value: 50, max: 50 } }
+        attributes: { hp: { value: 50, max: 50 } },
       };
 
       await createActorHandler({
         name: 'Test Character',
         type: 'character',
-        system: systemData
+        system: systemData,
       });
 
       expect(mockGame.actors.documentClass.create).toHaveBeenCalledWith({
         name: 'Test Character',
         type: 'character',
-        system: systemData
+        system: systemData,
       });
     });
 
@@ -99,7 +99,7 @@ describe('createActorHandler', () => {
         type: 'npc',
         folder: 'folder-456',
         img: 'custom/image.png',
-        system: { cr: 5 }
+        system: { cr: 5 },
       });
 
       expect(mockGame.actors.documentClass.create).toHaveBeenCalledWith({
@@ -107,19 +107,19 @@ describe('createActorHandler', () => {
         type: 'npc',
         folder: 'folder-456',
         img: 'custom/image.png',
-        system: { cr: 5 }
+        system: { cr: 5 },
       });
     });
 
     it('should return folder name when actor has folder', async () => {
       mockGame.actors.documentClass.create.mockResolvedValue({
         ...mockCreatedActor,
-        folder: { name: 'NPCs' }
+        folder: { name: 'NPCs' },
       });
 
       const result = await createActorHandler({
         name: 'Test Character',
-        type: 'npc'
+        type: 'npc',
       });
 
       expect(result.folder).toBe('NPCs');

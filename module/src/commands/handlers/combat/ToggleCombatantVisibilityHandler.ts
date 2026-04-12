@@ -1,14 +1,11 @@
 import type { ToggleCombatantVisibilityParams, CombatantResult } from '@/commands/types';
-import {
-  getActiveCombat,
-  getCombatant,
-  mapCombatantToResult,
-  type FoundryGame
-} from './combatTypes';
+import { getActiveCombat, getCombatant, mapCombatantToResult, type FoundryGame } from './combatTypes';
 
 declare const game: FoundryGame;
 
-export async function toggleCombatantVisibilityHandler(params: ToggleCombatantVisibilityParams): Promise<CombatantResult> {
+export async function toggleCombatantVisibilityHandler(
+  params: ToggleCombatantVisibilityParams,
+): Promise<CombatantResult> {
   const combat = getActiveCombat(game, params.combatId);
   const combatant = getCombatant(combat, params.combatantId);
 

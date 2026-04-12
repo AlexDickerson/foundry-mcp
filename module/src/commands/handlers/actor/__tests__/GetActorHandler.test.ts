@@ -26,7 +26,7 @@ function createMockItem(overrides?: Partial<MockItem>): MockItem {
     type: 'weapon',
     img: 'items/sword.webp',
     toObject: jest.fn().mockReturnValue({ system: { damage: '1d8' } }),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -38,22 +38,22 @@ function createMockActor(items: MockItem[] = [], overrides?: Partial<MockActor>)
     img: 'tokens/gandalf.webp',
     getRollData: jest.fn().mockReturnValue({
       attributes: { hp: { value: 120, max: 120 }, ac: { value: 18 } },
-      abilities: { str: { value: 10, mod: 0, save: 0 } }
+      abilities: { str: { value: 10, mod: 0, save: 0 } },
     }),
     items: {
       forEach: jest.fn((fn: (item: MockItem) => void) => {
         items.forEach(fn);
-      })
+      }),
     },
-    ...overrides
+    ...overrides,
   };
 }
 
 function setGame(actors: Map<string, MockActor>): void {
   (globalThis as Record<string, unknown>)['game'] = {
     actors: {
-      get: jest.fn((id: string) => actors.get(id))
-    }
+      get: jest.fn((id: string) => actors.get(id)),
+    },
   };
 }
 
@@ -67,13 +67,19 @@ describe('getActorHandler', () => {
   it('should return full actor data with items including system', async () => {
     const items = [
       createMockItem({
-        id: 'i1', name: 'Staff', type: 'weapon', img: 'items/staff.webp',
-        toObject: jest.fn().mockReturnValue({ system: { damage: '1d6', weight: 4 } })
+        id: 'i1',
+        name: 'Staff',
+        type: 'weapon',
+        img: 'items/staff.webp',
+        toObject: jest.fn().mockReturnValue({ system: { damage: '1d6', weight: 4 } }),
       }),
       createMockItem({
-        id: 'i2', name: 'Robe', type: 'equipment', img: 'items/robe.webp',
-        toObject: jest.fn().mockReturnValue({ system: { ac: { value: 12 } } })
-      })
+        id: 'i2',
+        name: 'Robe',
+        type: 'equipment',
+        img: 'items/robe.webp',
+        toObject: jest.fn().mockReturnValue({ system: { ac: { value: 12 } } }),
+      }),
     ];
     const actor = createMockActor(items);
     setGame(new Map([['actor-123', actor]]));
@@ -82,7 +88,7 @@ describe('getActorHandler', () => {
 
     expect(result.items).toEqual([
       { id: 'i1', name: 'Staff', type: 'weapon', img: 'items/staff.webp', system: { damage: '1d6', weight: 4 } },
-      { id: 'i2', name: 'Robe', type: 'equipment', img: 'items/robe.webp', system: { ac: { value: 12 } } }
+      { id: 'i2', name: 'Robe', type: 'equipment', img: 'items/robe.webp', system: { ac: { value: 12 } } },
     ]);
   });
 
@@ -99,8 +105,7 @@ describe('getActorHandler', () => {
   it('should reject with error when actor not found', async () => {
     setGame(new Map());
 
-    await expect(getActorHandler({ actorId: 'nonexistent' }))
-      .rejects.toThrow('Actor not found: nonexistent');
+    await expect(getActorHandler({ actorId: 'nonexistent' })).rejects.toThrow('Actor not found: nonexistent');
   });
 
   it('should fallback actor img to empty string when undefined', async () => {
@@ -134,10 +139,10 @@ describe('getActorHandler', () => {
   it('should pass through actor system data from getRollData as-is', async () => {
     const systemData = {
       abilities: { str: { value: 10, mod: 0, save: 4 } },
-      details: { level: 20 }
+      details: { level: 20 },
     };
     const actor = createMockActor([], {
-      getRollData: jest.fn().mockReturnValue(systemData)
+      getRollData: jest.fn().mockReturnValue(systemData),
     });
     setGame(new Map([['a1', actor]]));
 
@@ -150,10 +155,10 @@ describe('getActorHandler', () => {
     const itemSystem = {
       description: { value: '<p>A magical staff</p>' },
       damage: { base: { formula: '1d6+4', types: ['bludgeoning'] } },
-      range: { reach: 5, units: 'ft' }
+      range: { reach: 5, units: 'ft' },
     };
     const item = createMockItem({
-      toObject: jest.fn().mockReturnValue({ system: itemSystem })
+      toObject: jest.fn().mockReturnValue({ system: itemSystem }),
     });
     const actor = createMockActor([item]);
     setGame(new Map([['a1', actor]]));
@@ -167,7 +172,7 @@ describe('getActorHandler', () => {
     const items = [
       createMockItem({ id: 'i1', name: 'Alpha' }),
       createMockItem({ id: 'i2', name: 'Beta' }),
-      createMockItem({ id: 'i3', name: 'Gamma' })
+      createMockItem({ id: 'i3', name: 'Gamma' }),
     ];
     const actor = createMockActor(items);
     setGame(new Map([['a1', actor]]));
@@ -175,13 +180,12 @@ describe('getActorHandler', () => {
     const result = await getActorHandler({ actorId: 'a1' });
 
     expect(result.items).toHaveLength(3);
-    expect(result.items.map(i => i.name)).toEqual(['Alpha', 'Beta', 'Gamma']);
+    expect(result.items.map((i) => i.name)).toEqual(['Alpha', 'Beta', 'Gamma']);
   });
 
   it('should reject with descriptive error for empty actorId', async () => {
     setGame(new Map());
 
-    await expect(getActorHandler({ actorId: '' }))
-      .rejects.toThrow('Actor not found: ');
+    await expect(getActorHandler({ actorId: '' })).rejects.toThrow('Actor not found: ');
   });
 });

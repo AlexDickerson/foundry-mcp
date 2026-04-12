@@ -1,9 +1,7 @@
 import type { ToggleActorStatusParams, ToggleStatusResult } from '@/commands/types';
 import { getGame } from './effectTypes';
 
-export async function toggleActorStatusHandler(
-  params: ToggleActorStatusParams
-): Promise<ToggleStatusResult> {
+export async function toggleActorStatusHandler(params: ToggleActorStatusParams): Promise<ToggleStatusResult> {
   const actor = getGame().actors.get(params.actorId);
 
   if (!actor) {
@@ -20,15 +18,12 @@ export async function toggleActorStatusHandler(
     options.overlay = params.overlay;
   }
 
-  const result = await actor.toggleStatusEffect(
-    params.statusId,
-    Object.keys(options).length > 0 ? options : undefined
-  );
+  const result = await actor.toggleStatusEffect(params.statusId, Object.keys(options).length > 0 ? options : undefined);
 
   const toggleResult: ToggleStatusResult = {
     actorId: actor.id,
     statusId: params.statusId,
-    active: false
+    active: false,
   };
 
   if (result === true) {

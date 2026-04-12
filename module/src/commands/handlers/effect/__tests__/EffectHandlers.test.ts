@@ -6,13 +6,11 @@ const mockEffect1 = {
   origin: 'Item.spell-123',
   transfer: false,
   statuses: new Set<string>(),
-  changes: [
-    { key: 'system.bonuses.abilities.save', value: '1d4', mode: 2 }
-  ],
+  changes: [{ key: 'system.bonuses.abilities.save', value: '1d4', mode: 2 }],
   duration: { rounds: 10 },
   flags: {},
   update: jest.fn(),
-  delete: jest.fn()
+  delete: jest.fn(),
 };
 
 const mockEffect2 = {
@@ -27,7 +25,7 @@ const mockEffect2 = {
   duration: {},
   flags: {},
   update: jest.fn(),
-  delete: jest.fn()
+  delete: jest.fn(),
 };
 
 const mockDisabledEffect = {
@@ -38,18 +36,16 @@ const mockDisabledEffect = {
   origin: 'Item.spell-456',
   transfer: false,
   statuses: new Set<string>(),
-  changes: [
-    { key: 'system.attributes.ac.bonus', value: '2', mode: 2 }
-  ],
+  changes: [{ key: 'system.attributes.ac.bonus', value: '2', mode: 2 }],
   duration: { seconds: 600 },
   flags: {},
   update: jest.fn(),
-  delete: jest.fn()
+  delete: jest.fn(),
 };
 
 const mockEffectsCollection = {
   contents: [mockEffect1, mockEffect2, mockDisabledEffect],
-  get: jest.fn()
+  get: jest.fn(),
 };
 
 const mockActor = {
@@ -58,13 +54,13 @@ const mockActor = {
   effects: mockEffectsCollection,
   statuses: new Set(['prone']),
   toggleStatusEffect: jest.fn(),
-  createEmbeddedDocuments: jest.fn()
+  createEmbeddedDocuments: jest.fn(),
 };
 
 const mockGame = {
   actors: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 (globalThis as Record<string, unknown>)['game'] = mockGame;
@@ -95,7 +91,7 @@ describe('getActorEffectsHandler', () => {
     it('should map effect properties correctly', async () => {
       const result = await getActorEffectsHandler({ actorId: 'actor-123' });
 
-      const bless = result.effects.find(e => e.id === 'effect-001');
+      const bless = result.effects.find((e) => e.id === 'effect-001');
       expect(bless).toEqual({
         id: 'effect-001',
         name: 'Bless',
@@ -105,32 +101,32 @@ describe('getActorEffectsHandler', () => {
         statuses: [],
         origin: 'Item.spell-123',
         changes: [{ key: 'system.bonuses.abilities.save', value: '1d4', mode: 2 }],
-        duration: { rounds: 10 }
+        duration: { rounds: 10 },
       });
     });
 
     it('should filter out disabled effects when includeDisabled is false', async () => {
       const result = await getActorEffectsHandler({
         actorId: 'actor-123',
-        includeDisabled: false
+        includeDisabled: false,
       });
 
       expect(result.effects).toHaveLength(2);
-      expect(result.effects.find(e => e.name === 'Shield of Faith')).toBeUndefined();
+      expect(result.effects.find((e) => e.name === 'Shield of Faith')).toBeUndefined();
     });
 
     it('should include disabled effects by default', async () => {
       const result = await getActorEffectsHandler({ actorId: 'actor-123' });
 
       expect(result.effects).toHaveLength(3);
-      const shieldOfFaith = result.effects.find(e => e.name === 'Shield of Faith');
+      const shieldOfFaith = result.effects.find((e) => e.name === 'Shield of Faith');
       expect(shieldOfFaith?.disabled).toBe(true);
     });
 
     it('should convert statuses Set to array', async () => {
       const result = await getActorEffectsHandler({ actorId: 'actor-123' });
 
-      const prone = result.effects.find(e => e.name === 'Prone');
+      const prone = result.effects.find((e) => e.name === 'Prone');
       expect(prone?.statuses).toEqual(['prone']);
     });
 
@@ -139,7 +135,7 @@ describe('getActorEffectsHandler', () => {
         id: 'empty-actor',
         name: 'Empty Actor',
         effects: { contents: [] },
-        statuses: new Set()
+        statuses: new Set(),
       });
 
       const result = await getActorEffectsHandler({ actorId: 'empty-actor' });
@@ -154,7 +150,7 @@ describe('getActorEffectsHandler', () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
       await expect(getActorEffectsHandler({ actorId: 'non-existent' })).rejects.toThrow(
-        'Actor not found: non-existent'
+        'Actor not found: non-existent',
       );
     });
   });
@@ -170,12 +166,12 @@ describe('toggleActorStatusHandler', () => {
     it('should toggle status and return active true when effect created', async () => {
       mockActor.toggleStatusEffect.mockResolvedValue({
         _id: 'new-effect-id',
-        name: 'Stunned'
+        name: 'Stunned',
       });
 
       const result = await toggleActorStatusHandler({
         actorId: 'actor-123',
-        statusId: 'stunned'
+        statusId: 'stunned',
       });
 
       expect(result.actorId).toBe('actor-123');
@@ -189,7 +185,7 @@ describe('toggleActorStatusHandler', () => {
 
       const result = await toggleActorStatusHandler({
         actorId: 'actor-123',
-        statusId: 'prone'
+        statusId: 'prone',
       });
 
       expect(result.active).toBe(true);
@@ -201,7 +197,7 @@ describe('toggleActorStatusHandler', () => {
 
       const result = await toggleActorStatusHandler({
         actorId: 'actor-123',
-        statusId: 'prone'
+        statusId: 'prone',
       });
 
       expect(result.active).toBe(false);
@@ -214,7 +210,7 @@ describe('toggleActorStatusHandler', () => {
       await toggleActorStatusHandler({
         actorId: 'actor-123',
         statusId: 'blinded',
-        active: true
+        active: true,
       });
 
       expect(mockActor.toggleStatusEffect).toHaveBeenCalledWith('blinded', { active: true });
@@ -226,7 +222,7 @@ describe('toggleActorStatusHandler', () => {
       await toggleActorStatusHandler({
         actorId: 'actor-123',
         statusId: 'dead',
-        overlay: true
+        overlay: true,
       });
 
       expect(mockActor.toggleStatusEffect).toHaveBeenCalledWith('dead', { overlay: true });
@@ -239,12 +235,12 @@ describe('toggleActorStatusHandler', () => {
         actorId: 'actor-123',
         statusId: 'unconscious',
         active: true,
-        overlay: true
+        overlay: true,
       });
 
       expect(mockActor.toggleStatusEffect).toHaveBeenCalledWith('unconscious', {
         active: true,
-        overlay: true
+        overlay: true,
       });
     });
   });
@@ -253,9 +249,9 @@ describe('toggleActorStatusHandler', () => {
     it('should throw error if actor not found', async () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
-      await expect(
-        toggleActorStatusHandler({ actorId: 'non-existent', statusId: 'prone' })
-      ).rejects.toThrow('Actor not found: non-existent');
+      await expect(toggleActorStatusHandler({ actorId: 'non-existent', statusId: 'prone' })).rejects.toThrow(
+        'Actor not found: non-existent',
+      );
     });
   });
 });
@@ -264,21 +260,17 @@ describe('addActorEffectHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGame.actors.get.mockReturnValue(mockActor);
-    mockActor.createEmbeddedDocuments.mockResolvedValue([
-      { _id: 'new-effect-123', name: 'Custom Effect' }
-    ]);
+    mockActor.createEmbeddedDocuments.mockResolvedValue([{ _id: 'new-effect-123', name: 'Custom Effect' }]);
   });
 
   describe('successful creation', () => {
     it('should create effect with required name', async () => {
       const result = await addActorEffectHandler({
         actorId: 'actor-123',
-        name: 'Custom Buff'
+        name: 'Custom Buff',
       });
 
-      expect(mockActor.createEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', [
-        { name: 'Custom Buff' }
-      ]);
+      expect(mockActor.createEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', [{ name: 'Custom Buff' }]);
       expect(result.actorId).toBe('actor-123');
       expect(result.effectId).toBe('new-effect-123');
       expect(result.name).toBe('Custom Effect');
@@ -293,7 +285,7 @@ describe('addActorEffectHandler', () => {
         origin: 'Actor.actor-123',
         statuses: ['custom-status'],
         changes: [{ key: 'system.attributes.hp.temp', value: '10', mode: 2 }],
-        duration: { rounds: 5, turns: 1 }
+        duration: { rounds: 5, turns: 1 },
       });
 
       expect(mockActor.createEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', [
@@ -304,15 +296,15 @@ describe('addActorEffectHandler', () => {
           origin: 'Actor.actor-123',
           statuses: ['custom-status'],
           changes: [{ key: 'system.attributes.hp.temp', value: '10', mode: 2 }],
-          duration: { rounds: 5, turns: 1 }
-        }
+          duration: { rounds: 5, turns: 1 },
+        },
       ]);
     });
 
     it('should not include undefined optional properties', async () => {
       await addActorEffectHandler({
         actorId: 'actor-123',
-        name: 'Simple Effect'
+        name: 'Simple Effect',
       });
 
       const callArg = mockActor.createEmbeddedDocuments.mock.calls[0]?.[1]?.[0];
@@ -326,25 +318,25 @@ describe('addActorEffectHandler', () => {
     it('should throw error if actor not found', async () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
-      await expect(
-        addActorEffectHandler({ actorId: 'non-existent', name: 'Effect' })
-      ).rejects.toThrow('Actor not found: non-existent');
+      await expect(addActorEffectHandler({ actorId: 'non-existent', name: 'Effect' })).rejects.toThrow(
+        'Actor not found: non-existent',
+      );
     });
 
     it('should throw error if creation returns empty array', async () => {
       mockActor.createEmbeddedDocuments.mockResolvedValue([]);
 
-      await expect(
-        addActorEffectHandler({ actorId: 'actor-123', name: 'Effect' })
-      ).rejects.toThrow('Failed to create effect');
+      await expect(addActorEffectHandler({ actorId: 'actor-123', name: 'Effect' })).rejects.toThrow(
+        'Failed to create effect',
+      );
     });
 
     it('should throw error if creation returns null', async () => {
       mockActor.createEmbeddedDocuments.mockResolvedValue(null);
 
-      await expect(
-        addActorEffectHandler({ actorId: 'actor-123', name: 'Effect' })
-      ).rejects.toThrow('Failed to create effect');
+      await expect(addActorEffectHandler({ actorId: 'actor-123', name: 'Effect' })).rejects.toThrow(
+        'Failed to create effect',
+      );
     });
   });
 });
@@ -361,7 +353,7 @@ describe('removeActorEffectHandler', () => {
     it('should delete effect and return success', async () => {
       const result = await removeActorEffectHandler({
         actorId: 'actor-123',
-        effectId: 'effect-001'
+        effectId: 'effect-001',
       });
 
       expect(mockEffectsCollection.get).toHaveBeenCalledWith('effect-001');
@@ -376,17 +368,17 @@ describe('removeActorEffectHandler', () => {
     it('should throw error if actor not found', async () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
-      await expect(
-        removeActorEffectHandler({ actorId: 'non-existent', effectId: 'effect-001' })
-      ).rejects.toThrow('Actor not found: non-existent');
+      await expect(removeActorEffectHandler({ actorId: 'non-existent', effectId: 'effect-001' })).rejects.toThrow(
+        'Actor not found: non-existent',
+      );
     });
 
     it('should throw error if effect not found', async () => {
       mockEffectsCollection.get.mockReturnValue(undefined);
 
-      await expect(
-        removeActorEffectHandler({ actorId: 'actor-123', effectId: 'non-existent' })
-      ).rejects.toThrow('Effect not found: non-existent');
+      await expect(removeActorEffectHandler({ actorId: 'actor-123', effectId: 'non-existent' })).rejects.toThrow(
+        'Effect not found: non-existent',
+      );
     });
   });
 });
@@ -404,7 +396,7 @@ describe('updateActorEffectHandler', () => {
       const result = await updateActorEffectHandler({
         actorId: 'actor-123',
         effectId: 'effect-001',
-        name: 'New Name'
+        name: 'New Name',
       });
 
       expect(mockEffect1.update).toHaveBeenCalledWith({ name: 'New Name' });
@@ -417,7 +409,7 @@ describe('updateActorEffectHandler', () => {
       await updateActorEffectHandler({
         actorId: 'actor-123',
         effectId: 'effect-001',
-        disabled: true
+        disabled: true,
       });
 
       expect(mockEffect1.update).toHaveBeenCalledWith({ disabled: true });
@@ -429,7 +421,7 @@ describe('updateActorEffectHandler', () => {
       await updateActorEffectHandler({
         actorId: 'actor-123',
         effectId: 'effect-001',
-        changes: newChanges
+        changes: newChanges,
       });
 
       expect(mockEffect1.update).toHaveBeenCalledWith({ changes: newChanges });
@@ -442,14 +434,14 @@ describe('updateActorEffectHandler', () => {
         name: 'Multi Update',
         disabled: true,
         img: 'new-icon.png',
-        duration: { rounds: 20 }
+        duration: { rounds: 20 },
       });
 
       expect(mockEffect1.update).toHaveBeenCalledWith({
         name: 'Multi Update',
         disabled: true,
         img: 'new-icon.png',
-        duration: { rounds: 20 }
+        duration: { rounds: 20 },
       });
     });
 
@@ -457,7 +449,7 @@ describe('updateActorEffectHandler', () => {
       await updateActorEffectHandler({
         actorId: 'actor-123',
         effectId: 'effect-001',
-        name: 'Only Name'
+        name: 'Only Name',
       });
 
       const callArg = mockEffect1.update.mock.calls[0]?.[0];
@@ -471,17 +463,17 @@ describe('updateActorEffectHandler', () => {
     it('should throw error if actor not found', async () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
-      await expect(
-        updateActorEffectHandler({ actorId: 'non-existent', effectId: 'effect-001' })
-      ).rejects.toThrow('Actor not found: non-existent');
+      await expect(updateActorEffectHandler({ actorId: 'non-existent', effectId: 'effect-001' })).rejects.toThrow(
+        'Actor not found: non-existent',
+      );
     });
 
     it('should throw error if effect not found', async () => {
       mockEffectsCollection.get.mockReturnValue(undefined);
 
-      await expect(
-        updateActorEffectHandler({ actorId: 'actor-123', effectId: 'non-existent' })
-      ).rejects.toThrow('Effect not found: non-existent');
+      await expect(updateActorEffectHandler({ actorId: 'actor-123', effectId: 'non-existent' })).rejects.toThrow(
+        'Effect not found: non-existent',
+      );
     });
   });
 });

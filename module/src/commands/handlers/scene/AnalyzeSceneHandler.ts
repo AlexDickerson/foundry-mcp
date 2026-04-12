@@ -20,7 +20,12 @@ declare const game: { scenes: FoundryScenesCollection };
 // Pixel classification
 // ---------------------------------------------------------------------------
 
-interface RGB { r: number; g: number; b: number; a: number }
+interface RGB {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
 
 function luminance({ r, g, b }: RGB): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
@@ -72,7 +77,7 @@ function classify(sample: RGB): string {
   if (sat > 0.25 && h >= 60 && h <= 170 && lum < 0.45) return '~';
 
   // Dark with low saturation → wall/structure
-  if (lum < 0.30 && sat < 0.35) return '#';
+  if (lum < 0.3 && sat < 0.35) return '#';
 
   // Medium dark, brownish → could be wall or dark floor
   if (lum < 0.35 && sat < 0.5) return '#';
@@ -89,8 +94,12 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = (): void => { resolve(img); };
-    img.onerror = (): void => { reject(new Error(`Failed to load image: ${src}`)); };
+    img.onload = (): void => {
+      resolve(img);
+    };
+    img.onerror = (): void => {
+      reject(new Error(`Failed to load image: ${src}`));
+    };
     img.src = src;
   });
 }
@@ -100,13 +109,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
  * Uses a small kernel (5x5) centered on the grid cell center
  * to avoid single-pixel noise.
  */
-function sampleRegion(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  imgW: number,
-  imgH: number,
-): RGB {
+function sampleRegion(ctx: CanvasRenderingContext2D, cx: number, cy: number, imgW: number, imgH: number): RGB {
   const radius = 2; // 5x5 kernel
   const x0 = Math.max(0, Math.floor(cx - radius));
   const y0 = Math.max(0, Math.floor(cy - radius));
@@ -116,7 +119,10 @@ function sampleRegion(
   const h = y1 - y0 + 1;
 
   const data = ctx.getImageData(x0, y0, w, h).data;
-  let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
+  let rSum = 0,
+    gSum = 0,
+    bSum = 0,
+    aSum = 0;
   const count = w * h;
   for (let i = 0; i < count; i++) {
     rSum += data[i * 4] ?? 0;
@@ -138,9 +144,7 @@ function sampleRegion(
 // ---------------------------------------------------------------------------
 
 export async function analyzeSceneHandler(params: AnalyzeSceneParams): Promise<AnalyzeSceneResult> {
-  const scene = params.sceneId
-    ? game.scenes.get(params.sceneId)
-    : game.scenes.active;
+  const scene = params.sceneId ? game.scenes.get(params.sceneId) : game.scenes.active;
 
   if (!scene) {
     throw new Error(params.sceneId ? `Scene not found: ${params.sceneId}` : 'No active scene');

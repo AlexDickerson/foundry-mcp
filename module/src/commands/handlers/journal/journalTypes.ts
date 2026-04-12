@@ -26,10 +26,7 @@ export interface FoundryJournalEntry {
   pages: FoundryPagesCollection;
   update(data: FoundryJournalUpdateData): Promise<FoundryJournalEntry>;
   delete(): Promise<FoundryJournalEntry>;
-  createEmbeddedDocuments(
-    type: 'JournalEntryPage',
-    data: FoundryPageCreateData[]
-  ): Promise<FoundryJournalPage[]>;
+  createEmbeddedDocuments(type: 'JournalEntryPage', data: FoundryPageCreateData[]): Promise<FoundryJournalPage[]>;
   deleteEmbeddedDocuments(type: 'JournalEntryPage', ids: string[]): Promise<unknown[]>;
 }
 
@@ -69,7 +66,7 @@ export function mapJournalToResult(journal: FoundryJournalEntry): JournalResult 
     id: journal.id,
     name: journal.name,
     folder: journal.folder?.id ?? null,
-    pages: journal.pages.map(mapPageToResult)
+    pages: journal.pages.map(mapPageToResult),
   };
 }
 
@@ -77,6 +74,6 @@ export function mapPageToResult(page: FoundryJournalPage): JournalPageResult {
   return {
     id: page.id,
     name: page.name,
-    type: page.type
+    type: page.type,
   };
 }

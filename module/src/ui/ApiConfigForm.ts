@@ -37,12 +37,14 @@ function parseFormData(formData: Record<string, unknown>): ModuleConfig {
     webSocket: {
       enabled: Boolean(formData['webSocket.enabled'] ?? DEFAULT_CONFIG.webSocket.enabled),
       reconnectInterval: Number(formData['webSocket.reconnectInterval'] ?? DEFAULT_CONFIG.webSocket.reconnectInterval),
-      maxReconnectAttempts: Number(formData['webSocket.maxReconnectAttempts'] ?? DEFAULT_CONFIG.webSocket.maxReconnectAttempts)
+      maxReconnectAttempts: Number(
+        formData['webSocket.maxReconnectAttempts'] ?? DEFAULT_CONFIG.webSocket.maxReconnectAttempts,
+      ),
     },
     logging: {
       enabled: Boolean(formData['logging.enabled']),
-      level: validLogLevel
-    }
+      level: validLogLevel,
+    },
   };
 }
 
@@ -59,7 +61,7 @@ export class ApiConfigForm extends FormApplication {
       submitOnClose: false,
       submitOnChange: false,
       resizable: true,
-      classes: ['foundry-api-bridge-config']
+      classes: ['foundry-api-bridge-config'],
     };
   }
 

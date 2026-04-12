@@ -1,9 +1,7 @@
 import type { RemoveActorEffectParams, RemoveEffectResult } from '@/commands/types';
 import { getGame } from './effectTypes';
 
-export async function removeActorEffectHandler(
-  params: RemoveActorEffectParams
-): Promise<RemoveEffectResult> {
+export async function removeActorEffectHandler(params: RemoveActorEffectParams): Promise<RemoveEffectResult> {
   const actor = getGame().actors.get(params.actorId);
 
   if (!actor) {
@@ -21,6 +19,6 @@ export async function removeActorEffectHandler(
   return {
     actorId: actor.id,
     effectId: params.effectId,
-    removed: true
+    removed: true,
   };
 }

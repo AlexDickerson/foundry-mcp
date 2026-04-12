@@ -5,13 +5,13 @@ const mockMessage = { id: 'msg-123' };
 const mockChatMessage = {
   create: jest.fn().mockResolvedValue(mockMessage),
   getSpeaker: jest.fn().mockReturnValue({ alias: 'Gamemaster', actor: undefined, scene: 'scene-1' }),
-  STYLE: { IC: 1, OOC: 2, EMOTE: 3 }
+  STYLE: { IC: 1, OOC: 2, EMOTE: 3 },
 };
 
 const mockGame = {
   actors: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 (global as Record<string, unknown>)['ChatMessage'] = mockChatMessage;
@@ -30,7 +30,7 @@ describe('sendChatMessageHandler', () => {
 
     expect(mockChatMessage.create).toHaveBeenCalledWith({
       content: 'Hello world',
-      speaker: { alias: 'Gamemaster', actor: undefined, scene: 'scene-1' }
+      speaker: { alias: 'Gamemaster', actor: undefined, scene: 'scene-1' },
     });
     expect(result).toEqual({ messageId: 'msg-123', sent: true });
   });
@@ -102,13 +102,11 @@ describe('sendChatMessageHandler', () => {
   });
 
   it('throws on empty content', async () => {
-    await expect(sendChatMessageHandler({ content: '' }))
-      .rejects.toThrow('Message content cannot be empty');
+    await expect(sendChatMessageHandler({ content: '' })).rejects.toThrow('Message content cannot be empty');
   });
 
   it('throws on whitespace-only content', async () => {
-    await expect(sendChatMessageHandler({ content: '   ' }))
-      .rejects.toThrow('Message content cannot be empty');
+    await expect(sendChatMessageHandler({ content: '   ' })).rejects.toThrow('Message content cannot be empty');
   });
 
   it('does not include flavor when not provided', async () => {
@@ -148,7 +146,7 @@ describe('sendChatMessageHandler', () => {
       actorId: 'innkeeper-id',
       flavor: 'The Rusty Dragon Inn',
       whisperTo: ['user-1'],
-      type: 'ic'
+      type: 'ic',
     });
 
     const callArgs = mockChatMessage.create.mock.calls[0] as [Record<string, unknown>];

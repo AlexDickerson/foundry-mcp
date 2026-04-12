@@ -18,7 +18,7 @@ describe('ConfigManager', () => {
     it('should initialize with config from game.settings', () => {
       const settingsConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        webSocket: { ...DEFAULT_CONFIG.webSocket, reconnectInterval: 3000 }
+        webSocket: { ...DEFAULT_CONFIG.webSocket, reconnectInterval: 3000 },
       };
 
       mockGetConfig.mockReturnValue(settingsConfig);
@@ -39,7 +39,7 @@ describe('ConfigManager', () => {
     it('should update config when valid', async () => {
       const newConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        webSocket: { ...DEFAULT_CONFIG.webSocket, maxReconnectAttempts: 20 }
+        webSocket: { ...DEFAULT_CONFIG.webSocket, maxReconnectAttempts: 20 },
       };
 
       await ConfigManager.updateConfig(newConfig);

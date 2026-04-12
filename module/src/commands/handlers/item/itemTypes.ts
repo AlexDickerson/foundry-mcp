@@ -43,7 +43,7 @@ export interface FoundryActivity {
   use(
     usage?: ActivityUsageConfig,
     dialog?: ActivityDialogConfig,
-    message?: ActivityMessageConfig
+    message?: ActivityMessageConfig,
   ): Promise<FoundryUsageResult | null>;
 }
 
@@ -83,7 +83,7 @@ export interface FoundryItem {
   use(
     usage?: { consume?: boolean; scaling?: number; create?: { measuredTemplate?: boolean } },
     dialog?: { configure?: boolean },
-    message?: { create?: boolean }
+    message?: { create?: boolean },
   ): Promise<FoundryUsageResult | null>;
   displayCard(message?: { create?: boolean }): Promise<FoundryChatMessage | null>;
 }
@@ -205,7 +205,7 @@ export function extractDiceResults(terms: FoundryDiceTerm[]): RollResult['dice']
       diceResults.push({
         type: `d${String(term.faces)}`,
         count: term.number ?? 1,
-        results: term.results.map(r => r.result)
+        results: term.results.map((r) => r.result),
       });
     }
   }

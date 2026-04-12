@@ -4,7 +4,7 @@ import {
   getGame,
   type FoundryActivity,
   type FoundryRoll,
-  type ActivityUsageConfig
+  type ActivityUsageConfig,
 } from './itemTypes';
 
 function extractRollResults(rolls: FoundryRoll[] | undefined): RollResult[] {
@@ -12,11 +12,11 @@ function extractRollResults(rolls: FoundryRoll[] | undefined): RollResult[] {
     return [];
   }
 
-  return rolls.map(roll => {
+  return rolls.map((roll) => {
     const result: RollResult = {
       total: roll.total,
       formula: roll.formula,
-      dice: extractDiceResults(roll.terms)
+      dice: extractDiceResults(roll.terms),
     };
 
     if (roll.isCritical) {
@@ -54,7 +54,7 @@ export async function useItemHandler(params: UseItemParams): Promise<UseItemResu
       throw new Error(`Activity not found: ${params.activityId}`);
     }
   } else if (params.activityType) {
-    targetActivity = item.system.activities?.find(a => a.type === params.activityType);
+    targetActivity = item.system.activities?.find((a) => a.type === params.activityType);
     if (!targetActivity) {
       throw new Error(`No activity of type '${params.activityType}' found on item: ${item.name}`);
     }
@@ -63,13 +63,11 @@ export async function useItemHandler(params: UseItemParams): Promise<UseItemResu
   }
 
   const usageConfig: ActivityUsageConfig = {
-    consume: params.consume === false
-      ? false
-      : { resources: true, spellSlot: true },
+    consume: params.consume === false ? false : { resources: true, spellSlot: true },
     scaling: params.scaling ?? false,
     concentration: { begin: false },
     create: { measuredTemplate: false },
-    event: { shiftKey: true }
+    event: { shiftKey: true },
   };
 
   const dialogConfig = { configure: false };
@@ -85,9 +83,9 @@ export async function useItemHandler(params: UseItemParams): Promise<UseItemResu
       activityUsed: {
         id: targetActivity._id,
         name: targetActivity.name,
-        type: targetActivity.type
+        type: targetActivity.type,
       },
-      rolls: extractRollResults(result?.rolls)
+      rolls: extractRollResults(result?.rolls),
     };
 
     if (result?.message) {
@@ -103,7 +101,7 @@ export async function useItemHandler(params: UseItemParams): Promise<UseItemResu
     itemId: item.id,
     itemName: item.name,
     itemType: item.type,
-    rolls: []
+    rolls: [],
   };
 
   if (cardResult?.id) {

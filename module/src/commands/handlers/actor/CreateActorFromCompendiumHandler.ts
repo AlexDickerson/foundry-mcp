@@ -37,9 +37,7 @@ interface FoundryGame {
 
 declare const game: FoundryGame;
 
-export async function createActorFromCompendiumHandler(
-  params: CreateActorFromCompendiumParams
-): Promise<ActorResult> {
+export async function createActorFromCompendiumHandler(params: CreateActorFromCompendiumParams): Promise<ActorResult> {
   const pack = game.packs.get(params.packId);
 
   if (!pack) {
@@ -76,6 +74,6 @@ export async function createActorFromCompendiumHandler(
     name: actor.name,
     type: actor.type,
     img: actor.img,
-    folder: actor.folder?.name ?? null
+    folder: actor.folder?.name ?? null,
   };
 }

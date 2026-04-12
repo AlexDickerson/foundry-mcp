@@ -15,10 +15,7 @@ interface FoundryActor {
   id: string;
   name: string;
   items: FoundryItemsCollection;
-  updateEmbeddedDocuments(
-    embeddedName: string,
-    updates: Record<string, unknown>[]
-  ): Promise<FoundryItem[]>;
+  updateEmbeddedDocuments(embeddedName: string, updates: Record<string, unknown>[]): Promise<FoundryItem[]>;
 }
 
 interface ActorsCollection {
@@ -45,7 +42,7 @@ export async function updateActorItemHandler(params: UpdateActorItemParams): Pro
   }
 
   const updateData: Record<string, unknown> = {
-    _id: params.itemId
+    _id: params.itemId,
   };
 
   if (params.name !== undefined) {
@@ -76,6 +73,6 @@ export async function updateActorItemHandler(params: UpdateActorItemParams): Pro
     type: updatedItem.type,
     img: updatedItem.img,
     actorId: actor.id,
-    actorName: actor.name
+    actorName: actor.name,
   };
 }

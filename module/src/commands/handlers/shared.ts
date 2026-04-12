@@ -36,7 +36,7 @@ export function extractDiceResults(terms: FoundryDiceTerm[]): DiceResult[] {
       diceResults.push({
         type: `d${String(term.faces)}`,
         count: term.number ?? 1,
-        results: term.results.map(r => r.result)
+        results: term.results.map((r) => r.result),
       });
     }
   }

@@ -42,8 +42,8 @@ function createMockCanvas(overrides?: Partial<MockCanvas>): MockCanvas {
       view: {
         toDataURL: jest.fn().mockReturnValue('data:image/webp;base64,abc123encodeddata'),
         width: 2658,
-        height: 1864
-      }
+        height: 1864,
+      },
     },
     stage: {
       position: { x: 0, y: 0, set: jest.fn() },
@@ -56,7 +56,7 @@ function createMockCanvas(overrides?: Partial<MockCanvas>): MockCanvas {
       dimensions: { sceneWidth: 2658, sceneHeight: 1864, sceneX: 0, sceneY: 0 },
     },
     pan: jest.fn(),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -97,7 +97,9 @@ describe('captureSceneHandler', () => {
   it('should call renderer.render before toDataURL', async () => {
     const callOrder: string[] = [];
     const canvas = createMockCanvas();
-    canvas.app.renderer.render = jest.fn(() => { callOrder.push('render'); });
+    canvas.app.renderer.render = jest.fn(() => {
+      callOrder.push('render');
+    });
     canvas.app.view.toDataURL = jest.fn(() => {
       callOrder.push('toDataURL');
       return 'data:image/webp;base64,x';
@@ -140,22 +142,19 @@ describe('captureSceneHandler', () => {
   it('should reject when canvas is not ready', async () => {
     setCanvas(createMockCanvas({ ready: false }));
 
-    await expect(captureSceneHandler({} as Record<string, never>))
-      .rejects.toThrow('Canvas not ready');
+    await expect(captureSceneHandler({} as Record<string, never>)).rejects.toThrow('Canvas not ready');
   });
 
   it('should reject when canvas is undefined', async () => {
     setCanvas(undefined);
 
-    await expect(captureSceneHandler({} as Record<string, never>))
-      .rejects.toThrow('Canvas not ready');
+    await expect(captureSceneHandler({} as Record<string, never>)).rejects.toThrow('Canvas not ready');
   });
 
   it('should reject when canvas.scene is null', async () => {
     setCanvas(createMockCanvas({ scene: null }));
 
-    await expect(captureSceneHandler({} as Record<string, never>))
-      .rejects.toThrow('Canvas not ready');
+    await expect(captureSceneHandler({} as Record<string, never>)).rejects.toThrow('Canvas not ready');
   });
 
   it('should return view dimensions', async () => {
@@ -172,10 +171,11 @@ describe('captureSceneHandler', () => {
 
   it('should propagate render errors', () => {
     const canvas = createMockCanvas();
-    canvas.app.renderer.render = jest.fn(() => { throw new Error('WebGL context lost'); });
+    canvas.app.renderer.render = jest.fn(() => {
+      throw new Error('WebGL context lost');
+    });
     setCanvas(canvas);
 
-    expect(() => captureSceneHandler({} as Record<string, never>))
-      .toThrow('WebGL context lost');
+    expect(() => captureSceneHandler({} as Record<string, never>)).toThrow('WebGL context lost');
   });
 });

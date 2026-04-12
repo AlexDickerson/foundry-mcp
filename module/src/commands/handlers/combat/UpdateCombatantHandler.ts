@@ -4,7 +4,7 @@ import {
   getCombatant,
   mapCombatantToResult,
   type FoundryGame,
-  type CombatantUpdateData
+  type CombatantUpdateData,
 } from './combatTypes';
 
 declare const game: FoundryGame;

@@ -1,10 +1,5 @@
 import type { CreateTokenParams, TokenResult } from '@/commands/types';
-import {
-  getActiveScene,
-  mapTokenToResult,
-  type FoundryGame,
-  type TokenCreateData
-} from './tokenTypes';
+import { getActiveScene, mapTokenToResult, type FoundryGame, type TokenCreateData } from './tokenTypes';
 
 declare const game: FoundryGame;
 
@@ -14,7 +9,7 @@ export async function createTokenHandler(params: CreateTokenParams): Promise<Tok
   const tokenData: TokenCreateData = {
     actorId: params.actorId,
     x: params.x,
-    y: params.y
+    y: params.y,
   };
 
   if (params.hidden !== undefined) {

@@ -1,15 +1,9 @@
 import type { UpdateJournalPageParams, JournalPageResult } from '@/commands/types';
-import {
-  mapPageToResult,
-  type FoundryGame,
-  type FoundryPageUpdateData
-} from './journalTypes';
+import { mapPageToResult, type FoundryGame, type FoundryPageUpdateData } from './journalTypes';
 
 declare const game: FoundryGame;
 
-export async function updateJournalPageHandler(
-  params: UpdateJournalPageParams
-): Promise<JournalPageResult> {
+export async function updateJournalPageHandler(params: UpdateJournalPageParams): Promise<JournalPageResult> {
   const journal = game.journal.get(params.journalId);
 
   if (!journal) {

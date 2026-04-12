@@ -11,7 +11,7 @@ import {
   type FoundryRoll,
   type FoundryTargetToken,
   type FoundryUsageResult,
-  type MidiWorkflow
+  type MidiWorkflow,
 } from './itemTypes';
 
 const MIDI_WORKFLOW_TIMEOUT = 30000;
@@ -40,11 +40,11 @@ function setTargets(tokenIds: string[]): FoundryTargetToken[] {
 function extractRolls(rolls: FoundryRoll[] | undefined): RollResult[] {
   if (!rolls || rolls.length === 0) return [];
 
-  return rolls.map(roll => {
+  return rolls.map((roll) => {
     const result: RollResult = {
       total: roll.total,
       formula: roll.formula,
-      dice: extractDiceResults(roll.terms)
+      dice: extractDiceResults(roll.terms),
     };
     if (roll.isCritical) result.isCritical = true;
     if (roll.isFumble) result.isFumble = true;
@@ -58,9 +58,9 @@ function extractWorkflow(workflow: MidiWorkflow): MidiWorkflowResult {
     damageTotal: workflow.damageTotal,
     isCritical: workflow.isCritical ?? false,
     isFumble: workflow.isFumble ?? false,
-    hitTargetIds: [...(workflow.hitTargets ?? [])].map(t => t.id),
-    saveTargetIds: [...(workflow.saves ?? [])].map(t => t.id),
-    failedSaveTargetIds: [...(workflow.failedSaves ?? [])].map(t => t.id)
+    hitTargetIds: [...(workflow.hitTargets ?? [])].map((t) => t.id),
+    saveTargetIds: [...(workflow.saves ?? [])].map((t) => t.id),
+    failedSaveTargetIds: [...(workflow.failedSaves ?? [])].map((t) => t.id),
   };
 }
 
@@ -73,8 +73,10 @@ function waitForMidiWorkflow(): { promise: Promise<MidiWorkflow | undefined>; cl
       hookId = hooks.once('midi-qol.RollComplete', resolve);
     }),
     new Promise<undefined>((resolve) => {
-      setTimeout(() => { resolve(undefined); }, MIDI_WORKFLOW_TIMEOUT);
-    })
+      setTimeout(() => {
+        resolve(undefined);
+      }, MIDI_WORKFLOW_TIMEOUT);
+    }),
   ]);
 
   const cleanup = (): void => {
@@ -94,7 +96,9 @@ function setupAutoTemplatePlace(position: { x: number; y: number; direction?: nu
   const AbilityTemplate = dnd5eCanvas.AbilityTemplate;
   const origDrawPreview = AbilityTemplate.prototype.drawPreview;
 
-  AbilityTemplate.prototype.drawPreview = async function (this: { document: { toObject(): Record<string, unknown>; updateSource(data: Record<string, unknown>): void } }): Promise<unknown> {
+  AbilityTemplate.prototype.drawPreview = async function (this: {
+    document: { toObject(): Record<string, unknown>; updateSource(data: Record<string, unknown>): void };
+  }): Promise<unknown> {
     const update: Record<string, unknown> = { x: position.x, y: position.y };
     if (position.direction !== undefined) {
       update['direction'] = position.direction;
@@ -147,9 +151,7 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
     throw new Error(`Item not found: ${params.itemId}`);
   }
 
-  const targetTokens = params.targetTokenIds?.length
-    ? setTargets(params.targetTokenIds)
-    : [];
+  const targetTokens = params.targetTokenIds?.length ? setTargets(params.targetTokenIds) : [];
 
   const targetActivity = resolveActivity(item, params);
   const midiActive = isMidiQolActive();
@@ -195,7 +197,7 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
     itemType: item.type,
     activated: true,
     targetsSet: targetTokens.length,
-    rolls: extractRolls(useResult?.rolls)
+    rolls: extractRolls(useResult?.rolls),
   };
 
   if (workflow) {
@@ -210,7 +212,7 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
     result.activityUsed = {
       id: targetActivity._id,
       name: targetActivity.name,
-      type: targetActivity.type
+      type: targetActivity.type,
     };
   }
 

@@ -22,12 +22,12 @@ function getGame(): FoundryGame {
 export function getActorsHandler(_params: Record<string, never>): Promise<ActorSummary[]> {
   const actors: ActorSummary[] = [];
 
-  getGame().actors.forEach(actor => {
+  getGame().actors.forEach((actor) => {
     actors.push({
       id: actor.id,
       name: actor.name,
       type: actor.type,
-      img: actor.img ?? ''
+      img: actor.img ?? '',
     });
   });
 

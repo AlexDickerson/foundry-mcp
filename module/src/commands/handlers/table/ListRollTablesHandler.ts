@@ -4,7 +4,7 @@ import { getGame, mapTableToSummary } from './tableTypes';
 export function listRollTablesHandler(_params: ListRollTablesParams): Promise<RollTableSummary[]> {
   const tables: RollTableSummary[] = [];
 
-  getGame().tables.forEach(table => {
+  getGame().tables.forEach((table) => {
     tables.push(mapTableToSummary(table));
   });
 

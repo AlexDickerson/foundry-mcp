@@ -22,9 +22,7 @@ interface FoundryGame {
 declare const game: FoundryGame;
 
 export async function deleteWallHandler(params: DeleteWallParams): Promise<DeleteResult> {
-  const scene = params.sceneId
-    ? game.scenes.get(params.sceneId)
-    : game.scenes.active;
+  const scene = params.sceneId ? game.scenes.get(params.sceneId) : game.scenes.active;
 
   if (!scene) {
     throw new Error(params.sceneId ? `Scene not found: ${params.sceneId}` : 'No active scene');

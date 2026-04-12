@@ -17,13 +17,13 @@ const mockRoll: MockD20Roll = {
   formula: '',
   terms: [],
   isCritical: false,
-  isFumble: false
+  isFumble: false,
 };
 
 const mockAttackActivity = {
   _id: 'attackCrossHandI',
   type: 'attack',
-  rollAttack: jest.fn()
+  rollAttack: jest.fn(),
 };
 
 const mockItem = {
@@ -32,23 +32,23 @@ const mockItem = {
   type: 'weapon',
   system: {
     activities: {
-      find: jest.fn()
-    }
-  }
+      find: jest.fn(),
+    },
+  },
 };
 
 const mockActor = {
   id: 'actor-123',
   name: 'Test Actor',
   items: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 const mockGame = {
   actors: {
-    get: jest.fn()
-  }
+    get: jest.fn(),
+  },
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;
@@ -71,21 +71,17 @@ describe('rollAttackHandler', () => {
     it('should roll attack and return result', async () => {
       const result = await rollAttackHandler({
         actorId: 'actor-123',
-        itemId: 'item-123'
+        itemId: 'item-123',
       });
 
       expect(mockGame.actors.get).toHaveBeenCalledWith('actor-123');
       expect(mockActor.items.get).toHaveBeenCalledWith('item-123');
       expect(mockItem.system.activities.find).toHaveBeenCalled();
-      expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith(
-        {},
-        { configure: false },
-        { create: false }
-      );
+      expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith({}, { configure: false }, { create: false });
       expect(result).toEqual({
         total: 18,
         formula: '1d20 + 5',
-        dice: [{ type: 'd20', count: 1, results: [13] }]
+        dice: [{ type: 'd20', count: 1, results: [13] }],
       });
     });
 
@@ -93,13 +89,13 @@ describe('rollAttackHandler', () => {
       await rollAttackHandler({
         actorId: 'actor-123',
         itemId: 'item-123',
-        advantage: true
+        advantage: true,
       });
 
       expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith(
         { advantage: true },
         { configure: false },
-        { create: false }
+        { create: false },
       );
     });
 
@@ -107,13 +103,13 @@ describe('rollAttackHandler', () => {
       await rollAttackHandler({
         actorId: 'actor-123',
         itemId: 'item-123',
-        disadvantage: true
+        disadvantage: true,
       });
 
       expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith(
         { disadvantage: true },
         { configure: false },
-        { create: false }
+        { create: false },
       );
     });
 
@@ -121,14 +117,10 @@ describe('rollAttackHandler', () => {
       await rollAttackHandler({
         actorId: 'actor-123',
         itemId: 'item-123',
-        showInChat: true
+        showInChat: true,
       });
 
-      expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith(
-        {},
-        { configure: false },
-        { create: true }
-      );
+      expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith({}, { configure: false }, { create: true });
     });
 
     it('should detect critical on natural 20', async () => {
@@ -138,7 +130,7 @@ describe('rollAttackHandler', () => {
 
       const result = await rollAttackHandler({
         actorId: 'actor-123',
-        itemId: 'item-123'
+        itemId: 'item-123',
       });
 
       expect(result.isCritical).toBe(true);
@@ -152,7 +144,7 @@ describe('rollAttackHandler', () => {
 
       const result = await rollAttackHandler({
         actorId: 'actor-123',
-        itemId: 'item-123'
+        itemId: 'item-123',
       });
 
       expect(result.isCritical).toBeUndefined();
@@ -164,17 +156,17 @@ describe('rollAttackHandler', () => {
     it('should throw error if actor not found', async () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
-      await expect(
-        rollAttackHandler({ actorId: 'non-existent', itemId: 'item-123' })
-      ).rejects.toThrow('Actor not found: non-existent');
+      await expect(rollAttackHandler({ actorId: 'non-existent', itemId: 'item-123' })).rejects.toThrow(
+        'Actor not found: non-existent',
+      );
     });
 
     it('should throw error if item not found', async () => {
       mockActor.items.get.mockReturnValue(undefined);
 
-      await expect(
-        rollAttackHandler({ actorId: 'actor-123', itemId: 'non-existent' })
-      ).rejects.toThrow('Item not found: non-existent');
+      await expect(rollAttackHandler({ actorId: 'actor-123', itemId: 'non-existent' })).rejects.toThrow(
+        'Item not found: non-existent',
+      );
     });
 
     it('should throw error if item has no activities', async () => {
@@ -182,36 +174,36 @@ describe('rollAttackHandler', () => {
         id: 'item-123',
         name: 'Broken Item',
         type: 'weapon',
-        system: {}
+        system: {},
       });
 
-      await expect(
-        rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })
-      ).rejects.toThrow('Item has no activities: Broken Item');
+      await expect(rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })).rejects.toThrow(
+        'Item has no activities: Broken Item',
+      );
     });
 
     it('should throw error if item has no attack activity', async () => {
       mockItem.system.activities.find.mockReturnValue(undefined);
 
-      await expect(
-        rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })
-      ).rejects.toThrow('Item has no attack activity: Hand Crossbow');
+      await expect(rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })).rejects.toThrow(
+        'Item has no attack activity: Hand Crossbow',
+      );
     });
 
     it('should throw error if roll returns null', async () => {
       mockAttackActivity.rollAttack.mockResolvedValue(null);
 
-      await expect(
-        rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })
-      ).rejects.toThrow('Attack roll returned no results');
+      await expect(rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })).rejects.toThrow(
+        'Attack roll returned no results',
+      );
     });
 
     it('should throw error if roll returns empty array', async () => {
       mockAttackActivity.rollAttack.mockResolvedValue([]);
 
-      await expect(
-        rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })
-      ).rejects.toThrow('Attack roll returned no results');
+      await expect(rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })).rejects.toThrow(
+        'Attack roll returned no results',
+      );
     });
   });
 });

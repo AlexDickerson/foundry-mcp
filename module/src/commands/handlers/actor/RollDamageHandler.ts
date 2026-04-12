@@ -12,7 +12,7 @@ interface FoundryActivity {
   rollDamage(
     config?: DamageRollConfig,
     dialog?: RollDialogConfig,
-    message?: RollMessageConfig
+    message?: RollMessageConfig,
   ): Promise<FoundryDamageRoll[] | null>;
 }
 
@@ -68,7 +68,7 @@ export async function rollDamageHandler(params: RollDamageParams): Promise<RollR
     throw new Error(`Item has no activities: ${item.name}`);
   }
 
-  const attackActivity = item.system.activities.find(a => a.type === 'attack');
+  const attackActivity = item.system.activities.find((a) => a.type === 'attack');
 
   if (!attackActivity) {
     throw new Error(`Item has no attack activity: ${item.name}`);
@@ -83,7 +83,7 @@ export async function rollDamageHandler(params: RollDamageParams): Promise<RollR
   const rolls = await attackActivity.rollDamage(
     rollConfig,
     { configure: false },
-    { create: params.showInChat ?? false }
+    { create: params.showInChat ?? false },
   );
 
   if (!rolls || rolls.length === 0) {
@@ -101,7 +101,7 @@ export async function rollDamageHandler(params: RollDamageParams): Promise<RollR
   const result: RollResult = {
     total: roll.total,
     formula: roll.formula,
-    dice
+    dice,
   };
 
   if (params.critical) {

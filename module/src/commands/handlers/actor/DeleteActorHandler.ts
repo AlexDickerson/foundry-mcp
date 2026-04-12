@@ -25,6 +25,6 @@ export async function deleteActorHandler(params: DeleteActorParams): Promise<Del
   await actor.delete();
 
   return {
-    deleted: true
+    deleted: true,
   };
 }

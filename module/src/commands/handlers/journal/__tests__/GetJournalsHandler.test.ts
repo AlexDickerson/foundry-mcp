@@ -21,7 +21,7 @@ function createMockPage(overrides?: Partial<MockPage>): MockPage {
     name: 'Page One',
     type: 'text',
     text: { content: '<p>Hello</p>', markdown: '# Hello' },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -32,16 +32,23 @@ function createMockJournal(pages: MockPage[] = [], overrides?: Partial<MockJourn
     name: 'Test Journal',
     folder: { name: 'Adventures' },
     pages: {
-      forEach: jest.fn((fn: (page: MockPage) => void) => { pages.forEach(fn); })
+      forEach: jest.fn((fn: (page: MockPage) => void) => {
+        pages.forEach(fn);
+      }),
     },
-    ...overrides
+    ...overrides,
   };
 }
 
 function setGame(journals: MockJournal[] | undefined): void {
-  const journal = journals !== undefined
-    ? { forEach: jest.fn((fn: (j: MockJournal) => void) => { journals.forEach(fn); }) }
-    : undefined;
+  const journal =
+    journals !== undefined
+      ? {
+          forEach: jest.fn((fn: (j: MockJournal) => void) => {
+            journals.forEach(fn);
+          }),
+        }
+      : undefined;
   (globalThis as Record<string, unknown>)['game'] = { journal };
 }
 
@@ -55,24 +62,24 @@ describe('getJournalsHandler', () => {
   it('should return all journals with pages', async () => {
     const pages = [
       createMockPage({ id: 'p1', name: 'Intro', text: { content: '<p>Start</p>', markdown: '# Start' } }),
-      createMockPage({ id: 'p2', name: 'Chapter 1', type: 'image', text: { content: undefined, markdown: undefined } })
+      createMockPage({ id: 'p2', name: 'Chapter 1', type: 'image', text: { content: undefined, markdown: undefined } }),
     ];
-    setGame([
-      createMockJournal(pages, { id: 'j1', uuid: 'JE.j1', name: 'Adventure Log', folder: { name: 'Logs' } })
-    ]);
+    setGame([createMockJournal(pages, { id: 'j1', uuid: 'JE.j1', name: 'Adventure Log', folder: { name: 'Logs' } })]);
 
     const result = await getJournalsHandler({} as Record<string, never>);
 
-    expect(result).toEqual([{
-      id: 'j1',
-      uuid: 'JE.j1',
-      name: 'Adventure Log',
-      folder: 'Logs',
-      pages: [
-        { id: 'p1', name: 'Intro', type: 'text', text: '<p>Start</p>', markdown: '# Start' },
-        { id: 'p2', name: 'Chapter 1', type: 'image', text: null, markdown: null }
-      ]
-    }]);
+    expect(result).toEqual([
+      {
+        id: 'j1',
+        uuid: 'JE.j1',
+        name: 'Adventure Log',
+        folder: 'Logs',
+        pages: [
+          { id: 'p1', name: 'Intro', type: 'text', text: '<p>Start</p>', markdown: '# Start' },
+          { id: 'p2', name: 'Chapter 1', type: 'image', text: null, markdown: null },
+        ],
+      },
+    ]);
   });
 
   it('should return empty array when journal collection is undefined', async () => {
@@ -130,12 +137,12 @@ describe('getJournalsHandler', () => {
     setGame([
       createMockJournal([], { id: 'j1', uuid: 'JE.j1', name: 'First' }),
       createMockJournal([], { id: 'j2', uuid: 'JE.j2', name: 'Second' }),
-      createMockJournal([], { id: 'j3', uuid: 'JE.j3', name: 'Third' })
+      createMockJournal([], { id: 'j3', uuid: 'JE.j3', name: 'Third' }),
     ]);
 
     const result = await getJournalsHandler({} as Record<string, never>);
 
     expect(result).toHaveLength(3);
-    expect(result.map(j => j.name)).toEqual(['First', 'Second', 'Third']);
+    expect(result.map((j) => j.name)).toEqual(['First', 'Second', 'Third']);
   });
 });

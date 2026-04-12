@@ -16,8 +16,8 @@ export async function rollOnTableHandler(params: RollOnTableParams): Promise<Rol
     tableName: table.name,
     roll: {
       formula: roll.formula,
-      total: roll.total
+      total: roll.total,
     },
-    results: results.map(mapTableResultToData)
+    results: results.map(mapTableResultToData),
   };
 }

@@ -3,7 +3,7 @@ import {
   mapCombatToResult,
   type CombatConstructor,
   type FoundryGame,
-  type FoundryCombatCreateData
+  type FoundryCombatCreateData,
 } from './combatTypes';
 
 declare const game: FoundryGame;

@@ -9,7 +9,7 @@ export function getSceneTokensHandler(params: GetSceneTokensParams): Promise<Sce
     return Promise.resolve({
       sceneId: scene.id,
       sceneName: scene.name,
-      tokens: scene.tokens.contents.map(mapTokenToResult)
+      tokens: scene.tokens.contents.map(mapTokenToResult),
     });
   } catch (error) {
     return Promise.reject(error instanceof Error ? error : new Error(String(error)));

@@ -1,10 +1,5 @@
 import type { SetCombatantDefeatedParams, CombatantResult } from '@/commands/types';
-import {
-  getActiveCombat,
-  getCombatant,
-  mapCombatantToResult,
-  type FoundryGame
-} from './combatTypes';
+import { getActiveCombat, getCombatant, mapCombatantToResult, type FoundryGame } from './combatTypes';
 
 declare const game: FoundryGame;
 

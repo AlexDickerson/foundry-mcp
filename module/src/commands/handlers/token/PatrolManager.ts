@@ -6,14 +6,9 @@ import type {
   GetPatrolsParams,
   GetPatrolsResult,
   PatrolInfo,
-  TokenWaypoint
+  TokenWaypoint,
 } from '@/commands/types';
-import {
-  getActiveScene,
-  getToken,
-  type FoundryGame,
-  type TokenUpdateData
-} from './tokenTypes';
+import { getActiveScene, getToken, type FoundryGame, type TokenUpdateData } from './tokenTypes';
 
 declare const game: FoundryGame;
 
@@ -37,31 +32,41 @@ let patrolCounter = 0;
 
 function getGridSize(): number {
   const canvas = (globalThis as Record<string, unknown>)['canvas'] as
-    { scene?: { grid?: { size?: number } } } | undefined;
+    | { scene?: { grid?: { size?: number } } }
+    | undefined;
   return canvas?.scene?.grid?.size ?? 100;
 }
 
 function toPixelWaypoints(
   waypoints: TokenWaypoint[],
   coordType: 'pixel' | 'grid',
-  gridSize: number
+  gridSize: number,
 ): Array<{ x: number; y: number }> {
   if (coordType === 'grid') {
-    return waypoints.map(wp => ({ x: wp.x * gridSize, y: wp.y * gridSize }));
+    return waypoints.map((wp) => ({ x: wp.x * gridSize, y: wp.y * gridSize }));
   }
-  return waypoints.map(wp => ({ x: wp.x, y: wp.y }));
+  return waypoints.map((wp) => ({ x: wp.x, y: wp.y }));
 }
 
 async function stepPatrol(patrol: ActivePatrol): Promise<void> {
   try {
     const scene = game.scenes.get(patrol.sceneId);
-    if (!scene) { stopPatrolById(patrol.tokenId); return; }
+    if (!scene) {
+      stopPatrolById(patrol.tokenId);
+      return;
+    }
 
     const token = scene.tokens.get(patrol.tokenId);
-    if (!token) { stopPatrolById(patrol.tokenId); return; }
+    if (!token) {
+      stopPatrolById(patrol.tokenId);
+      return;
+    }
 
     const wp = patrol.pixelWaypoints[patrol.currentStep];
-    if (!wp) { stopPatrolById(patrol.tokenId); return; }
+    if (!wp) {
+      stopPatrolById(patrol.tokenId);
+      return;
+    }
 
     const updateData: TokenUpdateData = { x: wp.x, y: wp.y };
     await token.update(updateData, { animate: patrol.animate });
@@ -84,7 +89,9 @@ async function stepPatrol(patrol: ActivePatrol): Promise<void> {
     // Schedule next step
     const isAtEnd = patrol.currentStep === 0 || patrol.currentStep === patrol.pixelWaypoints.length - 1;
     const delay = isAtEnd ? patrol.intervalMs : patrol.delayMs;
-    patrol.timer = setTimeout(() => { void stepPatrol(patrol); }, delay);
+    patrol.timer = setTimeout(() => {
+      void stepPatrol(patrol);
+    }, delay);
   } catch {
     stopPatrolById(patrol.tokenId);
   }
@@ -128,7 +135,9 @@ export function setPatrolHandler(params: SetPatrolParams): Promise<SetPatrolResu
   activePatrols.set(params.tokenId, patrol);
 
   // Start the patrol
-  patrol.timer = setTimeout(() => { void stepPatrol(patrol); }, patrol.delayMs);
+  patrol.timer = setTimeout(() => {
+    void stepPatrol(patrol);
+  }, patrol.delayMs);
 
   return Promise.resolve({
     patrolId,

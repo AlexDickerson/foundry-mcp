@@ -17,7 +17,7 @@ const mockRollInstance: MockRollInstance = {
   toMessage: jest.fn(),
   total: 0,
   formula: '',
-  terms: []
+  terms: [],
 };
 
 const MockRoll = jest.fn().mockImplementation(() => mockRollInstance);
@@ -34,9 +34,7 @@ describe('rollDiceHandler', () => {
   it('should roll dice and return result', async () => {
     mockRollInstance.total = 15;
     mockRollInstance.formula = '2d6+3';
-    mockRollInstance.terms = [
-      { faces: 6, number: 2, results: [{ result: 5 }, { result: 7 }] }
-    ];
+    mockRollInstance.terms = [{ faces: 6, number: 2, results: [{ result: 5 }, { result: 7 }] }];
 
     const result = await rollDiceHandler({ formula: '2d6+3' });
 
@@ -45,7 +43,7 @@ describe('rollDiceHandler', () => {
     expect(result).toEqual({
       total: 15,
       formula: '2d6+3',
-      dice: [{ type: 'd6', count: 2, results: [5, 7] }]
+      dice: [{ type: 'd6', count: 2, results: [5, 7] }],
     });
   });
 
@@ -107,24 +105,21 @@ describe('rollDiceHandler', () => {
     mockRollInstance.formula = '2d6+1d8+5';
     mockRollInstance.terms = [
       { faces: 6, number: 2, results: [{ result: 4 }, { result: 5 }] },
-      { faces: 8, number: 1, results: [{ result: 6 }] }
+      { faces: 8, number: 1, results: [{ result: 6 }] },
     ];
 
     const result = await rollDiceHandler({ formula: '2d6+1d8+5' });
 
     expect(result.dice).toEqual([
       { type: 'd6', count: 2, results: [4, 5] },
-      { type: 'd8', count: 1, results: [6] }
+      { type: 'd8', count: 1, results: [6] },
     ]);
   });
 
   it('should ignore non-dice terms', async () => {
     mockRollInstance.total = 10;
     mockRollInstance.formula = '1d6+4';
-    mockRollInstance.terms = [
-      { faces: 6, number: 1, results: [{ result: 6 }] },
-      {}
-    ];
+    mockRollInstance.terms = [{ faces: 6, number: 1, results: [{ result: 6 }] }, {}];
 
     const result = await rollDiceHandler({ formula: '1d6+4' });
 

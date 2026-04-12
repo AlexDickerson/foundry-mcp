@@ -40,13 +40,13 @@ function mapPageToData(page: FoundryPage): JournalPageData {
     name: page.name,
     type: typeof pageType === 'string' ? pageType : String(pageType),
     text: page.text.content ?? null,
-    markdown: page.text.markdown ?? null
+    markdown: page.text.markdown ?? null,
   };
 }
 
 function mapJournalToData(journal: FoundryJournal): JournalData {
   const pages: JournalPageData[] = [];
-  journal.pages.forEach(page => {
+  journal.pages.forEach((page) => {
     pages.push(mapPageToData(page));
   });
 
@@ -55,7 +55,7 @@ function mapJournalToData(journal: FoundryJournal): JournalData {
     uuid: journal.uuid,
     name: journal.name,
     folder: journal.folder?.name ?? null,
-    pages
+    pages,
   };
 }
 
@@ -65,7 +65,7 @@ export function getJournalsHandler(_params: GetJournalsParams): Promise<JournalD
   const game = getGame();
   const journals: JournalData[] = [];
 
-  game.journal?.forEach(journal => {
+  game.journal?.forEach((journal) => {
     journals.push(mapJournalToData(journal));
   });
 

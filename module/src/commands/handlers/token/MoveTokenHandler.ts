@@ -1,11 +1,5 @@
 import type { MoveTokenParams, MutationResult } from '@/commands/types';
-import {
-  getActiveScene,
-  getToken,
-  type FoundryGame,
-  type FoundryToken,
-  type TokenUpdateData
-} from './tokenTypes';
+import { getActiveScene, getToken, type FoundryGame, type FoundryToken, type TokenUpdateData } from './tokenTypes';
 import { findGridPath, type CollisionChecker } from './GridPathfinder';
 
 declare const game: FoundryGame;
@@ -34,7 +28,7 @@ async function moveAlongPath(
   scene: { tokens: { get(id: string): FoundryToken | undefined } },
   path: Array<{ x: number; y: number }>,
   animate: boolean,
-  finalUpdate?: TokenUpdateData
+  finalUpdate?: TokenUpdateData,
 ): Promise<FoundryToken> {
   const tokenId = startToken.id;
   let current = startToken;
@@ -85,7 +79,7 @@ export async function moveTokenHandler(params: MoveTokenParams): Promise<Mutatio
         endX: params.x,
         endY: params.y,
         gridSize,
-        collision: collisionBackend
+        collision: collisionBackend,
       });
 
       if (!path || path.length === 0) {
@@ -103,7 +97,7 @@ export async function moveTokenHandler(params: MoveTokenParams): Promise<Mutatio
 
   const updateData: TokenUpdateData = {
     x: params.x,
-    y: params.y
+    y: params.y,
   };
 
   if (params.elevation !== undefined) {
