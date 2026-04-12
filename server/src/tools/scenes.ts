@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod/v4';
-import { foundryTool } from '../bridge.js';
+import { foundryTool, sendCommand } from '../bridge.js';
 
 export function registerSceneTools(mcp: McpServer): void {
   mcp.registerTool('get_scenes_list', {
@@ -38,6 +38,30 @@ export function registerSceneTools(mcp: McpServer): void {
     description: 'Capture a WebP screenshot of the active scene canvas (includes grid overlay)',
     inputSchema: {},
   }, async (): Promise<CallToolResult> => foundryTool('capture-scene'));
+
+  mcp.registerTool('screenshot_scene', {
+    title: 'Screenshot Scene',
+    description: 'Get a WebP screenshot of a scene showing its current state (map, tokens, lighting). Returns only the image.',
+    inputSchema: {
+      sceneId: z.string().optional().describe('Scene ID. Omit for the currently active scene.'),
+    },
+  }, async ({ sceneId }): Promise<CallToolResult> => {
+    try {
+      const data = await sendCommand('get-scene', { sceneId, includeScreenshot: true }) as Record<string, unknown>;
+      const ss = data?.screenshot as { image: string; mimeType: string } | undefined;
+      if (!ss?.image) {
+        return { content: [{ type: 'text', text: 'Error: No screenshot returned. The scene may not be rendered in the GM browser.' }], isError: true };
+      }
+      return {
+        content: [
+          { type: 'image', data: ss.image, mimeType: ss.mimeType },
+        ],
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: 'text', text: `Error: ${msg}` }], isError: true };
+    }
+  });
 
   mcp.registerTool('create_scene', {
     title: 'Create Scene',
