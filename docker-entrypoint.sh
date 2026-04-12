@@ -25,4 +25,5 @@ cleanup() {
 trap cleanup EXIT SIGTERM SIGINT
 
 # ---- Hand off to the original felddy entrypoint -----------------------------
-exec /home/foundry/entrypoint.sh "$@"
+cd /home/node
+exec ./entrypoint.sh "$@"
