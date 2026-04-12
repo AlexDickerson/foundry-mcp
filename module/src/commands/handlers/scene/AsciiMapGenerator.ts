@@ -6,6 +6,7 @@ interface MapToken {
   width: number;
   height: number;
   hp?: { value: number; max: number } | undefined;
+  disposition?: number;
 }
 
 interface MapWall {
@@ -39,6 +40,13 @@ export interface AsciiMapInput {
 
 type WallType = 'wall' | 'door' | 'door-open' | 'door-locked' | 'secret';
 
+const DISPOSITIONS: Record<number, string> = {
+  [-2]: 'secret',
+  [-1]: 'hostile',
+  [0]: 'neutral',
+  [1]: 'friendly',
+};
+
 interface TokenLegendEntry {
   label: string;
   name: string;
@@ -47,6 +55,7 @@ interface TokenLegendEntry {
   gridY: number;
   size: string;
   hp: string;
+  disposition: string;
 }
 
 function classifyWall(wall: MapWall): WallType {
@@ -131,6 +140,7 @@ export function generateAsciiMap(input: AsciiMapInput): string {
       gridY: gy,
       size: w === 1 && h === 1 ? '1x1' : `${String(w)}x${String(h)}`,
       hp: hpStr,
+      disposition: DISPOSITIONS[token.disposition ?? 0] ?? 'neutral',
     });
 
     for (let dy = 0; dy < h; dy++) {
@@ -270,19 +280,21 @@ export function generateAsciiMap(input: AsciiMapInput): string {
   // Legend
   lines.push('');
   lines.push('=== LEGEND ===');
-  lines.push('| --- = Wall   D -D- = Door   d -d- = Open door   L -L- = Locked   ? -?- = Secret');
+  lines.push('Walls: | (vertical) --- (horizontal) between adjacent cells');
+  lines.push('Doors: D/d/L/? = closed/open/locked/secret');
   lines.push('');
-  lines.push('#   Name                          Size  HP         Position');
-  lines.push('\u2500'.repeat(70));
+  lines.push('#   Name                          Disp      Size  HP         Position');
+  lines.push('\u2500'.repeat(80));
 
   for (const entry of legend) {
     const num = entry.label.padEnd(3);
     const name = entry.name.padEnd(30);
+    const disp = entry.disposition.padEnd(9);
     const size = entry.size.padEnd(5);
     const hp = entry.hp.padEnd(10);
     const pos = `(${String(entry.gridX)},${String(entry.gridY)})`;
-    lines.push(`${num} ${name} ${size} ${hp} ${pos}`);
+    lines.push(`${num} ${name} ${disp} ${size} ${hp} ${pos}`);
   }
 
-  return `${sceneName} | ${String(gridDistance)}${gridUnits}/cell\n\n${lines.join('\n')}`;
+  return `${sceneName} | ${String(gridDistance)}${gridUnits}/cell (${String(gridSize)}px)\n\n${lines.join('\n')}`;
 }
