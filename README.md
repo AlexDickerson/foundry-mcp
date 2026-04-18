@@ -35,6 +35,28 @@ journalctl --user -u foundry-mcp -f    # tail logs
 
 MCP clients connect to `http://server.ad:8765/mcp`. The Foundry module connects its WebSocket to `ws://server.ad:8765/foundry`.
 
+## Local development (Docker Desktop)
+
+Run the whole stack on the dev machine instead of deploying to the remote server. Useful for iterating on module/server code without the rsync round-trip that `dev.sh` performs.
+
+```bash
+cp .env.example .env         # fill in FOUNDRY_USERNAME/PASSWORD/OPENAI_API_KEY
+./local.sh up                # build image, deps, dist, start container
+# open http://localhost:30000 and set up a world
+
+# after editing module/ or server/ code:
+./local.sh rebuild           # rebuild dist + restart container (seconds)
+
+./local.sh logs              # tail container logs
+./local.sh status            # container + MCP health
+./local.sh stop              # keep data
+./local.sh nuke              # destroy the data volume (asks first)
+```
+
+Data lives in a named Docker volume (`foundry-data-local`) by default, so the workflow is OS-portable. Set `FOUNDRY_DATA=/some/host/path` in `.env` to bind to a host path instead. Ports default to 30000/8765 and can be overridden via `FOUNDRY_PORT` / `MCP_PORT` if you already have a production container running on the same machine.
+
+The image is built from the checked-out `Dockerfile` — `./local.sh up` will also rebuild it if the Dockerfile changes. For source-only changes, `./local.sh rebuild` just refreshes the bind-mounted `dist/` directories and restarts.
+
 ## Acknowledgments
 
 The Foundry VTT module in `module/` is a fork of [foundry-api-bridge](https://github.com/alexivenkov/foundry-api-bridge-module) v7.7.0 by [Alex Ivenkov](https://github.com/alexivenkov) (AI DM Project), licensed under MIT.

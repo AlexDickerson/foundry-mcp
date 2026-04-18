@@ -1,0 +1,43 @@
+# Local development on a Docker Desktop host (typically the dev laptop).
+# Builds the image from the checked-out Dockerfile instead of pulling the
+# GHCR release, so changes to module/server sources show up after one
+# `docker compose -f docker-compose.local.yml up --build`. The bind mounts
+# on dist/ let you iterate without rebuilding the image: run
+# `npm run build` in module/ or server/ and `docker compose ... restart`.
+#
+# Data lives in a named volume so the same Compose file works on Windows,
+# macOS, and Linux without hard-coding host paths. Override FOUNDRY_DATA
+# in .env to a host path if you want the Foundry data directory exposed
+# on the filesystem (e.g. for backups or poking at user data directly).
+
+services:
+  foundry-local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: foundry-mcp:local
+    container_name: foundry-local
+    ports:
+      - '${FOUNDRY_PORT:-30000}:30000' # Foundry VTT
+      - '${MCP_PORT:-8765}:8765' # MCP server
+    volumes:
+      # Named volume by default — portable across OSes. Override in .env
+      # with e.g. FOUNDRY_DATA=E:/TTRPG/foundry-local-data to use a host path.
+      - ${FOUNDRY_DATA:-foundry-data-local}:/data
+      # Live-reload bind mounts: rebuild module or server locally and
+      # restart the container to pick up changes without rebuilding the
+      # image. Mirrors docker-compose.dev.yml's dev layering.
+      - ./module/dist:/opt/foundry-api-bridge
+      - ./server/dist:/opt/foundry-mcp/dist
+      - ./server/node_modules:/opt/foundry-mcp/node_modules
+      - ./server/package.json:/opt/foundry-mcp/package.json
+    environment:
+      - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
+      - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+
+volumes:
+  foundry-data-local:
+    # Named volume, managed by Docker. Survives `docker compose down`;
+    # removed only with `docker compose down -v`.
