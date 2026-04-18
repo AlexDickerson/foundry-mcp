@@ -195,4 +195,66 @@ describe('findInCompendiumHandler', () => {
 
     expect(result.matches[0]?.type).toBe('Actor');
   });
+
+  // --- Tokenized / word-order-independent matching -------------------------
+
+  it('matches word-order-independent multi-word queries', async () => {
+    const p1 = createPack('pack', [
+      { _id: '1', name: 'Blue Dragon (Adult)', type: 'npc' },
+      { _id: '2', name: 'Ancient Blue Wyrm', type: 'npc' },
+      { _id: '3', name: 'Red Dragon (Adult)', type: 'npc' },
+    ]);
+    setGame([p1]);
+
+    const result = await findInCompendiumHandler({ name: 'adult blue dragon' });
+
+    expect(result.matches).toHaveLength(1);
+    expect(result.matches[0]?.name).toBe('Blue Dragon (Adult)');
+  });
+
+  it('requires ALL tokens to be present — partial matches are filtered', async () => {
+    const p1 = createPack('pack', [
+      { _id: '1', name: 'Blue Dragon', type: 'npc' }, // has only "blue" and "dragon"
+      { _id: '2', name: 'Blue Dragon (Adult)', type: 'npc' }, // has all three
+    ]);
+    setGame([p1]);
+
+    const result = await findInCompendiumHandler({ name: 'adult blue dragon' });
+
+    expect(result.matches).toHaveLength(1);
+    expect(result.matches[0]?.name).toBe('Blue Dragon (Adult)');
+  });
+
+  it('ranks contiguous phrase matches above tokens-scattered matches', async () => {
+    const p1 = createPack('pack', [
+      // Tokens present but scattered (rank 3).
+      { _id: '1', name: 'Ancient Red Dragon Blue Eyes', type: 'npc' },
+      // Phrase contiguous but not a prefix (rank 2).
+      { _id: '2', name: 'Legendary Blue Dragon', type: 'npc' },
+      // Phrase is a prefix (rank 1).
+      { _id: '3', name: 'Blue Dragon Hatchling', type: 'npc' },
+      // Exact whole-name match (rank 0).
+      { _id: '4', name: 'Blue Dragon', type: 'npc' },
+    ]);
+    setGame([p1]);
+
+    const result = await findInCompendiumHandler({ name: 'blue dragon' });
+
+    expect(result.matches.map((m) => m.name)).toEqual([
+      'Blue Dragon',
+      'Blue Dragon Hatchling',
+      'Legendary Blue Dragon',
+      'Ancient Red Dragon Blue Eyes',
+    ]);
+  });
+
+  it('collapses runs of whitespace in the query', async () => {
+    const p1 = createPack('pack', [{ _id: '1', name: 'Blue Dragon (Adult)', type: 'npc' }]);
+    setGame([p1]);
+
+    const result = await findInCompendiumHandler({ name: '  adult   blue\tdragon  ' });
+
+    expect(result.matches).toHaveLength(1);
+    expect(result.matches[0]?.name).toBe('Blue Dragon (Adult)');
+  });
 });

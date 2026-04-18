@@ -9,7 +9,7 @@ export function registerCompendiumTools(mcp: McpServer): void {
     {
       title: 'Find in Compendium',
       description:
-        'Search compendium packs for documents whose name contains the given substring (case-insensitive). Returns lean matches suitable for passing to create_actor_from_compendium or add_item_from_compendium. Results are ranked exact → prefix → contains, alphabetically within each tier.',
+        'Search compendium packs for documents whose name contains every word of the query (case-insensitive, word-order independent). A single-word query behaves like a substring match; "adult blue dragon" also matches "Blue Dragon (Adult)". Returns lean matches suitable for passing to create_actor_from_compendium or add_item_from_compendium. Results are ranked exact → phrase prefix → phrase contained → tokens scattered, alphabetically within each tier.',
       inputSchema: {
         name: z.string().describe('Name substring to search for (case-insensitive)'),
         packId: z.string().optional().describe('Restrict to a single pack (e.g. "pf2e.pathfinder-bestiary")'),
