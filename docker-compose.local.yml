@@ -20,6 +20,7 @@ services:
     ports:
       - '${FOUNDRY_PORT:-30000}:30000' # Foundry VTT
       - '${MCP_PORT:-8765}:8765' # MCP server
+      - '${MCP_INSPECT_PORT:-9229}:9229' # Node inspector — attach from host for debugging
     volumes:
       # Named volume by default — portable across OSes. Override in .env
       # with e.g. FOUNDRY_DATA=E:/TTRPG/foundry-local-data to use a host path.
@@ -35,6 +36,10 @@ services:
       - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
       - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Enable Node inspector on the in-container MCP server (local only).
+      # VS Code's "Debug MCP server (full stack)" attaches to :9229 to hit
+      # breakpoints in server/src/** while the Foundry container runs.
+      - MCP_INSPECT=1
     restart: unless-stopped
 
 volumes:

@@ -12,8 +12,17 @@ if [ -d "$MODULE_SRC" ]; then
 fi
 
 # ---- Start the MCP server in the background --------------------------------
+# When MCP_INSPECT is set, the Node inspector listens on 0.0.0.0:9229 so a
+# host-side debugger (e.g. VS Code's "Debug MCP server (full stack)") can
+# attach. Only the local-dev compose sets this; production leaves it unset.
+NODE_ARGS=""
+if [ -n "${MCP_INSPECT:-}" ]; then
+  NODE_ARGS="--inspect=0.0.0.0:9229"
+  echo "[foundry-mcp] Node inspector enabled on :9229"
+fi
 echo "[foundry-mcp] Starting MCP server on :8765"
-node /opt/foundry-mcp/dist/index.js &
+# shellcheck disable=SC2086  # Intentional word-splitting of NODE_ARGS
+node $NODE_ARGS /opt/foundry-mcp/dist/index.js &
 MCP_PID=$!
 
 # Shut down MCP server when the container stops
