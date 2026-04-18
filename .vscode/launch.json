@@ -2,7 +2,36 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug MCP server (host node)",
+      //  Brings up the full Docker stack (Foundry + in-container MCP server),
+      //  then attaches the debugger to the MCP node process over the
+      //  inspector port (9229). Requires docker-compose.local.yml with
+      //  MCP_INSPECT=1 and the 9229 port exposed — that runs node with
+      //  `--inspect=0.0.0.0:9229` so we can reach it from the host.
+      //
+      //  Path mapping: breakpoints in server/src/** map to compiled
+      //  server/dist/** inside the container at /opt/foundry-mcp/dist.
+      //  Requires sourceMap: true in server/tsconfig.json (already set).
+      //
+      //  Container restarts reconnect automatically (restart: true).
+      "name": "Debug MCP server (full stack)",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9229,
+      "restart": true,
+      "timeout": 30000,
+      "preLaunchTask": "local: start",
+      "localRoot": "${workspaceFolder}/server",
+      "remoteRoot": "/opt/foundry-mcp",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      //  Runs the MCP server on the HOST via tsx (no Docker). Useful for
+      //  quick iteration when you don't need Foundry VTT — for example
+      //  unit-testing tool handlers against a mock transport. Port 8765
+      //  must be free (stop the container first if running).
+      "name": "Debug MCP server (standalone, no docker)",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
