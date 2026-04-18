@@ -59,8 +59,8 @@ export async function findOrCreateFolderHandler(
     return f.name.toLowerCase() === lowered;
   });
 
-  if (existing.length > 0) {
-    const found = existing[0]!;
+  const found = existing[0];
+  if (found !== undefined) {
     return {
       id: found.id,
       name: found.name,
