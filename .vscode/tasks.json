@@ -35,8 +35,8 @@
       //  shell VS Code picks (PowerShell on Windows, zsh on macOS) —
       //  no bash override that can collide with WSL's bash.exe on PATH.
       "label": "local: server-rebuild",
-      "detail": "Build server dist + restart container (fast MCP iteration)",
-      "dependsOn": ["server: build", "local: restart"],
+      "detail": "Build server dist + ensure container is up + restart (fast MCP iteration)",
+      "dependsOn": ["server: build", "local: start", "local: restart"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     },
