@@ -30,15 +30,33 @@
       //  picked up. Skips the module/vite build since the module is
       //  bind-mounted and updates live in the browser. Used as the
       //  preLaunchTask for "Debug MCP server (full stack)".
+      //
+      //  Composed via dependsOn so each step runs in whatever default
+      //  shell VS Code picks (PowerShell on Windows, zsh on macOS) —
+      //  no bash override that can collide with WSL's bash.exe on PATH.
       "label": "local: server-rebuild",
       "detail": "Build server dist + restart container (fast MCP iteration)",
+      "dependsOn": ["server: build", "local: restart"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "server: build",
+      "detail": "tsc → server/dist (sub-task of local: server-rebuild)",
       "type": "shell",
-      "command": "npm run build --prefix server && docker compose -f docker-compose.local.yml restart",
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "shell": { "executable": "bash", "args": ["-c"] }
-      },
-      "problemMatcher": ["$tsc"]
+      "command": "npm run build",
+      "options": { "cwd": "${workspaceFolder}/server" },
+      "problemMatcher": ["$tsc"],
+      "presentation": { "reveal": "silent", "revealProblems": "onProblem" }
+    },
+    {
+      "label": "local: restart",
+      "detail": "docker compose restart (sub-task of local: server-rebuild)",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.local.yml restart",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent" }
     },
     {
       "label": "local: start",
