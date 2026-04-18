@@ -86,6 +86,8 @@ export type CommandType =
   | 'get-item'
   | 'get-compendiums'
   | 'get-compendium'
+  | 'find-in-compendium'
+  | 'find-or-create-folder'
   | 'list-roll-tables'
   | 'get-roll-table'
   | 'roll-on-table'
@@ -1057,6 +1059,68 @@ export interface GetCompendiumParams {
   packId: string;
 }
 
+export interface FindInCompendiumParams {
+  /** Substring (case-insensitive) to match against document names. */
+  name: string;
+  /** Optional — restrict to a single pack (e.g. 'pf2e.pathfinder-bestiary'). */
+  packId?: string;
+  /** Optional — restrict to packs of this document type (e.g. 'Actor', 'Item'). */
+  documentType?: string;
+  /** Max results to return. Defaults to 10. */
+  limit?: number;
+}
+
+export interface CompendiumMatch {
+  packId: string;
+  packLabel: string;
+  documentId: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+}
+
+export interface FindInCompendiumResult {
+  matches: CompendiumMatch[];
+}
+
+/** Folder document types Foundry supports. The set mirrors
+ *  CONST.FOLDER_DOCUMENT_TYPES in recent Foundry versions. */
+export type FolderDocumentType =
+  | 'Actor'
+  | 'Item'
+  | 'Scene'
+  | 'JournalEntry'
+  | 'RollTable'
+  | 'Macro'
+  | 'Playlist'
+  | 'Adventure'
+  | 'Card';
+
+export interface FindOrCreateFolderParams {
+  /** Folder name to look up or create. Matched case-insensitively against
+   *  existing folders of the same document type. */
+  name: string;
+  /** Document type the folder holds. Required because Foundry scopes
+   *  folder names by document type — an "Actor" folder and an "Item" folder
+   *  can share a name without conflict. */
+  type: FolderDocumentType;
+  /** Optional parent folder ID to nest under. Existing folders match by
+   *  name + parent, so the same name under different parents counts as
+   *  separate folders. */
+  parentFolderId?: string;
+}
+
+export interface FindOrCreateFolderResult {
+  id: string;
+  name: string;
+  type: string;
+  /** true when a new folder was created, false when an existing one was
+   *  reused. Lets callers decide whether to emit a "created" or "reused"
+   *  status message. */
+  created: boolean;
+}
+
 // Roll Table types
 export type ListRollTablesParams = Record<string, never>;
 
@@ -1316,6 +1380,8 @@ export interface CommandParamsMap {
   'get-item': GetItemParams;
   'get-compendiums': GetCompendiumsParams;
   'get-compendium': GetCompendiumParams;
+  'find-in-compendium': FindInCompendiumParams;
+  'find-or-create-folder': FindOrCreateFolderParams;
   'list-roll-tables': ListRollTablesParams;
   'get-roll-table': GetRollTableParams;
   'roll-on-table': RollOnTableParams;
@@ -1402,6 +1468,8 @@ export interface CommandResultMap {
   'get-item': ItemData;
   'get-compendiums': CompendiumMetadata[];
   'get-compendium': CompendiumData;
+  'find-in-compendium': FindInCompendiumResult;
+  'find-or-create-folder': FindOrCreateFolderResult;
   'list-roll-tables': RollTableSummary[];
   'get-roll-table': RollTableResult;
   'roll-on-table': RollOnTableResult;

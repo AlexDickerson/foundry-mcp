@@ -1,0 +1,58 @@
+# Local development on a Docker Desktop host (typically the dev laptop).
+# Builds the image from the checked-out Dockerfile instead of pulling the
+# GHCR release, so changes to module/server sources show up after one
+# `docker compose -f docker-compose.local.yml up --build`. The bind mounts
+# on dist/ let you iterate without rebuilding the image: run
+# `npm run build` in module/ or server/ and `docker compose ... restart`.
+#
+# Data lives in a named volume so the same Compose file works on Windows,
+# macOS, and Linux without hard-coding host paths. Override FOUNDRY_DATA
+# in .env to a host path if you want the Foundry data directory exposed
+# on the filesystem (e.g. for backups or poking at user data directly).
+
+services:
+  foundry-local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: foundry-mcp:local
+    container_name: foundry-local
+    ports:
+      - '${FOUNDRY_PORT:-30000}:30000' # Foundry VTT
+      - '${MCP_PORT:-8765}:8765' # MCP server
+      - '${MCP_INSPECT_PORT:-9229}:9229' # Node inspector — attach from host for debugging
+    volumes:
+      # Named volume by default — portable across OSes. Override in .env
+      # with e.g. FOUNDRY_DATA=E:/TTRPG/foundry-local-data to use a host path.
+      - ${FOUNDRY_DATA:-foundry-data-local}:/data
+      # Live-reload bind mounts: rebuild module or server locally and
+      # changes appear in the container without rebuilding the image.
+      #
+      # The first module/dist mount keeps the staging path consistent with
+      # the baked image; the second mounts module/dist directly at the
+      # install path Foundry serves from, so edits to module.js are
+      # visible to the GM browser after a Ctrl+F5 — no container restart.
+      # SKIP_MODULE_COPY below tells docker-entrypoint.sh to skip its
+      # normal copy step (which would self-overwrite the bind mount).
+      - ./module/dist:/opt/foundry-api-bridge
+      - ./module/dist:/data/Data/modules/foundry-api-bridge
+      - ./server/dist:/opt/foundry-mcp/dist
+      - ./server/node_modules:/opt/foundry-mcp/node_modules
+      - ./server/package.json:/opt/foundry-mcp/package.json
+    environment:
+      - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
+      - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Enable Node inspector on the in-container MCP server (local only).
+      # VS Code's "Debug MCP server (full stack)" attaches to :9229 to hit
+      # breakpoints in server/src/** while the Foundry container runs.
+      - MCP_INSPECT=1
+      # Module is bind-mounted directly at the Foundry install path above;
+      # tell docker-entrypoint.sh not to cp on top of itself.
+      - SKIP_MODULE_COPY=1
+    restart: unless-stopped
+
+volumes:
+  foundry-data-local:
+    # Named volume, managed by Docker. Survives `docker compose down`;
+    # removed only with `docker compose down -v`.

@@ -94,7 +94,13 @@ export {
 } from '@/commands/handlers/scene';
 
 // World handlers
-export { getWorldInfoHandler, getCompendiumsHandler, getCompendiumHandler } from '@/commands/handlers/world';
+export {
+  getWorldInfoHandler,
+  getCompendiumsHandler,
+  getCompendiumHandler,
+  findInCompendiumHandler,
+  findOrCreateFolderHandler,
+} from '@/commands/handlers/world';
 
 // Table handlers
 export {
