@@ -33,18 +33,10 @@ export function registerCompendiumTools(mcp: McpServer): void {
       inputSchema: {
         name: z.string().describe('Folder name'),
         type: z
-          .enum([
-            'Actor',
-            'Item',
-            'Scene',
-            'JournalEntry',
-            'RollTable',
-            'Macro',
-            'Playlist',
-            'Adventure',
-            'Card',
-          ])
-          .describe('Document type the folder holds. Foundry scopes folder names by type, so the same name can coexist across different types.'),
+          .enum(['Actor', 'Item', 'Scene', 'JournalEntry', 'RollTable', 'Macro', 'Playlist', 'Adventure', 'Card'])
+          .describe(
+            'Document type the folder holds. Foundry scopes folder names by type, so the same name can coexist across different types.',
+          ),
         parentFolderId: z.string().optional().describe('Optional parent folder ID to nest under'),
       },
     },

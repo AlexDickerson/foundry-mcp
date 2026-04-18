@@ -1086,7 +1086,16 @@ export interface FindInCompendiumResult {
 
 /** Folder document types Foundry supports. The set mirrors
  *  CONST.FOLDER_DOCUMENT_TYPES in recent Foundry versions. */
-export type FolderDocumentType = 'Actor' | 'Item' | 'Scene' | 'JournalEntry' | 'RollTable' | 'Macro' | 'Playlist' | 'Adventure' | 'Card';
+export type FolderDocumentType =
+  | 'Actor'
+  | 'Item'
+  | 'Scene'
+  | 'JournalEntry'
+  | 'RollTable'
+  | 'Macro'
+  | 'Playlist'
+  | 'Adventure'
+  | 'Card';
 
 export interface FindOrCreateFolderParams {
   /** Folder name to look up or create. Matched case-insensitively against

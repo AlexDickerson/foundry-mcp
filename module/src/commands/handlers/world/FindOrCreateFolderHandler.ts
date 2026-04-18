@@ -1,8 +1,4 @@
-import type {
-  FindOrCreateFolderParams,
-  FindOrCreateFolderResult,
-  FolderDocumentType,
-} from '@/commands/types';
+import type { FindOrCreateFolderParams, FindOrCreateFolderResult, FolderDocumentType } from '@/commands/types';
 
 // Folder lookup + create primitive. Idempotent — callers can invoke this
 // repeatedly for the same name/type and only the first call produces a new
@@ -34,9 +30,7 @@ function getGame(): FoundryGame {
   return (globalThis as unknown as { game: FoundryGame }).game;
 }
 
-export async function findOrCreateFolderHandler(
-  params: FindOrCreateFolderParams,
-): Promise<FindOrCreateFolderResult> {
+export async function findOrCreateFolderHandler(params: FindOrCreateFolderParams): Promise<FindOrCreateFolderResult> {
   const game = getGame();
   if (!game.folders) {
     throw new Error('Foundry folders collection not available');

@@ -49,10 +49,7 @@ describe('findOrCreateFolderHandler', () => {
 
   it('reuses an existing folder that matches name + type (case-insensitive)', async () => {
     const create = jest.fn();
-    setGame(
-      [{ id: 'existing', name: 'Goblin Ambush', type: 'Actor', folder: null }],
-      create,
-    );
+    setGame([{ id: 'existing', name: 'Goblin Ambush', type: 'Actor', folder: null }], create);
 
     const result = await findOrCreateFolderHandler({ name: 'GOBLIN AMBUSH', type: 'Actor' });
 
@@ -113,10 +110,7 @@ describe('findOrCreateFolderHandler', () => {
 
   it('reuses a folder when name + type + parent all match', async () => {
     const create = jest.fn();
-    setGame(
-      [{ id: 'existing-child', name: 'Minions', type: 'Actor', folder: { id: 'parent-a' } }],
-      create,
-    );
+    setGame([{ id: 'existing-child', name: 'Minions', type: 'Actor', folder: { id: 'parent-a' } }], create);
 
     const result = await findOrCreateFolderHandler({
       name: 'Minions',

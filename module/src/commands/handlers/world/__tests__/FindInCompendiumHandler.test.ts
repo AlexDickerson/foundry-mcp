@@ -27,11 +27,7 @@ function mockIndex(entries: MockIndexEntry[]): { forEach: (fn: (e: MockIndexEntr
   };
 }
 
-function createPack(
-  collection: string,
-  entries: MockIndexEntry[],
-  metadata?: Partial<MockPackMetadata>,
-): MockPack {
+function createPack(collection: string, entries: MockIndexEntry[], metadata?: Partial<MockPackMetadata>): MockPack {
   return {
     collection,
     metadata: {
@@ -67,11 +63,29 @@ describe('findInCompendiumHandler', () => {
 
   it('returns substring matches across all packs', async () => {
     const p1 = createPack('pf2e.pathfinder-bestiary', [
-      { _id: 'a1', name: 'Goblin Warrior', type: 'npc', img: 'g.webp', uuid: 'Compendium.pf2e.pathfinder-bestiary.Actor.a1' },
-      { _id: 'a2', name: 'Orc Brute', type: 'npc', img: 'o.webp', uuid: 'Compendium.pf2e.pathfinder-bestiary.Actor.a2' },
+      {
+        _id: 'a1',
+        name: 'Goblin Warrior',
+        type: 'npc',
+        img: 'g.webp',
+        uuid: 'Compendium.pf2e.pathfinder-bestiary.Actor.a1',
+      },
+      {
+        _id: 'a2',
+        name: 'Orc Brute',
+        type: 'npc',
+        img: 'o.webp',
+        uuid: 'Compendium.pf2e.pathfinder-bestiary.Actor.a2',
+      },
     ]);
     const p2 = createPack('pf2e.pathfinder-bestiary-2', [
-      { _id: 'b1', name: 'Goblin Pyro', type: 'npc', img: 'gp.webp', uuid: 'Compendium.pf2e.pathfinder-bestiary-2.Actor.b1' },
+      {
+        _id: 'b1',
+        name: 'Goblin Pyro',
+        type: 'npc',
+        img: 'gp.webp',
+        uuid: 'Compendium.pf2e.pathfinder-bestiary-2.Actor.b1',
+      },
     ]);
     setGame([p1, p2]);
 
@@ -127,11 +141,9 @@ describe('findInCompendiumHandler', () => {
 
   it('filters by documentType', async () => {
     const actors = createPack('actors.pack', [{ _id: '1', name: 'Potion Peddler', type: 'npc' }]);
-    const items = createPack(
-      'items.pack',
-      [{ _id: '2', name: 'Potion of Healing', type: 'consumable' }],
-      { type: 'Item' },
-    );
+    const items = createPack('items.pack', [{ _id: '2', name: 'Potion of Healing', type: 'consumable' }], {
+      type: 'Item',
+    });
     setGame([actors, items]);
 
     const result = await findInCompendiumHandler({ name: 'potion', documentType: 'Item' });
