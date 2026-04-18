@@ -5,7 +5,13 @@ set -euo pipefail
 MODULE_SRC="/opt/foundry-api-bridge"
 MODULE_DST="/data/Data/modules/foundry-api-bridge"
 
-if [ -d "$MODULE_SRC" ]; then
+# When SKIP_MODULE_COPY is set (docker-compose.local.yml sets this alongside
+# a direct bind-mount of module/dist to MODULE_DST), the module is already
+# live at the install path — copying would self-overwrite. Skip the copy and
+# let edits to module/dist appear instantly to Foundry.
+if [ -n "${SKIP_MODULE_COPY:-}" ]; then
+  echo "[foundry-mcp] Module bind-mounted at $MODULE_DST — skipping copy"
+elif [ -d "$MODULE_SRC" ]; then
   mkdir -p "$MODULE_DST"
   cp -r "$MODULE_SRC"/. "$MODULE_DST"/
   echo "[foundry-mcp] Module installed → $MODULE_DST"
