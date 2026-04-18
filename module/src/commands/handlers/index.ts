@@ -99,6 +99,7 @@ export {
   getCompendiumsHandler,
   getCompendiumHandler,
   findInCompendiumHandler,
+  findOrCreateFolderHandler,
 } from '@/commands/handlers/world';
 
 // Table handlers
