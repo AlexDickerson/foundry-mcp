@@ -25,6 +25,22 @@
       "problemMatcher": []
     },
     {
+      //  Faster iteration path for MCP-only changes: rebuilds just the
+      //  server dist (tsc) and restarts the container so the new JS is
+      //  picked up. Skips the module/vite build since the module is
+      //  bind-mounted and updates live in the browser. Used as the
+      //  preLaunchTask for "Debug MCP server (full stack)".
+      "label": "local: server-rebuild",
+      "detail": "Build server dist + restart container (fast MCP iteration)",
+      "type": "shell",
+      "command": "npm run build --prefix server && docker compose -f docker-compose.local.yml restart",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": { "executable": "bash", "args": ["-c"] }
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
       "label": "local: start",
       "detail": "Start container without rebuilding",
       "type": "shell",

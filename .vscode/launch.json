@@ -20,7 +20,7 @@
       "port": 9229,
       "restart": true,
       "timeout": 30000,
-      "preLaunchTask": "local: start",
+      "preLaunchTask": "local: server-rebuild",
       "localRoot": "${workspaceFolder}/server",
       "remoteRoot": "/opt/foundry-mcp",
       "sourceMaps": true,
