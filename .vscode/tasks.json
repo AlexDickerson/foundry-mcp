@@ -1,0 +1,109 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    //  ─── Local Docker ─────────────────────────────────────────────────────
+    {
+      "label": "local: up",
+      "detail": "First-time: build image + start container via local.sh",
+      "type": "shell",
+      "command": "./local.sh up",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": { "executable": "bash", "args": ["-c"] }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "local: rebuild",
+      "detail": "Rebuild module + server dist, restart container",
+      "type": "shell",
+      "command": "./local.sh rebuild",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": { "executable": "bash", "args": ["-c"] }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "local: start",
+      "detail": "Start container without rebuilding",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.local.yml up -d",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "local: stop",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.local.yml stop",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "local: logs",
+      "detail": "Tail container logs (dedicated terminal)",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.local.yml logs -f --tail=100",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "foundrylogs", "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "local: status",
+      "type": "shell",
+      "command": "./local.sh status",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": { "executable": "bash", "args": ["-c"] }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "local: shell",
+      "detail": "Interactive bash inside the container",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.local.yml exec foundry-local bash",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "panel": "dedicated", "reveal": "always" },
+      "problemMatcher": []
+    },
+
+    //  ─── Standalone dev watches (no Docker) ──────────────────────────────
+    {
+      "label": "module: watch",
+      "detail": "vite build --watch against module/dist — restart container to load",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/module" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "foundrymodule", "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "server: dev (host node)",
+      "detail": "tsx dev server on host (bypasses Docker — use for fast MCP-only iteration)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/server" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "foundryserver", "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "module: test",
+      "type": "shell",
+      "command": "npm run test",
+      "options": { "cwd": "${workspaceFolder}/module" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "module: typecheck",
+      "type": "shell",
+      "command": "npm run type-check",
+      "options": { "cwd": "${workspaceFolder}/module" },
+      "problemMatcher": ["$tsc"]
+    }
+  ]
+}
