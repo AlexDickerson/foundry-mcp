@@ -86,6 +86,7 @@ export type CommandType =
   | 'get-item'
   | 'get-compendiums'
   | 'get-compendium'
+  | 'find-in-compendium'
   | 'list-roll-tables'
   | 'get-roll-table'
   | 'roll-on-table'
@@ -1057,6 +1058,31 @@ export interface GetCompendiumParams {
   packId: string;
 }
 
+export interface FindInCompendiumParams {
+  /** Substring (case-insensitive) to match against document names. */
+  name: string;
+  /** Optional — restrict to a single pack (e.g. 'pf2e.pathfinder-bestiary'). */
+  packId?: string;
+  /** Optional — restrict to packs of this document type (e.g. 'Actor', 'Item'). */
+  documentType?: string;
+  /** Max results to return. Defaults to 10. */
+  limit?: number;
+}
+
+export interface CompendiumMatch {
+  packId: string;
+  packLabel: string;
+  documentId: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+}
+
+export interface FindInCompendiumResult {
+  matches: CompendiumMatch[];
+}
+
 // Roll Table types
 export type ListRollTablesParams = Record<string, never>;
 
@@ -1316,6 +1342,7 @@ export interface CommandParamsMap {
   'get-item': GetItemParams;
   'get-compendiums': GetCompendiumsParams;
   'get-compendium': GetCompendiumParams;
+  'find-in-compendium': FindInCompendiumParams;
   'list-roll-tables': ListRollTablesParams;
   'get-roll-table': GetRollTableParams;
   'roll-on-table': RollOnTableParams;
@@ -1402,6 +1429,7 @@ export interface CommandResultMap {
   'get-item': ItemData;
   'get-compendiums': CompendiumMetadata[];
   'get-compendium': CompendiumData;
+  'find-in-compendium': FindInCompendiumResult;
   'list-roll-tables': RollTableSummary[];
   'get-roll-table': RollTableResult;
   'roll-on-table': RollOnTableResult;

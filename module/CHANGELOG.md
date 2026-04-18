@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **`find-in-compendium`** — lightweight name-substring search across compendium packs
+  - Case-insensitive match on document names, ranked exact → prefix → contains, alphabetical within each tier
+  - Optional filters: `packId` (restrict to one pack), `documentType` (restrict to packs of a given type, e.g. `Actor`)
+  - Uses `pack.getIndex()` rather than `getDocuments()` — returns lean `{packId, packLabel, documentId, uuid, name, type, img}` entries
+  - Default limit 10, hard-capped at 100
+  - Primary use case: resolve a monster/item name to a `{packId, actorId}` pair for `create-actor-from-compendium` without loading every document
+
 ## [7.7.0] - 2026-04-07
 
 ### Added

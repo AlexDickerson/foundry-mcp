@@ -23,6 +23,7 @@ import {
   getItemHandler,
   getCompendiumsHandler,
   getCompendiumHandler,
+  findInCompendiumHandler,
   createJournalHandler,
   updateJournalHandler,
   deleteJournalHandler,
@@ -147,6 +148,7 @@ function initializeWebSocket(
   commandRouter.register('get-item', getItemHandler);
   commandRouter.register('get-compendiums', getCompendiumsHandler);
   commandRouter.register('get-compendium', getCompendiumHandler);
+  commandRouter.register('find-in-compendium', findInCompendiumHandler);
   commandRouter.register('get-scene', getSceneHandler);
   commandRouter.register('get-scenes-list', getScenesListHandler);
   commandRouter.register('get-scene-tokens', getSceneTokensHandler);

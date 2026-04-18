@@ -5,6 +5,7 @@ import { registerTokenTools } from './tokens.js';
 import { registerAssetTools } from './assets.js';
 import { registerDiagnosticTools } from './diagnostics.js';
 import { registerImageTools } from './image.js';
+import { registerCompendiumTools } from './compendium.js';
 
 export function registerTools(mcp: McpServer): void {
   registerSceneTools(mcp);
@@ -13,4 +14,5 @@ export function registerTools(mcp: McpServer): void {
   registerAssetTools(mcp);
   registerDiagnosticTools(mcp);
   registerImageTools(mcp);
+  registerCompendiumTools(mcp);
 }
