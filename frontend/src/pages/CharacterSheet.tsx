@@ -1,12 +1,23 @@
 import { useEffect, useState } from 'react';
 import { api, ApiRequestError } from '../api/client';
 import type { PreparedActor, PreparedCharacter } from '../api/types';
+import { SheetHeader } from '../components/layout/SheetHeader';
+import { TabStrip } from '../components/common/TabStrip';
+import type { Tab } from '../components/common/TabStrip';
+import { Character } from '../components/tabs/Character';
 import { Proficiencies } from '../components/tabs/Proficiencies';
 
 type State =
   | { kind: 'loading' }
   | { kind: 'error'; message: string; suggestion?: string }
   | { kind: 'ready'; actor: PreparedCharacter };
+
+type TabId = 'character' | 'proficiencies';
+
+const TABS: readonly Tab<TabId>[] = [
+  { id: 'character', label: 'Character' },
+  { id: 'proficiencies', label: 'Proficiencies' },
+];
 
 interface Props {
   actorId: string;
@@ -15,6 +26,7 @@ interface Props {
 
 export function CharacterSheet({ actorId, onBack }: Props): React.ReactElement {
   const [state, setState] = useState<State>({ kind: 'loading' });
+  const [activeTab, setActiveTab] = useState<TabId>('character');
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +57,7 @@ export function CharacterSheet({ actorId, onBack }: Props): React.ReactElement {
 
   return (
     <div>
-      <header className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex items-center gap-3">
         <button
           type="button"
           onClick={onBack}
@@ -53,8 +65,7 @@ export function CharacterSheet({ actorId, onBack }: Props): React.ReactElement {
         >
           ← Actors
         </button>
-        {state.kind === 'ready' && <h1 className="text-xl font-semibold">{state.actor.name}</h1>}
-      </header>
+      </div>
 
       {state.kind === 'loading' && <p className="text-sm text-neutral-500">Loading character…</p>}
 
@@ -66,7 +77,17 @@ export function CharacterSheet({ actorId, onBack }: Props): React.ReactElement {
         </div>
       )}
 
-      {state.kind === 'ready' && <Proficiencies system={state.actor.system} />}
+      {state.kind === 'ready' && (
+        <>
+          <SheetHeader character={state.actor} />
+          <TabStrip tabs={TABS} active={activeTab} onChange={setActiveTab} />
+          {activeTab === 'character' ? (
+            <Character system={state.actor.system} />
+          ) : (
+            <Proficiencies system={state.actor.system} />
+          )}
+        </>
+      )}
     </div>
   );
 }
