@@ -50,7 +50,7 @@ export function SheetHeader({ character }: Props): React.ReactElement {
         )}
       </div>
       {subtitle && (
-        <p className="mt-0.5 text-sm text-neutral-500" data-section="identity">
+        <p className="mt-0.5 font-sans text-sm text-pf-alt" data-section="identity">
           {subtitle}
         </p>
       )}

@@ -52,19 +52,19 @@ function FeatCard({ feat }: { feat: FeatItem }): React.ReactElement {
   const traits = feat.system.traits.value.filter((t) => t !== feat.system.category);
   return (
     <li
-      className="flex items-start gap-3 rounded border border-neutral-200 bg-white px-3 py-2"
+      className="flex items-start gap-3 rounded border border-pf-border bg-white px-3 py-2"
       data-item-id={feat.id}
       data-feat-slug={feat.system.slug ?? ''}
     >
       <img
         src={feat.img}
         alt=""
-        className="mt-0.5 h-8 w-8 flex-shrink-0 rounded border border-neutral-200 bg-neutral-50"
+        className="mt-0.5 h-8 w-8 flex-shrink-0 rounded border border-pf-border bg-pf-bg-dark"
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="truncate text-sm font-medium text-neutral-900">{feat.name}</span>
-          <span className="flex-shrink-0 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+          <span className="truncate text-sm font-medium text-pf-text">{feat.name}</span>
+          <span className="flex-shrink-0 font-mono text-[10px] uppercase tracking-widest text-pf-alt-dark">
             Lv {level}
           </span>
         </div>
@@ -80,7 +80,7 @@ function TraitChips({ traits }: { traits: string[] }): React.ReactElement {
       {traits.map((t) => (
         <li
           key={t}
-          className="rounded-full border border-neutral-300 bg-neutral-50 px-1.5 py-0.5 text-[10px] text-neutral-600"
+          className="rounded-full border border-pf-tertiary-dark bg-pf-tertiary/40 px-1.5 py-0.5 text-[10px] text-pf-alt-dark"
         >
           {capitaliseSlug(t)}
         </li>
