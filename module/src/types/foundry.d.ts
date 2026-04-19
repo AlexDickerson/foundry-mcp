@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 declare const game: Game;
 
 interface SettingConfig {
@@ -15,6 +16,7 @@ interface SettingMenuConfig {
   label: string;
   hint: string;
   icon: string;
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   type: typeof FormApplication;
   restricted: boolean;
 }

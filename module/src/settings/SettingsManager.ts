@@ -50,6 +50,7 @@ export async function registerMenu(): Promise<void> {
     label: 'Configure',
     hint: 'Configure WebSocket and logging settings',
     icon: 'fas fa-cog',
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     type: ApiConfigForm as unknown as new () => FormApplication,
     restricted: true,
   });
