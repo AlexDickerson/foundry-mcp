@@ -1086,12 +1086,21 @@ export interface GetCompendiumParams {
 }
 
 export interface FindInCompendiumParams {
-  /** Substring (case-insensitive) to match against document names. */
+  /** Substring (case-insensitive) to match against document names. Tokenized
+   *  on whitespace — all tokens must appear in the name. */
   name: string;
   /** Optional — restrict to a single pack (e.g. 'pf2e.pathfinder-bestiary'). */
   packId?: string;
   /** Optional — restrict to packs of this document type (e.g. 'Actor', 'Item'). */
   documentType?: string;
+  /** Optional — require every trait in this list to be present on the
+   *  candidate's `system.traits.value`. Used by creator pickers to
+   *  scope class feat slots to the character's class trait, ancestry
+   *  feat slots to the ancestry trait, etc. */
+  traits?: string[];
+  /** Optional — cap `system.level.value` at this level. Used by feat
+   *  pickers to hide feats the character doesn't yet qualify for. */
+  maxLevel?: number;
   /** Max results to return. Defaults to 10. */
   limit?: number;
 }
@@ -1104,6 +1113,11 @@ export interface CompendiumMatch {
   name: string;
   type: string;
   img: string;
+  /** Present when the filter path required loading index fields
+   *  (traits or maxLevel). Omitted on plain name-only queries to keep
+   *  the response small. */
+  level?: number;
+  traits?: string[];
 }
 
 export interface FindInCompendiumResult {

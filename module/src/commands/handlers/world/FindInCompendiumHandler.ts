@@ -5,6 +5,16 @@ import type { FoundryPackMetadata } from './worldTypes';
 // entries. We load that via getIndex() rather than getDocuments() — the
 // index is typically cached after first access and avoids hydrating full
 // system data we don't need for name matching.
+//
+// When the caller filters by trait or level, we request those fields
+// explicitly via getIndex({fields: [...]}) so the index Collection
+// carries `system.traits.value` and `system.level.value` without
+// forcing the full document load.
+
+interface FoundrySystemSlice {
+  traits?: { value?: unknown };
+  level?: { value?: unknown };
+}
 
 interface FoundryIndexEntry {
   _id: string;
@@ -12,16 +22,21 @@ interface FoundryIndexEntry {
   type?: string;
   img?: string;
   uuid?: string;
+  system?: FoundrySystemSlice;
 }
 
 interface FoundryPackIndex {
   forEach(fn: (entry: FoundryIndexEntry) => void): void;
 }
 
+interface FoundryGetIndexOptions {
+  fields?: string[];
+}
+
 interface FoundryIndexablePack {
   collection: string;
   metadata: FoundryPackMetadata;
-  getIndex(): Promise<FoundryPackIndex>;
+  getIndex(options?: FoundryGetIndexOptions): Promise<FoundryPackIndex>;
 }
 
 interface FoundryPacksCollection {
@@ -59,6 +74,13 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
 
   const limit = Math.max(1, Math.min(params.limit ?? 10, 100));
 
+  const requiredTraits = (params.traits ?? []).map((t) => t.toLowerCase()).filter((t) => t.length > 0);
+  const hasTraitFilter = requiredTraits.length > 0;
+  const hasLevelFilter = typeof params.maxLevel === 'number';
+  // Ask Foundry for the extra index columns only when a filter or the
+  // caller needs them. Plain name-only queries stay on the lean index.
+  const indexFields = hasTraitFilter || hasLevelFilter ? ['system.traits.value', 'system.level.value'] : undefined;
+
   // Collect all candidate packs first so we can await getIndex for each in
   // sequence — packs have internal caching so the cost is bounded by the
   // number of packs that haven't been indexed yet this session.
@@ -86,7 +108,7 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
   const scored: ScoredMatch[] = [];
 
   for (const pack of candidatePacks) {
-    const index = await pack.getIndex();
+    const index = await (indexFields ? pack.getIndex({ fields: indexFields }) : pack.getIndex());
     index.forEach((entry) => {
       const entryName = entry.name ?? '';
       const lower = entryName.toLowerCase();
@@ -94,7 +116,19 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
       // qualify. Ranking (below) then distinguishes "entire phrase present
       // contiguously" from "tokens present but scattered".
       if (!tokens.every((t) => lower.includes(t))) return;
-      scored.push({
+
+      const entryTraits = extractTraits(entry);
+      if (hasTraitFilter) {
+        const lowered = entryTraits.map((t) => t.toLowerCase());
+        if (!requiredTraits.every((req) => lowered.includes(req))) return;
+      }
+
+      const entryLevel = extractLevel(entry);
+      if (hasLevelFilter && entryLevel !== undefined && entryLevel > (params.maxLevel ?? Infinity)) {
+        return;
+      }
+
+      const match: ScoredMatch = {
         packId: pack.collection,
         packLabel: pack.metadata.label,
         documentId: entry._id,
@@ -103,7 +137,14 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
         type: entry.type ?? pack.metadata.type,
         img: entry.img ?? '',
         rank: score(lower, joinedQuery),
-      });
+      };
+      // Only surface the extra fields when we asked Foundry for them,
+      // so name-only queries keep getting the lean response.
+      if (indexFields) {
+        if (entryLevel !== undefined) match.level = entryLevel;
+        if (entryTraits.length > 0) match.traits = entryTraits;
+      }
+      scored.push(match);
     });
   }
 
@@ -115,4 +156,15 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
 
   const matches: CompendiumMatch[] = scored.slice(0, limit).map(({ rank: _rank, ...match }) => match);
   return { matches };
+}
+
+function extractTraits(entry: FoundryIndexEntry): string[] {
+  const raw = entry.system?.traits?.value;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((v): v is string => typeof v === 'string');
+}
+
+function extractLevel(entry: FoundryIndexEntry): number | undefined {
+  const raw = entry.system?.level?.value;
+  return typeof raw === 'number' ? raw : undefined;
 }
