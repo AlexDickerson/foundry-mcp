@@ -1,4 +1,4 @@
-import type { AbilityKey, CharacterSystem, IWREntry, Save, Speed } from '../../api/types';
+import type { AbilityKey, CharacterSystem, IWREntry, Save, Shield, Speed } from '../../api/types';
 import { ABILITY_KEYS } from '../../api/types';
 import { t } from '../../i18n/t';
 import { formatSignedInt } from '../../lib/format';
@@ -17,6 +17,9 @@ export function Character({ system }: Props): React.ReactElement {
   const classDC = system.attributes.classDC;
   const speeds = populatedSpeeds(system.movement.speeds);
   const xp = system.details.xp;
+  const reach = system.attributes.reach;
+  const showReach = reach.base !== 5 || reach.manipulate !== reach.base;
+  const deityName = system.details.deity?.value?.trim() ?? '';
 
   return (
     <section className="space-y-6">
@@ -30,6 +33,8 @@ export function Character({ system }: Props): React.ReactElement {
         doomed={system.attributes.doomed}
       />
 
+      {system.attributes.shield.itemId !== null && <ShieldTile shield={system.attributes.shield} />}
+
       <ResourcesRow resources={system.resources} />
 
       <MetaRow>
@@ -42,6 +47,26 @@ export function Character({ system }: Props): React.ReactElement {
           </MetaItem>
         )}
         <MetaItem label="Size">{humaniseSize(system.traits.size.value)}</MetaItem>
+        {showReach && (
+          <MetaItem label="Reach">
+            <span data-stat="reach" className="tabular-nums">
+              {reach.base} ft
+              {reach.manipulate !== reach.base && (
+                <span className="text-neutral-500"> · {reach.manipulate} ft (manipulate)</span>
+              )}
+            </span>
+          </MetaItem>
+        )}
+        <MetaItem label="Free Hands">
+          <span data-stat="hands-free" className="tabular-nums">
+            {system.attributes.handsFree}
+          </span>
+        </MetaItem>
+        {deityName !== '' && (
+          <MetaItem label="Deity">
+            <span data-stat="deity">{deityName}</span>
+          </MetaItem>
+        )}
         {classDC && (
           <MetaItem label="Class DC">
             <span>
@@ -300,6 +325,51 @@ function CountResource({
         {value}
         <span className="text-neutral-400">/{max}</span>
       </span>
+    </div>
+  );
+}
+
+function ShieldTile({ shield }: { shield: Shield }): React.ReactElement {
+  const name = t(shield.name);
+  return (
+    <div
+      className="flex items-center gap-3 rounded border border-neutral-200 bg-white px-3 py-2"
+      data-stat="shield"
+      title={`Hardness ${shield.hardness.toString()} · Broken Threshold ${shield.brokenThreshold.toString()}`}
+    >
+      {shield.icon && (
+        <img src={shield.icon} alt="" className="h-8 w-8 shrink-0 rounded border border-neutral-200 bg-neutral-50" />
+      )}
+      <div className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-1">
+        <span className="text-sm font-medium text-neutral-900">{name}</span>
+        <span className="text-xs text-neutral-600">
+          <span className="font-semibold">+{shield.ac}</span> AC
+        </span>
+        <span className="text-xs text-neutral-600">
+          HP{' '}
+          <span className="font-mono tabular-nums">
+            {shield.hp.value}/{shield.hp.max}
+          </span>
+        </span>
+        <span className="text-xs text-neutral-600">
+          Hardness <span className="font-mono tabular-nums">{shield.hardness}</span>
+        </span>
+        {shield.raised && (
+          <span className="rounded-full border border-emerald-400 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-emerald-700">
+            Raised
+          </span>
+        )}
+        {shield.broken && (
+          <span className="rounded-full border border-amber-400 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-700">
+            Broken
+          </span>
+        )}
+        {shield.destroyed && (
+          <span className="rounded-full border border-red-400 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-red-700">
+            Destroyed
+          </span>
+        )}
+      </div>
     </div>
   );
 }

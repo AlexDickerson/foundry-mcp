@@ -153,4 +153,75 @@ describe('Character tab', () => {
     expect(container.querySelector('[data-iwr="weaknesses"]')?.textContent).toContain('Cold 5');
     expect(container.querySelector('[data-iwr="resistances"]')?.textContent).toContain('Physical 2');
   });
+
+  it('shows handsFree value (2 for Amiri)', () => {
+    const { container } = render(<Character system={system} />);
+    const hf = container.querySelector('[data-stat="hands-free"]');
+    expect(hf, 'hands-free tile').toBeTruthy();
+    expect(hf?.textContent).toBe('2');
+  });
+
+  it('hides Reach when base is 5 and manipulate matches (Amiri default)', () => {
+    const { container } = render(<Character system={system} />);
+    expect(container.querySelector('[data-stat="reach"]')).toBeNull();
+  });
+
+  it('shows Reach when non-default', () => {
+    const reachy: CharacterSystem = {
+      ...system,
+      attributes: { ...system.attributes, reach: { base: 10, manipulate: 10 } },
+    };
+    const { container } = render(<Character system={reachy} />);
+    const reach = container.querySelector('[data-stat="reach"]');
+    expect(reach, 'reach tile').toBeTruthy();
+    expect(reach?.textContent).toContain('10 ft');
+  });
+
+  it('hides Deity when deity.value is empty (Amiri)', () => {
+    const { container } = render(<Character system={system} />);
+    expect(container.querySelector('[data-stat="deity"]')).toBeNull();
+  });
+
+  it('shows Deity when populated', () => {
+    const faithful: CharacterSystem = {
+      ...system,
+      details: { ...system.details, deity: { image: 'x.svg', value: 'Iomedae' } },
+    };
+    const { container } = render(<Character system={faithful} />);
+    const deity = container.querySelector('[data-stat="deity"]');
+    expect(deity?.textContent).toBe('Iomedae');
+  });
+
+  it('hides Shield tile when no shield is equipped (Amiri)', () => {
+    const { container } = render(<Character system={system} />);
+    expect(container.querySelector('[data-stat="shield"]')).toBeNull();
+  });
+
+  it('shows Shield tile with raised state when equipped', () => {
+    const shielded: CharacterSystem = {
+      ...system,
+      attributes: {
+        ...system.attributes,
+        shield: {
+          itemId: 'abc123',
+          name: 'Steel Shield',
+          ac: 2,
+          hp: { value: 15, max: 20 },
+          brokenThreshold: 10,
+          hardness: 5,
+          raised: true,
+          broken: false,
+          destroyed: false,
+          icon: 'icons/shield.webp',
+        },
+      },
+    };
+    const { container } = render(<Character system={shielded} />);
+    const tile = container.querySelector('[data-stat="shield"]');
+    expect(tile, 'shield tile').toBeTruthy();
+    expect(tile?.textContent).toContain('Steel Shield');
+    expect(tile?.textContent).toContain('+2');
+    expect(tile?.textContent).toContain('15/20');
+    expect(tile?.textContent).toContain('Raised');
+  });
 });
