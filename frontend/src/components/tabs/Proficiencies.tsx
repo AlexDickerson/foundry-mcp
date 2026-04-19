@@ -8,6 +8,7 @@ import type {
 } from '../../api/types';
 import { t } from '../../i18n/t';
 import { formatSignedInt } from '../../lib/format';
+import { ATTACK_LABEL_KEY, DEFENSE_LABEL_KEY } from '../../lib/pf2e-maps';
 import { ModifierTooltip } from '../common/ModifierTooltip';
 import { RankChip } from '../common/RankChip';
 
@@ -57,14 +58,24 @@ export function Proficiencies({ system }: Props): React.ReactElement {
       <SectionHeader>{t('PF2E.Actor.Character.Proficiency.Attack.Title')}</SectionHeader>
       <ProficiencyGrid>
         {attacks.map(([slug, prof]) => (
-          <MartialRow key={`atk-${slug}`} slug={slug} prof={prof} />
+          <MartialRow
+            key={`atk-${slug}`}
+            slug={slug}
+            prof={prof}
+            label={resolveMartialLabel(slug, prof.label, ATTACK_LABEL_KEY)}
+          />
         ))}
       </ProficiencyGrid>
 
       <SectionHeader>{t('PF2E.Actor.Character.Proficiency.Defense.Title')}</SectionHeader>
       <ProficiencyGrid>
         {defenses.map(([slug, prof]) => (
-          <MartialRow key={`def-${slug}`} slug={slug} prof={prof} />
+          <MartialRow
+            key={`def-${slug}`}
+            slug={slug}
+            prof={prof}
+            label={resolveMartialLabel(slug, prof.label, DEFENSE_LABEL_KEY)}
+          />
         ))}
       </ProficiencyGrid>
 
@@ -78,8 +89,8 @@ export function Proficiencies({ system }: Props): React.ReactElement {
                 rank: system.proficiencies.spellcasting.rank,
                 value: 0,
                 breakdown: '',
-                label: 'PF2E.SpellcastingProficiencyLabel',
               }}
+              label="Spellcasting"
               spanFull
             />
           </ProficiencyGrid>
@@ -136,10 +147,12 @@ function SkillRow({ skill, spanFull }: { skill: SkillStatistic; spanFull?: boole
 function MartialRow({
   slug,
   prof,
+  label,
   spanFull,
 }: {
   slug: string;
   prof: MartialProficiency;
+  label: string;
   spanFull?: boolean;
 }): React.ReactElement {
   return (
@@ -152,9 +165,7 @@ function MartialRow({
       title={prof.breakdown}
     >
       <Modifier value={prof.value} />
-      <span className="flex-1 truncate text-sm text-neutral-900">
-        {t(prof.label ?? `PF2E.WeaponCategory${capitalise(slug)}`)}
-      </span>
+      <span className="flex-1 truncate text-sm text-neutral-900">{label}</span>
       <RankChip rank={prof.rank} />
     </li>
   );
@@ -198,9 +209,17 @@ function renderLabel(label: string, isLore: boolean): string {
   return isLore ? label : t(label);
 }
 
-function capitalise(s: string): string {
-  const first = s.charAt(0);
-  return first.toUpperCase() + s.slice(1);
+function resolveMartialLabel(slug: string, fallback: string | undefined, keyMap: Record<string, string>): string {
+  // Attack/defense proficiency labels aren't on the payload. Resolve via
+  // the canonical PF2E.Actor.Character.Proficiency.* keys from en.json.
+  // Unmapped slugs (user-added custom proficiencies) humanise the slug.
+  const key = keyMap[slug];
+  if (key !== undefined) return t(key);
+  if (fallback !== undefined) return t(fallback);
+  return slug
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 }
 
 // Swallow the unused-import warning for `Modifier` (we only import the

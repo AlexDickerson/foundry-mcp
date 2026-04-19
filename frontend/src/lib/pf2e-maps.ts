@@ -30,3 +30,25 @@ export const RANK_BG: Record<ProficiencyRank, string> = {
   3: 'bg-purple-700',
   4: 'bg-amber-600',
 };
+
+// Martial proficiency labels don't ship on the payload — they're resolved
+// on PF2e's sheet side via its own helpers. We map each slug to the i18n
+// key pf2e's en.json defines under PF2E.Actor.Character.Proficiency.*.
+// Unmapped slugs (e.g. user-added custom proficiencies) fall back to the
+// slug itself so the UI stays readable.
+
+export const ATTACK_LABEL_KEY: Record<string, string> = {
+  simple: 'PF2E.Actor.Character.Proficiency.Attack.Simple',
+  martial: 'PF2E.Actor.Character.Proficiency.Attack.Martial',
+  advanced: 'PF2E.Actor.Character.Proficiency.Attack.Advanced',
+  unarmed: 'PF2E.Actor.Character.Proficiency.Attack.Unarmed',
+};
+
+export const DEFENSE_LABEL_KEY: Record<string, string> = {
+  unarmored: 'PF2E.Actor.Character.Proficiency.Defense.Unarmored',
+  light: 'PF2E.Actor.Character.Proficiency.Defense.Light',
+  medium: 'PF2E.Actor.Character.Proficiency.Defense.Medium',
+  heavy: 'PF2E.Actor.Character.Proficiency.Defense.Heavy',
+  'light-barding': 'PF2E.Actor.Character.Proficiency.Defense.LightBarding',
+  'heavy-barding': 'PF2E.Actor.Character.Proficiency.Defense.HeavyBarding',
+};
