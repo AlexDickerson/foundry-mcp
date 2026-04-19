@@ -26,6 +26,10 @@ jobs:
         run: npm ci
         working-directory: server
 
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
       - name: Audit root dependencies
         run: npm audit --audit-level=high
         continue-on-error: true
@@ -40,6 +44,11 @@ jobs:
         continue-on-error: true
         working-directory: server
 
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+        continue-on-error: true
+        working-directory: frontend
+
       - name: Lint module
         run: npm run lint
         working-directory: module
@@ -47,6 +56,10 @@ jobs:
       - name: Lint server
         run: npm run lint
         working-directory: server
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: frontend
 
       - name: Type-check module
         run: npm run type-check
@@ -56,8 +69,12 @@ jobs:
         run: npm run build
         working-directory: server
 
+      - name: Type-check frontend
+        run: npm run typecheck
+        working-directory: frontend
+
       - name: Prettier check
-        run: npx prettier --check "module/src/**/*.ts" "server/src/**/*.ts"
+        run: npx prettier --check "module/src/**/*.ts" "server/src/**/*.ts" "frontend/src/**/*.{ts,tsx}"
 
   test:
     runs-on: ubuntu-latest
@@ -73,6 +90,14 @@ jobs:
         run: npm ci
         working-directory: module
 
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
       - name: Run module tests
         run: npm test
         working-directory: module
+
+      - name: Run frontend tests
+        run: npm test
+        working-directory: frontend

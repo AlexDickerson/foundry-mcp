@@ -166,6 +166,41 @@
       "group": "build",
       "problemMatcher": ["$tsc"]
     },
+    //  ─── Frontend (React SPA, Vite) ─────────────────────────────────────
+    {
+      "label": "frontend: dev",
+      "detail": "Vite dev server on :5173 — proxies /api to foundry-mcp container on :8765",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "frontend", "reveal": "always" },
+      "problemMatcher": []
+    },
+    {
+      "label": "frontend: build",
+      "detail": "Production build to frontend/dist",
+      "type": "shell",
+      "command": "npm run build",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "frontend: test",
+      "type": "shell",
+      "command": "npm run test",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "frontend: typecheck",
+      "type": "shell",
+      "command": "npm run typecheck",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "problemMatcher": ["$tsc"]
+    },
     {
       "label": "server: typecheck",
       "type": "shell",
