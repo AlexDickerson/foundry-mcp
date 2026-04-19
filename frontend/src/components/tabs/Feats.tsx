@@ -1,0 +1,133 @@
+import type { FeatItem, PreparedActorItem } from '../../api/types';
+import { isFeatItem } from '../../api/types';
+import { FEAT_CATEGORY_LABEL, FEAT_CATEGORY_ORDER } from '../../lib/pf2e-maps';
+
+interface Props {
+  items: PreparedActorItem[];
+}
+
+// Feats tab — groups character's feat items by `system.category`, ordered
+// to roughly match how pf2e's sheet lays them out (ancestry, class,
+// class features, skill, general, bonus, PFS). Read-only; no empty-slot
+// placeholders or browse buttons.
+export function Feats({ items }: Props): React.ReactElement {
+  const feats = items.filter(isFeatItem);
+  const grouped = groupByCategory(feats);
+
+  if (feats.length === 0) {
+    return <p className="text-sm text-neutral-500">No feats yet.</p>;
+  }
+
+  return (
+    <section className="space-y-6">
+      {FEAT_CATEGORY_ORDER.map((category) => {
+        const inCategory = grouped.get(category) ?? [];
+        if (inCategory.length === 0) return null;
+        return (
+          <div key={category} data-feat-category={category}>
+            <SectionHeader>{FEAT_CATEGORY_LABEL[category] ?? category}</SectionHeader>
+            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {inCategory.map((feat) => (
+                <FeatCard key={feat.id} feat={feat} />
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+      {renderUnknownCategories(grouped)}
+    </section>
+  );
+}
+
+function FeatCard({ feat }: { feat: FeatItem }): React.ReactElement {
+  const level = feat.system.level.value;
+  const traits = feat.system.traits.value.filter((t) => t !== feat.system.category);
+  return (
+    <li
+      className="flex items-start gap-3 rounded border border-neutral-200 bg-white px-3 py-2"
+      data-item-id={feat.id}
+      data-feat-slug={feat.system.slug ?? ''}
+    >
+      <img
+        src={feat.img}
+        alt=""
+        className="mt-0.5 h-8 w-8 flex-shrink-0 rounded border border-neutral-200 bg-neutral-50"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-sm font-medium text-neutral-900">{feat.name}</span>
+          <span className="flex-shrink-0 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+            Lv {level}
+          </span>
+        </div>
+        {traits.length > 0 && <TraitChips traits={traits} />}
+      </div>
+    </li>
+  );
+}
+
+function TraitChips({ traits }: { traits: string[] }): React.ReactElement {
+  return (
+    <ul className="mt-1 flex flex-wrap gap-1">
+      {traits.map((t) => (
+        <li
+          key={t}
+          className="rounded-full border border-neutral-300 bg-neutral-50 px-1.5 py-0.5 text-[10px] text-neutral-600"
+        >
+          {capitaliseSlug(t)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }): React.ReactElement {
+  return (
+    <h2 className="mb-2 border-b border-neutral-300 pb-1 text-sm font-semibold uppercase tracking-wide text-neutral-700">
+      {children}
+    </h2>
+  );
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────
+
+function groupByCategory(feats: FeatItem[]): Map<string, FeatItem[]> {
+  const out = new Map<string, FeatItem[]>();
+  for (const feat of feats) {
+    const arr = out.get(feat.system.category) ?? [];
+    arr.push(feat);
+    out.set(feat.system.category, arr);
+  }
+  // Sort within each group by level asc, then name.
+  for (const [, arr] of out) {
+    arr.sort((a, b) => a.system.level.value - b.system.level.value || a.name.localeCompare(b.name));
+  }
+  return out;
+}
+
+function renderUnknownCategories(grouped: Map<string, FeatItem[]>): React.ReactElement | null {
+  const known = new Set(FEAT_CATEGORY_ORDER);
+  const extras = Array.from(grouped.entries()).filter(([cat]) => !known.has(cat));
+  if (extras.length === 0) return null;
+  return (
+    <>
+      {extras.map(([category, feats]) => (
+        <div key={category} data-feat-category={category}>
+          <SectionHeader>{FEAT_CATEGORY_LABEL[category] ?? capitaliseSlug(category)}</SectionHeader>
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {feats.map((feat) => (
+              <FeatCard key={feat.id} feat={feat} />
+            ))}
+          </ul>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function capitaliseSlug(s: string): string {
+  return s
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}

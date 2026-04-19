@@ -211,6 +211,82 @@ export interface CharacterSystem {
     classDCs: Record<string, ClassDC>;
     spellcasting: SpellcastingProficiency;
   };
+  actions: Strike[];
+}
+
+// ─── Actions/Strikes (Actions tab) ─────────────────────────────────────
+
+export interface StrikeVariant {
+  label: string; // e.g. "+7", "+3 (MAP -4)", "-1 (MAP -8)"
+}
+
+export interface StrikeTrait {
+  name: string;
+  label: string;
+  description?: string;
+}
+
+export interface StrikeItemSource {
+  _id: string;
+  img: string;
+  name: string;
+  type: string;
+  system: {
+    damage?: { dice: number; die: string; damageType: string };
+    range?: number | null;
+    traits?: { value: string[]; rarity: string };
+  };
+}
+
+export interface Strike {
+  slug: string;
+  label: string;
+  totalModifier: number;
+  quantity: number;
+  ready: boolean;
+  visible: boolean;
+  glyph: string;
+  type: string; // usually 'strike'
+  item: StrikeItemSource;
+  description?: string;
+  options?: string[];
+  traits: StrikeTrait[];
+  weaponTraits: StrikeTrait[];
+  variants: StrikeVariant[];
+  canAttack: boolean;
+}
+
+// ─── Feats (Feats tab) ─────────────────────────────────────────────────
+
+// Common categories are 'ancestry' | 'class' | 'classfeature' | 'skill' |
+// 'general' | 'bonus' | 'pfsboon'. Kept as `string` so custom categories
+// from modules or future pf2e updates don't fail the type.
+export type FeatCategory = string;
+
+export interface FeatItemSystem {
+  slug: string | null;
+  level: { value: number; taken?: number | null };
+  category: FeatCategory;
+  traits: { value: string[]; rarity: string; otherTags?: string[] };
+  prerequisites?: { value: Array<{ value: string }> };
+  description?: { value: string };
+  location?: string | null;
+  // Index signature lets FeatItem be a subtype of PreparedActorItem
+  // (whose `system` is Record<string, unknown>) while keeping the
+  // declared fields above strongly typed at consumer sites.
+  [key: string]: unknown;
+}
+
+export interface FeatItem {
+  id: string;
+  name: string;
+  type: 'feat';
+  img: string;
+  system: FeatItemSystem;
+}
+
+export function isFeatItem(item: PreparedActorItem): item is FeatItem {
+  return item.type === 'feat';
 }
 
 export interface PreparedCharacter {
