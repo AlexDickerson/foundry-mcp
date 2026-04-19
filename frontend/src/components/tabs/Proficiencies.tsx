@@ -11,6 +11,7 @@ import { formatSignedInt } from '../../lib/format';
 import { ATTACK_LABEL_KEY, DEFENSE_LABEL_KEY } from '../../lib/pf2e-maps';
 import { ModifierTooltip } from '../common/ModifierTooltip';
 import { RankChip } from '../common/RankChip';
+import { SectionHeader } from '../common/SectionHeader';
 
 interface Props {
   system: CharacterSystem;
@@ -112,14 +113,6 @@ export function Proficiencies({ system }: Props): React.ReactElement {
 }
 
 // ─── Section helpers ───────────────────────────────────────────────────
-
-function SectionHeader({ children }: { children: React.ReactNode }): React.ReactElement {
-  return (
-    <h2 className="mb-2 border-b border-neutral-300 pb-1 text-sm font-semibold uppercase tracking-wide text-neutral-700">
-      {children}
-    </h2>
-  );
-}
 
 function ProficiencyGrid({ children }: { children: React.ReactNode }): React.ReactElement {
   return <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">{children}</ul>;

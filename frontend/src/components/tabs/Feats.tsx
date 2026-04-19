@@ -1,6 +1,7 @@
 import type { FeatCategory, FeatItem, PreparedActorItem } from '../../api/types';
 import { isFeatItem } from '../../api/types';
 import { FEAT_CATEGORY_LABEL, FEAT_CATEGORY_ORDER } from '../../lib/pf2e-maps';
+import { SectionHeader } from '../common/SectionHeader';
 
 interface Props {
   items: PreparedActorItem[];
@@ -85,14 +86,6 @@ function TraitChips({ traits }: { traits: string[] }): React.ReactElement {
         </li>
       ))}
     </ul>
-  );
-}
-
-function SectionHeader({ children }: { children: React.ReactNode }): React.ReactElement {
-  return (
-    <h2 className="mb-2 border-b border-neutral-300 pb-1 text-sm font-semibold uppercase tracking-wide text-neutral-700">
-      {children}
-    </h2>
   );
 }
 

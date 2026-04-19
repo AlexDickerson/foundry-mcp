@@ -23,12 +23,15 @@ export const RANK_I18N_KEY: Record<ProficiencyRank, string> = {
   4: 'PF2E.ProficiencyLevel4',
 };
 
+// Rank chip backgrounds — mapped to the pf2e proficiency palette in
+// src/styles/pf2e/tokens.css. The palette itself comes from pf2e's
+// _colors.scss (Apache-2.0).
 export const RANK_BG: Record<ProficiencyRank, string> = {
-  0: 'bg-neutral-500',
-  1: 'bg-emerald-700',
-  2: 'bg-sky-700',
-  3: 'bg-purple-700',
-  4: 'bg-amber-600',
+  0: 'bg-pf-prof-untrained',
+  1: 'bg-pf-prof-trained',
+  2: 'bg-pf-prof-expert',
+  3: 'bg-pf-prof-master',
+  4: 'bg-pf-prof-legendary',
 };
 
 // Martial proficiency labels don't ship on the payload — they're resolved

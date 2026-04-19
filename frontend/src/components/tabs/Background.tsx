@@ -1,4 +1,5 @@
 import type { CharacterBiography, CharacterDetails } from '../../api/types';
+import { SectionHeader } from '../common/SectionHeader';
 
 interface Props {
   details: CharacterDetails;
@@ -150,13 +151,5 @@ function TextBlock({
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>
-  );
-}
-
-function SectionHeader({ children }: { children: React.ReactNode }): React.ReactElement {
-  return (
-    <h2 className="mb-2 border-b border-neutral-300 pb-1 text-sm font-semibold uppercase tracking-wide text-neutral-700">
-      {children}
-    </h2>
   );
 }
