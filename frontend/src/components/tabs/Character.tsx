@@ -1,4 +1,4 @@
-import type { AbilityKey, CharacterSystem, Save } from '../../api/types';
+import type { AbilityKey, CharacterSystem, IWREntry, Save, Speed } from '../../api/types';
 import { ABILITY_KEYS } from '../../api/types';
 import { t } from '../../i18n/t';
 import { formatSignedInt } from '../../lib/format';
@@ -15,7 +15,7 @@ interface Props {
 export function Character({ system }: Props): React.ReactElement {
   const keyAbility = system.details.keyability.value;
   const classDC = system.attributes.classDC;
-  const landSpeed = system.movement.speeds.land;
+  const speeds = populatedSpeeds(system.movement.speeds);
   const xp = system.details.xp;
 
   return (
@@ -24,15 +24,21 @@ export function Character({ system }: Props): React.ReactElement {
 
       <StatsBlock system={system} />
 
-      <HeroPoints value={system.resources.heroPoints.value} max={system.resources.heroPoints.max} />
+      <ConditionsRow
+        dying={system.attributes.dying}
+        wounded={system.attributes.wounded}
+        doomed={system.attributes.doomed}
+      />
+
+      <ResourcesRow resources={system.resources} />
 
       <MetaRow>
         <MetaItem label="XP">
           <XPBar value={xp.value} max={xp.max} pct={xp.pct} />
         </MetaItem>
-        {landSpeed && (
+        {speeds.length > 0 && (
           <MetaItem label="Speed">
-            <span title={landSpeed.breakdown}>{landSpeed.value} ft</span>
+            <SpeedList speeds={speeds} />
           </MetaItem>
         )}
         <MetaItem label="Size">{humaniseSize(system.traits.size.value)}</MetaItem>
@@ -45,6 +51,12 @@ export function Character({ system }: Props): React.ReactElement {
           </MetaItem>
         )}
       </MetaRow>
+
+      <IWRBlock
+        immunities={system.attributes.immunities}
+        weaknesses={system.attributes.weaknesses}
+        resistances={system.attributes.resistances}
+      />
 
       <ChipList label="Languages" items={system.details.languages.value.map(humaniseSlug)} />
       <ChipList label="Traits" items={system.traits.value.map(humaniseSlug)} />
@@ -102,13 +114,13 @@ function AbilityBlock({
 
 function StatsBlock({ system }: { system: CharacterSystem }): React.ReactElement {
   const { ac, hp } = system.attributes;
-  const { perception } = system;
+  const { perception, initiative } = system;
   const saves = system.saves;
 
   return (
     <div>
       <SectionHeader>Key Stats</SectionHeader>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         <StatTile label="AC" value={ac.value.toString()} title={ac.breakdown} />
         <StatTile
           label="HP"
@@ -126,6 +138,12 @@ function StatsBlock({ system }: { system: CharacterSystem }): React.ReactElement
           title={perception.breakdown}
           rank={perception.rank}
           data-stat="perception"
+        />
+        <StatTile
+          label="Initiative"
+          value={formatSignedInt(initiative.value)}
+          title={initiative.breakdown}
+          data-stat="initiative"
         />
         {classDCTile(system)}
       </div>
@@ -191,17 +209,68 @@ function StatTile({
   );
 }
 
-function HeroPoints({ value, max }: { value: number; max: number }): React.ReactElement {
+function ResourcesRow({ resources }: { resources: CharacterSystem['resources'] }): React.ReactElement {
+  const { heroPoints, focus, investiture, mythicPoints } = resources;
   return (
-    <div className="flex items-center gap-3" data-stat="hero-points">
-      <span className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500">Hero Points</span>
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+      <PipResource
+        label="Hero Points"
+        value={heroPoints.value}
+        max={heroPoints.max}
+        colorOn="border-rose-400 bg-rose-500"
+        data-stat="hero-points"
+      />
+      {focus.max > 0 && (
+        <PipResource
+          label="Focus"
+          value={focus.value}
+          max={focus.max}
+          colorOn="border-indigo-400 bg-indigo-500"
+          title={`Cap ${focus.cap.toString()}`}
+          data-stat="focus"
+        />
+      )}
+      {mythicPoints.max > 0 && (
+        <PipResource
+          label="Mythic"
+          value={mythicPoints.value}
+          max={mythicPoints.max}
+          colorOn="border-amber-400 bg-amber-500"
+          data-stat="mythic-points"
+        />
+      )}
+      {investiture.max > 0 && (
+        <CountResource label="Invested" value={investiture.value} max={investiture.max} data-stat="investiture" />
+      )}
+    </div>
+  );
+}
+
+function PipResource({
+  label,
+  value,
+  max,
+  colorOn,
+  title,
+  ...rest
+}: {
+  label: string;
+  value: number;
+  max: number;
+  colorOn: string;
+  title?: string;
+  'data-stat'?: string;
+}): React.ReactElement {
+  return (
+    <div className="flex items-center gap-2" title={title} {...rest}>
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500">{label}</span>
       <div className="flex gap-1" aria-label={`${value.toString()} of ${max.toString()}`}>
         {Array.from({ length: max }, (_, i) => (
           <span
             key={i}
             className={[
               'inline-block h-3 w-3 rounded-full border',
-              i < value ? 'border-rose-400 bg-rose-500' : 'border-neutral-300 bg-white',
+              i < value ? colorOn : 'border-neutral-300 bg-white',
             ].join(' ')}
           />
         ))}
@@ -209,6 +278,173 @@ function HeroPoints({ value, max }: { value: number; max: number }): React.React
       <span className="font-mono text-xs tabular-nums text-neutral-500">
         {value}/{max}
       </span>
+    </div>
+  );
+}
+
+function CountResource({
+  label,
+  value,
+  max,
+  ...rest
+}: {
+  label: string;
+  value: number;
+  max: number;
+  'data-stat'?: string;
+}): React.ReactElement {
+  return (
+    <div className="flex items-center gap-2" {...rest}>
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500">{label}</span>
+      <span className="font-mono text-sm tabular-nums text-neutral-900">
+        {value}
+        <span className="text-neutral-400">/{max}</span>
+      </span>
+    </div>
+  );
+}
+
+function ConditionsRow({
+  dying,
+  wounded,
+  doomed,
+}: {
+  dying: CharacterSystem['attributes']['dying'];
+  wounded: CharacterSystem['attributes']['wounded'];
+  doomed: CharacterSystem['attributes']['doomed'];
+}): React.ReactElement {
+  return (
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2" data-section="conditions">
+      <Condition
+        label="Dying"
+        value={dying.value}
+        max={dying.max}
+        colorOn="border-red-500 bg-red-600"
+        title={`Recovery DC ${dying.recoveryDC.toString()}`}
+        data-stat="dying"
+      />
+      <Condition
+        label="Wounded"
+        value={wounded.value}
+        max={wounded.max}
+        colorOn="border-amber-500 bg-amber-600"
+        data-stat="wounded"
+      />
+      <Condition
+        label="Doomed"
+        value={doomed.value}
+        max={doomed.max}
+        colorOn="border-violet-500 bg-violet-700"
+        data-stat="doomed"
+      />
+    </div>
+  );
+}
+
+function Condition({
+  label,
+  value,
+  max,
+  colorOn,
+  title,
+  ...rest
+}: {
+  label: string;
+  value: number;
+  max: number;
+  colorOn: string;
+  title?: string;
+  'data-stat'?: string;
+}): React.ReactElement {
+  return (
+    <div className="flex items-center gap-2" title={title} {...rest}>
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500">{label}</span>
+      <div className="flex gap-1" aria-label={`${value.toString()} of ${max.toString()}`}>
+        {Array.from({ length: max }, (_, i) => (
+          <span
+            key={i}
+            className={[
+              'inline-block h-2.5 w-2.5 rounded-sm border',
+              i < value ? colorOn : 'border-neutral-300 bg-white',
+            ].join(' ')}
+          />
+        ))}
+      </div>
+      <span className="font-mono text-xs tabular-nums text-neutral-500">
+        {value}/{max}
+      </span>
+    </div>
+  );
+}
+
+const SPEED_LABELS: Record<string, string> = {
+  land: 'Land',
+  burrow: 'Burrow',
+  climb: 'Climb',
+  fly: 'Fly',
+  swim: 'Swim',
+  travel: 'Travel',
+};
+
+function populatedSpeeds(speeds: CharacterSystem['movement']['speeds']): Array<{ key: string; speed: Speed }> {
+  const order: (keyof CharacterSystem['movement']['speeds'])[] = ['land', 'burrow', 'climb', 'fly', 'swim', 'travel'];
+  const out: Array<{ key: string; speed: Speed }> = [];
+  for (const key of order) {
+    const s = speeds[key];
+    if (s) out.push({ key, speed: s });
+  }
+  return out;
+}
+
+function SpeedList({ speeds }: { speeds: Array<{ key: string; speed: Speed }> }): React.ReactElement {
+  return (
+    <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5" data-section="speeds">
+      {speeds.map(({ key, speed }, idx) => (
+        <span key={key} className="inline-flex items-center gap-1" data-speed={key} title={speed.breakdown}>
+          <span className="tabular-nums">{speed.value} ft</span>
+          <span className="text-xs text-neutral-500">{SPEED_LABELS[key] ?? humaniseSlug(key)}</span>
+          {idx < speeds.length - 1 && <span className="text-neutral-300">·</span>}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function IWRBlock({
+  immunities,
+  weaknesses,
+  resistances,
+}: {
+  immunities: IWREntry[];
+  weaknesses: IWREntry[];
+  resistances: IWREntry[];
+}): React.ReactElement | null {
+  if (immunities.length === 0 && weaknesses.length === 0 && resistances.length === 0) return null;
+  return (
+    <div data-section="iwr" className="space-y-2">
+      <SectionHeader>Defenses</SectionHeader>
+      <IWRRow label="Immunities" entries={immunities} />
+      <IWRRow label="Weaknesses" entries={weaknesses} />
+      <IWRRow label="Resistances" entries={resistances} />
+    </div>
+  );
+}
+
+function IWRRow({ label, entries }: { label: string; entries: IWREntry[] }): React.ReactElement | null {
+  if (entries.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" data-iwr={label.toLowerCase()}>
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">{label}</span>
+      {entries.map((e, i) => (
+        <span
+          key={`${e.type}-${i.toString()}`}
+          className="rounded-full border border-neutral-300 bg-neutral-50 px-2.5 py-0.5 text-xs text-neutral-700"
+          title={e.exceptions?.length ? `except ${e.exceptions.join(', ')}` : undefined}
+        >
+          {humaniseSlug(e.type)}
+          {e.value !== undefined ? ` ${e.value.toString()}` : ''}
+        </span>
+      ))}
     </div>
   );
 }

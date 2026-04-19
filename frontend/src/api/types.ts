@@ -151,6 +151,53 @@ export interface HeroPoints {
   max: number;
 }
 
+export interface PointPool {
+  value: number;
+  max: number;
+}
+
+export interface FocusPool {
+  value: number;
+  max: number;
+  cap: number;
+}
+
+export interface Dying {
+  value: number;
+  max: number;
+  recoveryDC: number;
+}
+
+export interface Wounded {
+  value: number;
+  max: number;
+}
+
+export interface Doomed {
+  value: number;
+  max: number;
+}
+
+export interface Initiative {
+  slug: string;
+  label: string;
+  value: number;
+  totalModifier: number;
+  breakdown: string;
+  statistic: string;
+  tiebreakPriority: number;
+}
+
+// PF2e immunities/weaknesses/resistances share a near-identical shape.
+// `value` is absent on immunities, present (numeric) on weaknesses/resistances.
+export interface IWREntry {
+  type: string;
+  value?: number;
+  exceptions?: string[];
+  doubleVs?: string[];
+  source?: string;
+}
+
 export interface Speed {
   type: string;
   slug: string;
@@ -196,11 +243,21 @@ export interface CharacterSystem {
     ac: ACAttribute;
     hp: HPAttribute;
     classDC: ClassDC | null;
+    dying: Dying;
+    wounded: Wounded;
+    doomed: Doomed;
+    immunities: IWREntry[];
+    weaknesses: IWREntry[];
+    resistances: IWREntry[];
   };
   details: CharacterDetails;
+  initiative: Initiative;
   perception: Perception;
   resources: {
     heroPoints: HeroPoints;
+    focus: FocusPool;
+    investiture: PointPool;
+    mythicPoints: PointPool;
   };
   movement: Movement;
   traits: CharacterTraits;
