@@ -89,4 +89,68 @@ describe('Character tab', () => {
     const { container } = render(<Character system={system} />);
     expect(container.textContent).toContain('25 ft');
   });
+
+  it('renders the initiative tile (+5 for Amiri)', () => {
+    const { container } = render(<Character system={system} />);
+    const tile = container.querySelector('[data-stat="initiative"]');
+    expect(tile, 'initiative tile').toBeTruthy();
+    expect(tile?.textContent).toContain('+5');
+  });
+
+  it('renders the conditions row (Dying/Wounded/Doomed)', () => {
+    const { container } = render(<Character system={system} />);
+    const row = container.querySelector('[data-section="conditions"]');
+    expect(row, 'conditions row').toBeTruthy();
+    for (const stat of ['dying', 'wounded', 'doomed']) {
+      const cond = container.querySelector(`[data-stat="${stat}"]`);
+      expect(cond, `${stat} tile`).toBeTruthy();
+      // Amiri is 0 for each.
+      expect(cond?.textContent).toContain('0/');
+    }
+  });
+
+  it('shows investiture resource for Amiri (0/10)', () => {
+    const { container } = render(<Character system={system} />);
+    const inv = container.querySelector('[data-stat="investiture"]');
+    expect(inv, 'investiture').toBeTruthy();
+    expect(inv?.textContent).toContain('0');
+    expect(inv?.textContent).toContain('/10');
+  });
+
+  it('omits Focus and Mythic resources when max is zero', () => {
+    const { container } = render(<Character system={system} />);
+    expect(container.querySelector('[data-stat="focus"]')).toBeNull();
+    expect(container.querySelector('[data-stat="mythic-points"]')).toBeNull();
+  });
+
+  it('renders all populated speeds (Land + Travel for Amiri)', () => {
+    const { container } = render(<Character system={system} />);
+    expect(container.querySelector('[data-speed="land"]')).toBeTruthy();
+    expect(container.querySelector('[data-speed="travel"]')).toBeTruthy();
+    // Unpopulated speeds should not render.
+    expect(container.querySelector('[data-speed="fly"]')).toBeNull();
+    expect(container.querySelector('[data-speed="climb"]')).toBeNull();
+  });
+
+  it('hides the Defenses block when IWR are all empty (Amiri)', () => {
+    const { container } = render(<Character system={system} />);
+    expect(container.querySelector('[data-section="iwr"]')).toBeNull();
+  });
+
+  it('renders IWR rows when entries exist', () => {
+    const custom = {
+      ...system,
+      attributes: {
+        ...system.attributes,
+        immunities: [{ type: 'fire' }],
+        weaknesses: [{ type: 'cold', value: 5 }],
+        resistances: [{ type: 'physical', value: 2, exceptions: ['adamantine'] }],
+      },
+    } as CharacterSystem;
+    const { container } = render(<Character system={custom} />);
+    expect(container.querySelector('[data-section="iwr"]')).toBeTruthy();
+    expect(container.querySelector('[data-iwr="immunities"]')?.textContent).toContain('Fire');
+    expect(container.querySelector('[data-iwr="weaknesses"]')?.textContent).toContain('Cold 5');
+    expect(container.querySelector('[data-iwr="resistances"]')?.textContent).toContain('Physical 2');
+  });
 });
