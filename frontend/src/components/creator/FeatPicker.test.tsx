@@ -223,6 +223,170 @@ describe('FeatPicker', () => {
     expect(levelBtn.getAttribute('aria-checked')).toBe('true');
   });
 
+  it('reverses direction when the active sort option is clicked again', async () => {
+    const { container, getByTestId } = render(
+      <FeatPicker title="t" filters={{ traits: ['barbarian'] }} onPick={vi.fn()} onClose={vi.fn()} />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('[data-match-uuid]')).toBeTruthy();
+    });
+    const toggle = getByTestId('feat-picker-sort');
+    const alpha = toggle.querySelector('[data-sort-option="alpha"]') as HTMLElement;
+
+    // First load: asc, so names A-Z.
+    expect(alpha.getAttribute('data-sort-dir')).toBe('asc');
+    const ascOrder = Array.from(container.querySelectorAll('[data-match-uuid]')).map(
+      (el) => el.querySelector('span')?.textContent,
+    );
+    expect(ascOrder).toEqual(['Raging Intimidation', 'Sudden Charge']);
+
+    // Click A-Z while already active → flips to desc.
+    fireEvent.click(alpha);
+    expect(alpha.getAttribute('data-sort-dir')).toBe('desc');
+    expect(alpha.textContent).toMatch(/↓/);
+    const descOrder = Array.from(container.querySelectorAll('[data-match-uuid]')).map(
+      (el) => el.querySelector('span')?.textContent,
+    );
+    expect(descOrder).toEqual(['Sudden Charge', 'Raging Intimidation']);
+  });
+
+  it('reverses Level sort on re-click and orders high-to-low', async () => {
+    searchSpy.mockResolvedValueOnce({
+      matches: [
+        {
+          packId: 'p',
+          packLabel: 'l',
+          documentId: 'a',
+          uuid: 'L1',
+          name: 'Low',
+          type: 'feat',
+          img: '',
+          level: 1,
+          traits: [],
+        },
+        {
+          packId: 'p',
+          packLabel: 'l',
+          documentId: 'b',
+          uuid: 'L5',
+          name: 'Mid',
+          type: 'feat',
+          img: '',
+          level: 5,
+          traits: [],
+        },
+        {
+          packId: 'p',
+          packLabel: 'l',
+          documentId: 'c',
+          uuid: 'L10',
+          name: 'High',
+          type: 'feat',
+          img: '',
+          level: 10,
+          traits: [],
+        },
+      ],
+    });
+    const { container, getByTestId } = render(
+      <FeatPicker title="t" filters={{ traits: ['x'] }} onPick={vi.fn()} onClose={vi.fn()} />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('[data-match-uuid]')).toBeTruthy();
+    });
+    const level = getByTestId('feat-picker-sort').querySelector('[data-sort-option="level"]') as HTMLElement;
+
+    // Click once → Level asc (1, 5, 10).
+    fireEvent.click(level);
+    expect(level.getAttribute('data-sort-dir')).toBe('asc');
+    const asc = Array.from(container.querySelectorAll('[data-match-uuid]')).map((el) =>
+      el.getAttribute('data-match-uuid'),
+    );
+    expect(asc).toEqual(['L1', 'L5', 'L10']);
+
+    // Click again → Level desc (10, 5, 1).
+    fireEvent.click(level);
+    expect(level.getAttribute('data-sort-dir')).toBe('desc');
+    const desc = Array.from(container.querySelectorAll('[data-match-uuid]')).map((el) =>
+      el.getAttribute('data-match-uuid'),
+    );
+    expect(desc).toEqual(['L10', 'L5', 'L1']);
+  });
+
+  it('unlevelled entries stay at the bottom in Level desc too', async () => {
+    searchSpy.mockResolvedValueOnce({
+      matches: [
+        {
+          packId: 'p',
+          packLabel: 'l',
+          documentId: 'u',
+          uuid: 'U',
+          name: 'Unknown',
+          type: 'feat',
+          img: '',
+          traits: [],
+        },
+        {
+          packId: 'p',
+          packLabel: 'l',
+          documentId: 'a',
+          uuid: 'A',
+          name: 'Ancient',
+          type: 'feat',
+          img: '',
+          level: 10,
+          traits: [],
+        },
+        {
+          packId: 'p',
+          packLabel: 'l',
+          documentId: 'b',
+          uuid: 'B',
+          name: 'Basic',
+          type: 'feat',
+          img: '',
+          level: 1,
+          traits: [],
+        },
+      ],
+    });
+    const { container, getByTestId } = render(
+      <FeatPicker title="t" filters={{ traits: ['x'] }} onPick={vi.fn()} onClose={vi.fn()} />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('[data-match-uuid]')).toBeTruthy();
+    });
+    const level = getByTestId('feat-picker-sort').querySelector('[data-sort-option="level"]') as HTMLElement;
+    fireEvent.click(level); // asc
+    fireEvent.click(level); // desc
+    const order = Array.from(container.querySelectorAll('[data-match-uuid]')).map((el) =>
+      el.getAttribute('data-match-uuid'),
+    );
+    // L10 first (Ancient), L1 next (Basic), Unknown (no level) at the bottom.
+    expect(order).toEqual(['A', 'B', 'U']);
+  });
+
+  it('resets direction to asc when switching between modes', async () => {
+    const { container, getByTestId } = render(
+      <FeatPicker title="t" filters={{ traits: ['barbarian'] }} onPick={vi.fn()} onClose={vi.fn()} />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('[data-match-uuid]')).toBeTruthy();
+    });
+    const toggle = getByTestId('feat-picker-sort');
+    const alpha = toggle.querySelector('[data-sort-option="alpha"]') as HTMLElement;
+    const level = toggle.querySelector('[data-sort-option="level"]') as HTMLElement;
+
+    // Flip alpha to desc.
+    fireEvent.click(alpha);
+    expect(alpha.getAttribute('data-sort-dir')).toBe('desc');
+
+    // Switch to Level → should start on asc, not inherit desc.
+    fireEvent.click(level);
+    expect(level.getAttribute('data-sort-dir')).toBe('asc');
+    expect(alpha.getAttribute('data-sort-dir')).toBeNull();
+  });
+
   it('sinks matches missing a level to the bottom of a Level sort, keeping alpha within each tier', async () => {
     searchSpy.mockResolvedValueOnce({
       matches: [

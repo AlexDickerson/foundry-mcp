@@ -4,6 +4,11 @@ import type { CompendiumMatch, CompendiumSearchOptions } from '../../api/types';
 import { useDebounce } from '../../lib/useDebounce';
 
 type SortMode = 'alpha' | 'level';
+type SortDir = 'asc' | 'desc';
+interface SortState {
+  mode: SortMode;
+  dir: SortDir;
+}
 
 interface Props {
   title: string;
@@ -25,30 +30,47 @@ type FetchState =
 export function FeatPicker({ title, filters, onPick, onClose }: Props): React.ReactElement {
   const [query, setQuery] = useState('');
   const [state, setState] = useState<FetchState>({ kind: 'loading' });
-  const [sort, setSort] = useState<SortMode>('alpha');
+  const [sort, setSort] = useState<SortState>({ mode: 'alpha', dir: 'asc' });
   const debouncedQuery = useDebounce(query.trim(), 200);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Apply sort on top of whatever order the server returned. Client-side
   // is fine because the server already caps results (limit 50 by default
   // from the picker), so the sort runs over a tiny array. Entries missing
-  // a level sink to the bottom of level-sorted lists and stay alpha among
-  // themselves.
+  // a level always sink to the bottom of a Level sort (in either
+  // direction) and stay alpha-asc among themselves — "unknown" shouldn't
+  // leapfrog real data just because the user flipped direction.
   const visibleMatches = useMemo(() => {
     if (state.kind !== 'ready') return [];
     const copy = [...state.matches];
-    if (sort === 'level') {
-      copy.sort((a, b) => {
-        const al = a.level ?? Number.POSITIVE_INFINITY;
-        const bl = b.level ?? Number.POSITIVE_INFINITY;
-        if (al !== bl) return al - bl;
+    const dirMul = sort.dir === 'desc' ? -1 : 1;
+    if (sort.mode === 'level') {
+      const leveled = copy.filter((m) => m.level !== undefined);
+      const unlevelled = copy.filter((m) => m.level === undefined);
+      leveled.sort((a, b) => {
+        const lvlCmp = ((a.level ?? 0) - (b.level ?? 0)) * dirMul;
+        if (lvlCmp !== 0) return lvlCmp;
+        // Keep intra-tier ordering alpha-asc regardless of direction,
+        // so scanning a level band reads left-to-right like a glossary.
         return a.name.localeCompare(b.name);
       });
-    } else {
-      copy.sort((a, b) => a.name.localeCompare(b.name));
+      unlevelled.sort((a, b) => a.name.localeCompare(b.name));
+      return [...leveled, ...unlevelled];
     }
+    copy.sort((a, b) => a.name.localeCompare(b.name) * dirMul);
     return copy;
   }, [state, sort]);
+
+  const onSortClick = (mode: SortMode): void => {
+    setSort((prev) =>
+      prev.mode === mode
+        ? // Re-clicking the active option flips direction.
+          { mode, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+        : // Switching modes resets direction to ascending so users
+          // don't carry an expectation from the other axis.
+          { mode, dir: 'asc' },
+    );
+  };
 
   // Stable filter key for the effect dep array. Callers typically pass
   // a fresh object each render; we memoise so the fetch only refires
@@ -144,7 +166,7 @@ export function FeatPicker({ title, filters, onPick, onClose }: Props): React.Re
           />
           <div className="mt-1 flex items-center justify-between gap-2">
             <FilterSummary filters={filters} />
-            <SortToggle sort={sort} onChange={setSort} />
+            <SortToggle sort={sort} onChange={onSortClick} />
           </div>
         </div>
 
@@ -169,7 +191,7 @@ export function FeatPicker({ title, filters, onPick, onClose }: Props): React.Re
   );
 }
 
-function SortToggle({ sort, onChange }: { sort: SortMode; onChange: (next: SortMode) => void }): React.ReactElement {
+function SortToggle({ sort, onChange }: { sort: SortState; onChange: (mode: SortMode) => void }): React.ReactElement {
   const options: Array<{ value: SortMode; label: string }> = [
     { value: 'alpha', label: 'A–Z' },
     { value: 'level', label: 'Level' },
@@ -179,10 +201,11 @@ function SortToggle({ sort, onChange }: { sort: SortMode; onChange: (next: SortM
       role="radiogroup"
       aria-label="Sort results"
       data-testid="feat-picker-sort"
-      className="inline-flex shrink-0 rounded border border-pf-border overflow-hidden text-[10px] font-semibold uppercase tracking-widest"
+      className="inline-flex shrink-0 overflow-hidden rounded border border-pf-border text-[10px] font-semibold uppercase tracking-widest"
     >
       {options.map((opt) => {
-        const active = sort === opt.value;
+        const active = sort.mode === opt.value;
+        const arrow = active ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : '';
         return (
           <button
             key={opt.value}
@@ -190,6 +213,12 @@ function SortToggle({ sort, onChange }: { sort: SortMode; onChange: (next: SortM
             role="radio"
             aria-checked={active}
             data-sort-option={opt.value}
+            data-sort-dir={active ? sort.dir : undefined}
+            title={
+              active
+                ? `Sorting ${opt.label} ${sort.dir === 'asc' ? '↑' : '↓'} — click to reverse`
+                : `Sort by ${opt.label}`
+            }
             onClick={(): void => {
               onChange(opt.value);
             }}
@@ -201,6 +230,7 @@ function SortToggle({ sort, onChange }: { sort: SortMode; onChange: (next: SortM
             ].join(' ')}
           >
             {opt.label}
+            {arrow}
           </button>
         );
       })}
