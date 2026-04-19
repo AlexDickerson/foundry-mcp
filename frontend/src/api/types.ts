@@ -180,6 +180,7 @@ export interface CharacterTraits {
 
 export interface CharacterDetails {
   level: { value: number };
+  xp: { value: number; min: number; max: number; pct: number };
   keyability: { value: AbilityKey };
   languages: { value: string[]; details: string };
   ancestry: { name: string; trait: string | null } | null;
@@ -287,6 +288,34 @@ export interface FeatItem {
 
 export function isFeatItem(item: PreparedActorItem): item is FeatItem {
   return item.type === 'feat';
+}
+
+// ─── Action items (Actions tab, non-strike) ────────────────────────────
+
+export type ActionKind = 'action' | 'reaction' | 'free' | 'passive';
+
+export interface ActionItemSystem {
+  slug: string | null;
+  actionType: { value: ActionKind };
+  actions: { value: number | null }; // 1-3 for "action", null for "reaction"/"free"/"passive"
+  category?: string; // "offensive" | "defensive" | "interaction" | ...
+  description?: { value: string };
+  traits: { value: string[]; rarity?: string; otherTags?: string[] };
+  frequency?: unknown;
+  selfEffect?: unknown;
+  [key: string]: unknown;
+}
+
+export interface ActionItem {
+  id: string;
+  name: string;
+  type: 'action';
+  img: string;
+  system: ActionItemSystem;
+}
+
+export function isActionItem(item: PreparedActorItem): item is ActionItem {
+  return item.type === 'action';
 }
 
 // ─── Inventory tab (physical items) ────────────────────────────────────

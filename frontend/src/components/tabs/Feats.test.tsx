@@ -49,8 +49,23 @@ describe('Feats tab', () => {
     }
   });
 
-  it('renders empty-state when the actor has no feats', () => {
+  it('always shows the Bonus Feats section even when empty', () => {
+    const { container } = render(<Feats items={items} />);
+    const bonus = container.querySelector('[data-feat-category="bonus"]');
+    expect(bonus, 'Bonus Feats section').toBeTruthy();
+    expect(bonus?.textContent).toContain('Bonus Feats');
+    // Amiri has no bonus feats — placeholder text should appear.
+    expect(bonus?.textContent).toContain('None yet');
+  });
+
+  it('shows all six canonical categories with placeholders when empty', () => {
     const { container } = render(<Feats items={[]} />);
-    expect(container.textContent).toContain('No feats yet');
+    for (const category of ['ancestry', 'class', 'classfeature', 'skill', 'general', 'bonus']) {
+      const section = container.querySelector(`[data-feat-category="${category}"]`);
+      expect(section, `${category} section`).toBeTruthy();
+      expect(section?.textContent).toContain('None yet');
+    }
+    // PFS Boons stays hidden when empty.
+    expect(container.querySelector('[data-feat-category="pfsboon"]')).toBeNull();
   });
 });
