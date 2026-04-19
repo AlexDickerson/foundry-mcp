@@ -10,13 +10,14 @@ import { Character } from '../components/tabs/Character';
 import { Feats } from '../components/tabs/Feats';
 import { Inventory } from '../components/tabs/Inventory';
 import { Proficiencies } from '../components/tabs/Proficiencies';
+import { Progression } from '../components/tabs/Progression';
 
 type State =
   | { kind: 'loading' }
   | { kind: 'error'; message: string; suggestion?: string }
   | { kind: 'ready'; actor: PreparedCharacter };
 
-type TabId = 'character' | 'actions' | 'inventory' | 'feats' | 'proficiencies' | 'background';
+type TabId = 'character' | 'actions' | 'inventory' | 'feats' | 'proficiencies' | 'progression' | 'background';
 
 const TABS: readonly Tab<TabId>[] = [
   { id: 'character', label: 'Character' },
@@ -24,6 +25,7 @@ const TABS: readonly Tab<TabId>[] = [
   { id: 'inventory', label: 'Inventory' },
   { id: 'feats', label: 'Feats' },
   { id: 'proficiencies', label: 'Proficiencies' },
+  { id: 'progression', label: 'Progression' },
   { id: 'background', label: 'Background' },
 ];
 
@@ -94,6 +96,9 @@ export function CharacterSheet({ actorId, onBack }: Props): React.ReactElement {
           {activeTab === 'inventory' && <Inventory items={state.actor.items} />}
           {activeTab === 'feats' && <Feats items={state.actor.items} />}
           {activeTab === 'proficiencies' && <Proficiencies system={state.actor.system} />}
+          {activeTab === 'progression' && (
+            <Progression characterLevel={state.actor.system.details.level.value} items={state.actor.items} />
+          )}
           {activeTab === 'background' && <Background details={state.actor.system.details} />}
         </>
       )}
