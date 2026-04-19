@@ -1,10 +1,4 @@
-import type {
-  AbilityKey,
-  CharacterSystem,
-  IWREntry,
-  Save,
-  Speed,
-} from '../../api/types';
+import type { AbilityKey, CharacterSystem, IWREntry, Save, Speed } from '../../api/types';
 import { ABILITY_KEYS } from '../../api/types';
 import { t } from '../../i18n/t';
 import { formatSignedInt } from '../../lib/format';
@@ -246,12 +240,7 @@ function ResourcesRow({ resources }: { resources: CharacterSystem['resources'] }
         />
       )}
       {investiture.max > 0 && (
-        <CountResource
-          label="Invested"
-          value={investiture.value}
-          max={investiture.max}
-          data-stat="investiture"
-        />
+        <CountResource label="Invested" value={investiture.value} max={investiture.max} data-stat="investiture" />
       )}
     </div>
   );
@@ -398,14 +387,7 @@ const SPEED_LABELS: Record<string, string> = {
 };
 
 function populatedSpeeds(speeds: CharacterSystem['movement']['speeds']): Array<{ key: string; speed: Speed }> {
-  const order: (keyof CharacterSystem['movement']['speeds'])[] = [
-    'land',
-    'burrow',
-    'climb',
-    'fly',
-    'swim',
-    'travel',
-  ];
+  const order: (keyof CharacterSystem['movement']['speeds'])[] = ['land', 'burrow', 'climb', 'fly', 'swim', 'travel'];
   const out: Array<{ key: string; speed: Speed }> = [];
   for (const key of order) {
     const s = speeds[key];
