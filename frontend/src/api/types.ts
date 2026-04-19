@@ -198,6 +198,57 @@ export interface IWREntry {
   source?: string;
 }
 
+export interface Shield {
+  itemId: string | null;
+  name: string; // i18n key or literal (e.g. "PF2E.ArmorTypeShield")
+  ac: number;
+  hp: { value: number; max: number };
+  brokenThreshold: number;
+  hardness: number;
+  raised: boolean;
+  broken: boolean;
+  destroyed: boolean;
+  icon: string;
+}
+
+export interface Reach {
+  base: number;
+  manipulate: number;
+}
+
+export interface BiographyVisibility {
+  appearance: boolean;
+  backstory: boolean;
+  personality: boolean;
+  campaign: boolean;
+}
+
+// pf2e actor biography block (system.details.biography). HTML fields
+// (appearance, backstory, campaignNotes) are raw HTML strings as stored
+// in Foundry; we render them via dangerouslySetInnerHTML because the
+// source is our own self-hosted Foundry instance.
+export interface CharacterBiography {
+  appearance: string;
+  backstory: string;
+  birthPlace: string;
+  attitude: string;
+  beliefs: string;
+  anathema: string[];
+  edicts: string[];
+  likes: string;
+  dislikes: string;
+  catchphrases: string;
+  campaignNotes: string;
+  allies: string;
+  enemies: string;
+  organizations: string;
+  visibility: BiographyVisibility;
+}
+
+export interface DemographicField {
+  value: string;
+}
+
 export interface Speed {
   type: string;
   slug: string;
@@ -235,6 +286,14 @@ export interface CharacterDetails {
   class: { name: string; trait: string | null } | null;
   background?: { name: string } | null;
   deity?: { image?: string; value?: string } | null;
+  biography: CharacterBiography;
+  age: DemographicField;
+  height: DemographicField;
+  weight: DemographicField;
+  gender: DemographicField;
+  ethnicity: DemographicField;
+  nationality: DemographicField;
+  alliance: 'party' | 'opposition' | null;
 }
 
 export interface CharacterSystem {
@@ -249,6 +308,9 @@ export interface CharacterSystem {
     immunities: IWREntry[];
     weaknesses: IWREntry[];
     resistances: IWREntry[];
+    shield: Shield;
+    reach: Reach;
+    handsFree: number;
   };
   details: CharacterDetails;
   initiative: Initiative;

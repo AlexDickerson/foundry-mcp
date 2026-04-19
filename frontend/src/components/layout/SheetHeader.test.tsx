@@ -31,4 +31,42 @@ describe('SheetHeader', () => {
     const { container } = render(<SheetHeader character={withoutBg} />);
     expect(container.querySelector('[data-section="identity"]')?.textContent).not.toContain('Hunter');
   });
+
+  it('renders rarity badge when non-common (Amiri is unique)', () => {
+    const { container } = render(<SheetHeader character={character} />);
+    const badge = container.querySelector('[data-badge="rarity"]');
+    expect(badge, 'rarity badge').toBeTruthy();
+    expect(badge?.textContent).toBe('Unique');
+  });
+
+  it('renders alliance badge for party members', () => {
+    const { container } = render(<SheetHeader character={character} />);
+    const badge = container.querySelector('[data-badge="alliance"]');
+    expect(badge, 'alliance badge').toBeTruthy();
+    expect(badge?.textContent).toBe('Party');
+  });
+
+  it('omits rarity badge when rarity is common', () => {
+    const common: PreparedCharacter = {
+      ...character,
+      system: {
+        ...character.system,
+        traits: { ...character.system.traits, rarity: 'common' },
+      },
+    };
+    const { container } = render(<SheetHeader character={common} />);
+    expect(container.querySelector('[data-badge="rarity"]')).toBeNull();
+  });
+
+  it('omits alliance badge when alliance is null', () => {
+    const neutral: PreparedCharacter = {
+      ...character,
+      system: {
+        ...character.system,
+        details: { ...character.system.details, alliance: null },
+      },
+    };
+    const { container } = render(<SheetHeader character={neutral} />);
+    expect(container.querySelector('[data-badge="alliance"]')).toBeNull();
+  });
 });
