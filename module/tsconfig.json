@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    // Silence TS 6.0 deprecation errors (baseUrl, moduleResolution=node10)
+    // so CI passes. Planned follow-up: migrate to non-deprecated options
+    // before TS 7.0.
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

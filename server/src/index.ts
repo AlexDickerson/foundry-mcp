@@ -6,6 +6,11 @@ import { PORT, HOST } from './config.js';
 import { wss, isFoundryConnected } from './bridge.js';
 import { log } from './logger.js';
 import { registerTools } from './tools/index.js';
+import { buildHttpApp } from './http/app.js';
+
+// REST surface for the character-creator frontend. Routed at /api/* alongside
+// the existing /mcp, /logs, /health endpoints on the same HTTP port.
+const httpApp = await buildHttpApp();
 
 // ---------------------------------------------------------------------------
 // Session management — one transport + McpServer per MCP client
@@ -42,6 +47,12 @@ async function createSession(): Promise<StreamableHTTPServerTransport> {
 // ---------------------------------------------------------------------------
 
 const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+  // REST API for the character-creator frontend
+  if (req.url?.startsWith('/api/') || req.url === '/api') {
+    httpApp.routing(req, res);
+    return;
+  }
+
   // MCP Streamable HTTP endpoint
   if (req.url === '/mcp' || req.url === '/') {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
@@ -110,6 +121,7 @@ httpServer.on('upgrade', (req, socket, head) => {
 httpServer.listen(PORT, HOST, () => {
   log.info(`foundry-mcp server listening on ${HOST}:${PORT}`);
   log.info(`  MCP endpoint: http://${HOST}:${PORT}/mcp`);
+  log.info(`  REST API:     http://${HOST}:${PORT}/api/`);
   log.info(`  Foundry WS:   ws://${HOST}:${PORT}/foundry`);
   log.info(`  Health:       http://${HOST}:${PORT}/health`);
   log.info(`  Logs:         http://${HOST}:${PORT}/logs`);

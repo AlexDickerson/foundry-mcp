@@ -11,6 +11,12 @@
         "cwd": "${workspaceFolder}",
         "shell": { "executable": "bash", "args": ["-c"] }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "shell": { "executable": "${env:PROGRAMFILES}\\Git\\bin\\bash.exe", "args": ["-c"] }
+        }
+      },
       "problemMatcher": []
     },
     {
@@ -21,6 +27,12 @@
       "options": {
         "cwd": "${workspaceFolder}",
         "shell": { "executable": "bash", "args": ["-c"] }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "shell": { "executable": "${env:PROGRAMFILES}\\Git\\bin\\bash.exe", "args": ["-c"] }
+        }
       },
       "problemMatcher": []
     },
@@ -91,6 +103,12 @@
         "cwd": "${workspaceFolder}",
         "shell": { "executable": "bash", "args": ["-c"] }
       },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "shell": { "executable": "${env:PROGRAMFILES}\\Git\\bin\\bash.exe", "args": ["-c"] }
+        }
+      },
       "problemMatcher": []
     },
     {
@@ -137,6 +155,31 @@
       "type": "shell",
       "command": "npm run type-check",
       "options": { "cwd": "${workspaceFolder}/module" },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "module: build",
+      "detail": "vite build → module/dist (one-shot; pair with local: restart to deploy)",
+      "type": "shell",
+      "command": "npm run build",
+      "options": { "cwd": "${workspaceFolder}/module" },
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "server: typecheck",
+      "type": "shell",
+      "command": "./node_modules/.bin/tsc --noEmit",
+      "options": {
+        "cwd": "${workspaceFolder}/server",
+        "shell": { "executable": "bash", "args": ["-c"] }
+      },
+      "windows": {
+        "options": {
+          "cwd": "${workspaceFolder}/server",
+          "shell": { "executable": "${env:PROGRAMFILES}\\Git\\bin\\bash.exe", "args": ["-c"] }
+        }
+      },
       "problemMatcher": ["$tsc"]
     }
   ]

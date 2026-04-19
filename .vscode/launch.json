@@ -27,6 +27,26 @@
       "skipFiles": ["<node_internals>/**"]
     },
     {
+      //  Same as above but does a FULL rebuild (module/vite + server/tsc)
+      //  before attaching, via `local: rebuild`. Use when you've changed
+      //  module sources (new command handlers, UI, transport) — the fast
+      //  server-only path skips the vite build and won't pick up module
+      //  changes. Slower (~20-40s) but the right choice for cross-cutting
+      //  changes like the REST API work.
+      "name": "Debug MCP server (full rebuild + attach)",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 9229,
+      "restart": true,
+      "timeout": 30000,
+      "preLaunchTask": "local: rebuild",
+      "localRoot": "${workspaceFolder}/server",
+      "remoteRoot": "/opt/foundry-mcp",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
       //  Runs the MCP server on the HOST via tsx (no Docker). Useful for
       //  quick iteration when you don't need Foundry VTT — for example
       //  unit-testing tool handlers against a mock transport. Port 8765

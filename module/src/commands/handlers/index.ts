@@ -1,5 +1,6 @@
 export { rollDiceHandler } from '@/commands/handlers/RollDiceHandler';
 export { sendChatMessageHandler } from '@/commands/handlers/SendChatMessageHandler';
+export { runScriptHandler } from '@/commands/handlers/RunScriptHandler';
 
 // Actor handlers
 export {
@@ -16,6 +17,8 @@ export {
   deleteActorHandler,
   getActorsHandler,
   getActorHandler,
+  getPreparedActorHandler,
+  getStatisticTraceHandler,
 } from '@/commands/handlers/actor';
 
 // Journal handlers
