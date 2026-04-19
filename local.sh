@@ -41,10 +41,13 @@ EOF
 }
 
 build_local() {
+  # npm's --silent suppresses errors too, which hides legitimate install
+  # failures. Use --loglevel=warn: quiet during success, still surfaces
+  # warnings/errors so VS Code task output is actionable on failure.
   echo "==> Installing module deps..."
-  (cd module && npm install --silent)
+  (cd module && npm install --loglevel=warn)
   echo "==> Installing server deps..."
-  (cd server && npm install --silent)
+  (cd server && npm install --loglevel=warn)
   echo "==> Building module..."
   (cd module && npx vite build 2>&1 | tail -3)
   # Static assets not produced by vite

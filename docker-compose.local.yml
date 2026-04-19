@@ -43,6 +43,8 @@ services:
       - FOUNDRY_USERNAME=${FOUNDRY_USERNAME}
       - FOUNDRY_PASSWORD=${FOUNDRY_PASSWORD}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Opt-in: enables POST /api/eval. Leave unset in production.
+      - ALLOW_EVAL=${ALLOW_EVAL:-}
       # Enable Node inspector on the in-container MCP server (local only).
       # VS Code's "Debug MCP server (full stack)" attaches to :9229 to hit
       # breakpoints in server/src/** while the Foundry container runs.

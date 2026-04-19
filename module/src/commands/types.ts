@@ -23,6 +23,9 @@ export type CommandType =
   | 'get-world-info'
   | 'get-actors'
   | 'get-actor'
+  | 'get-prepared-actor'
+  | 'get-statistic-trace'
+  | 'run-script'
   | 'create-actor'
   | 'create-actor-from-compendium'
   | 'update-actor'
@@ -446,6 +449,29 @@ export interface ActorDetailResult {
   system: Record<string, unknown>;
   items: ItemSummary[];
 }
+
+export interface PreparedActorResult {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  system: Record<string, unknown>;
+  items: ItemSummary[];
+}
+
+export interface GetStatisticTraceParams {
+  actorId: string;
+  slug: string;
+}
+
+export type StatisticTraceResult = Record<string, unknown>;
+
+export interface RunScriptParams {
+  script: string;
+}
+
+export type RunScriptResult = unknown;
 
 export interface ItemSummary {
   id: string;
@@ -1317,6 +1343,9 @@ export interface CommandParamsMap {
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'get-actor': GetActorParams;
+  'get-prepared-actor': GetActorParams;
+  'get-statistic-trace': GetStatisticTraceParams;
+  'run-script': RunScriptParams;
   'create-actor': CreateActorParams;
   'create-actor-from-compendium': CreateActorFromCompendiumParams;
   'update-actor': UpdateActorParams;
@@ -1405,6 +1434,9 @@ export interface CommandResultMap {
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
   'get-actor': ActorDetailResult;
+  'get-prepared-actor': PreparedActorResult;
+  'get-statistic-trace': StatisticTraceResult;
+  'run-script': RunScriptResult;
   'create-actor': ActorResult;
   'create-actor-from-compendium': ActorResult;
   'update-actor': ActorResult;

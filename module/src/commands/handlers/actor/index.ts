@@ -9,3 +9,5 @@ export { updateActorHandler } from './UpdateActorHandler';
 export { deleteActorHandler } from './DeleteActorHandler';
 export { getActorsHandler } from './GetActorsHandler';
 export { getActorHandler } from './GetActorHandler';
+export { getPreparedActorHandler } from './GetPreparedActorHandler';
+export { getStatisticTraceHandler } from './GetStatisticTraceHandler';
