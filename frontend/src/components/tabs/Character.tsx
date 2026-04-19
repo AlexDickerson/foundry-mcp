@@ -3,6 +3,7 @@ import { ABILITY_KEYS } from '../../api/types';
 import { t } from '../../i18n/t';
 import { formatSignedInt } from '../../lib/format';
 import { RankChip } from '../common/RankChip';
+import { SectionHeader } from '../common/SectionHeader';
 
 interface Props {
   system: CharacterSystem;
@@ -569,14 +570,6 @@ function ChipList({ label, items }: { label: string; items: string[] }): React.R
         ))}
       </ul>
     </div>
-  );
-}
-
-function SectionHeader({ children }: { children: React.ReactNode }): React.ReactElement {
-  return (
-    <h2 className="mb-2 border-b border-neutral-300 pb-1 text-sm font-semibold uppercase tracking-wide text-neutral-700">
-      {children}
-    </h2>
   );
 }
 

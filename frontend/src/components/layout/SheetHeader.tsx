@@ -4,15 +4,18 @@ interface Props {
   character: PreparedCharacter;
 }
 
+// Rarity pill colours borrowed from pf2e's _colors.scss rarity palette
+// (`--color-rarity-*`). Background/foreground tuned for contrast on the
+// cream sheet surface.
 const RARITY_CLASSES: Record<string, string> = {
-  uncommon: 'border-amber-400 bg-amber-50 text-amber-800',
-  rare: 'border-sky-400 bg-sky-50 text-sky-800',
-  unique: 'border-violet-400 bg-violet-50 text-violet-800',
+  uncommon: 'border-pf-rarity-uncommon bg-pf-rarity-uncommon/10 text-pf-rarity-uncommon',
+  rare: 'border-pf-rarity-rare bg-pf-rarity-rare/10 text-pf-rarity-rare',
+  unique: 'border-pf-rarity-unique bg-pf-rarity-unique/10 text-pf-rarity-unique',
 };
 
 const ALLIANCE_CLASSES: Record<string, string> = {
   party: 'border-emerald-400 bg-emerald-50 text-emerald-800',
-  opposition: 'border-red-400 bg-red-50 text-red-800',
+  opposition: 'border-pf-primary bg-pf-primary/10 text-pf-primary',
 };
 
 // Identity band at the top of the character sheet: name + level +
@@ -38,7 +41,7 @@ export function SheetHeader({ character }: Props): React.ReactElement {
   return (
     <header className="mb-4">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h1 className="text-xl font-semibold text-neutral-900">{name}</h1>
+        <h1 className="font-serif text-2xl font-semibold text-pf-text">{name}</h1>
         {rarity && rarity !== 'common' && (
           <Badge data-badge="rarity" label={capitalise(rarity)} className={RARITY_CLASSES[rarity] ?? ''} />
         )}
