@@ -35,6 +35,42 @@ export interface ApiError {
   suggestion?: string;
 }
 
+// ─── Compendium search ─────────────────────────────────────────────────
+
+export interface CompendiumSearchOptions {
+  /** Free-text query tokenised on whitespace; every token must appear
+   *  in a candidate's name. Required. */
+  q: string;
+  /** Restrict to a single pack (e.g. 'pf2e.feats-srd'). */
+  packId?: string;
+  /** Restrict to packs whose document type matches (e.g. 'Item'). */
+  documentType?: string;
+  /** Every trait in this list must be present on `system.traits.value`.
+   *  Creator pickers use this to scope e.g. class-feat slots to the
+   *  character's class trait. */
+  traits?: string[];
+  /** Cap `system.level.value`. Creator pickers use this to hide feats
+   *  the character doesn't yet qualify for. */
+  maxLevel?: number;
+  /** Max results. Clamped server-side to 1-100, defaults to 10. */
+  limit?: number;
+}
+
+export interface CompendiumMatch {
+  packId: string;
+  packLabel: string;
+  documentId: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  /** Present only when the search included a trait or maxLevel filter
+   *  (the server requests the fields lazily to keep plain name-only
+   *  searches lean). */
+  level?: number;
+  traits?: string[];
+}
+
 // ─── PF2e character-specific shapes (used by the Proficiencies tab) ────
 
 export type ProficiencyRank = 0 | 1 | 2 | 3 | 4;
