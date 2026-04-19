@@ -1,4 +1,4 @@
-import type { FeatItem, PreparedActorItem } from '../../api/types';
+import type { FeatCategory, FeatItem, PreparedActorItem } from '../../api/types';
 import { isFeatItem } from '../../api/types';
 import { FEAT_CATEGORY_LABEL, FEAT_CATEGORY_ORDER } from '../../lib/pf2e-maps';
 
@@ -6,31 +6,38 @@ interface Props {
   items: PreparedActorItem[];
 }
 
+// Canonical categories that always render a section, empty or not — so
+// the reader can see which slots exist even when unfilled (in particular
+// Bonus Feats, which many low-level characters don't have yet).
+// `pfsboon` stays hidden when empty since it only matters for organized
+// play.
+const ALWAYS_SHOW: readonly FeatCategory[] = ['ancestry', 'class', 'classfeature', 'skill', 'general', 'bonus'];
+
 // Feats tab — groups character's feat items by `system.category`, ordered
-// to roughly match how pf2e's sheet lays them out (ancestry, class,
-// class features, skill, general, bonus, PFS). Read-only; no empty-slot
-// placeholders or browse buttons.
+// to roughly match how pf2e's sheet lays them out. Canonical categories
+// render even when empty to advertise the slot.
 export function Feats({ items }: Props): React.ReactElement {
   const feats = items.filter(isFeatItem);
   const grouped = groupByCategory(feats);
-
-  if (feats.length === 0) {
-    return <p className="text-sm text-neutral-500">No feats yet.</p>;
-  }
 
   return (
     <section className="space-y-6">
       {FEAT_CATEGORY_ORDER.map((category) => {
         const inCategory = grouped.get(category) ?? [];
-        if (inCategory.length === 0) return null;
+        const isCanonical = ALWAYS_SHOW.includes(category);
+        if (inCategory.length === 0 && !isCanonical) return null;
         return (
           <div key={category} data-feat-category={category}>
             <SectionHeader>{FEAT_CATEGORY_LABEL[category] ?? category}</SectionHeader>
-            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {inCategory.map((feat) => (
-                <FeatCard key={feat.id} feat={feat} />
-              ))}
-            </ul>
+            {inCategory.length === 0 ? (
+              <p className="text-xs italic text-neutral-400">None yet</p>
+            ) : (
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {inCategory.map((feat) => (
+                  <FeatCard key={feat.id} feat={feat} />
+                ))}
+              </ul>
+            )}
           </div>
         );
       })}

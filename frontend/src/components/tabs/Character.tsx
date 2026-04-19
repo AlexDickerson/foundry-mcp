@@ -16,6 +16,7 @@ export function Character({ system }: Props): React.ReactElement {
   const keyAbility = system.details.keyability.value;
   const classDC = system.attributes.classDC;
   const landSpeed = system.movement.speeds.land;
+  const xp = system.details.xp;
 
   return (
     <section className="space-y-6">
@@ -26,6 +27,9 @@ export function Character({ system }: Props): React.ReactElement {
       <HeroPoints value={system.resources.heroPoints.value} max={system.resources.heroPoints.max} />
 
       <MetaRow>
+        <MetaItem label="XP">
+          <XPBar value={xp.value} max={xp.max} pct={xp.pct} />
+        </MetaItem>
         {landSpeed && (
           <MetaItem label="Speed">
             <span title={landSpeed.breakdown}>{landSpeed.value} ft</span>
@@ -211,6 +215,27 @@ function HeroPoints({ value, max }: { value: number; max: number }): React.React
 
 function MetaRow({ children }: { children: React.ReactNode }): React.ReactElement {
   return <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">{children}</div>;
+}
+
+function XPBar({ value, max, pct }: { value: number; max: number; pct: number }): React.ReactElement {
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <span className="flex items-center gap-2" data-stat="xp">
+      <span className="font-mono tabular-nums text-neutral-900">
+        {value} / {max}
+      </span>
+      <span
+        className="inline-block h-1.5 w-16 overflow-hidden rounded bg-neutral-200"
+        role="progressbar"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        title={`${clamped.toString()}% to next level`}
+      >
+        <span className="block h-full bg-emerald-500" style={{ width: `${clamped.toString()}%` }} />
+      </span>
+    </span>
+  );
 }
 
 function MetaItem({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {

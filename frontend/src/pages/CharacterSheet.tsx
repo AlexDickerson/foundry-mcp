@@ -88,7 +88,7 @@ export function CharacterSheet({ actorId, onBack }: Props): React.ReactElement {
           <SheetHeader character={state.actor} />
           <TabStrip tabs={TABS} active={activeTab} onChange={setActiveTab} />
           {activeTab === 'character' && <Character system={state.actor.system} />}
-          {activeTab === 'actions' && <Actions actions={state.actor.system.actions} />}
+          {activeTab === 'actions' && <Actions actions={state.actor.system.actions} items={state.actor.items} />}
           {activeTab === 'inventory' && <Inventory items={state.actor.items} />}
           {activeTab === 'feats' && <Feats items={state.actor.items} />}
           {activeTab === 'proficiencies' && <Proficiencies system={state.actor.system} />}
