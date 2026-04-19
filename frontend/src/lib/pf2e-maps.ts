@@ -1,4 +1,4 @@
-import type { ProficiencyRank } from '../api/types';
+import type { FeatCategory, ProficiencyRank } from '../api/types';
 
 // PF2e proficiency-rank labels and palette.
 // Labels match the en.json `PF2E.ProficiencyLevel{0..4}` keys; we duplicate
@@ -51,4 +51,28 @@ export const DEFENSE_LABEL_KEY: Record<string, string> = {
   heavy: 'PF2E.Actor.Character.Proficiency.Defense.Heavy',
   'light-barding': 'PF2E.Actor.Character.Proficiency.Defense.LightBarding',
   'heavy-barding': 'PF2E.Actor.Character.Proficiency.Defense.HeavyBarding',
+};
+
+// Feat category → display label. pf2e's sheet has finer-grained
+// groupings (class feat-1, class feat-2, ...) driven by level slots; we
+// collapse to category in this viewer. Render order matches how the
+// sheet typically lays them out.
+export const FEAT_CATEGORY_ORDER: readonly FeatCategory[] = [
+  'ancestry',
+  'class',
+  'classfeature',
+  'skill',
+  'general',
+  'bonus',
+  'pfsboon',
+];
+
+export const FEAT_CATEGORY_LABEL: Record<string, string> = {
+  ancestry: 'Ancestry Feats',
+  class: 'Class Feats',
+  classfeature: 'Class Features',
+  skill: 'Skill Feats',
+  general: 'General Feats',
+  bonus: 'Bonus Feats',
+  pfsboon: 'PFS Boons',
 };
