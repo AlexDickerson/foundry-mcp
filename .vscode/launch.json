@@ -61,6 +61,19 @@
       "skipFiles": ["<node_internals>/**"]
     },
     {
+      //  Launches Chrome against the Vite dev server at :5173. Start the
+      //  `frontend: dev` task first (or the container + frontend: dev) so
+      //  the server is listening. Breakpoints work in React components via
+      //  Vite's sourcemaps.
+      "name": "Debug frontend (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend/src",
+      "preLaunchTask": "frontend: dev",
+      "sourceMaps": true
+    },
+    {
       "name": "Debug module tests (Jest)",
       "type": "node",
       "request": "launch",

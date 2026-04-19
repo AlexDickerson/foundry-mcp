@@ -3,9 +3,10 @@
 Self-hosted MCP server + Foundry API Bridge module for controlling Foundry VTT from Claude Code.
 
 ## Tech Stack
-- TypeScript monorepo (module + server)
+- TypeScript monorepo (module + server + frontend)
 - Module: Vite bundler, ESLint 9, Jest tests, Foundry VTT types
-- Server: MCP SDK, OpenAI SDK (image editing), WebSocket bridge
+- Server: MCP SDK, OpenAI SDK (image editing), WebSocket bridge, Fastify (REST surface)
+- Frontend: React 19 + Vite 8 + Tailwind 4 + Vitest 4 (character-creator SPA)
 - Docker (felddy/foundryvtt base image)
 
 ## Build & Run
@@ -22,6 +23,13 @@ Self-hosted MCP server + Foundry API Bridge module for controlling Foundry VTT f
 - `cd server && npm run dev` — Dev mode (tsx)
 - `cd server && npm start` — Run compiled server
 
+### Frontend (character-creator SPA)
+- `cd frontend && npm run dev` — Vite dev on :5173, proxies /api to :8765
+- `cd frontend && npm run build` — Production build to `frontend/dist`
+- `cd frontend && npm run typecheck`
+- `cd frontend && npm run test` — Vitest
+- `cd frontend && npm run lint`
+
 ### Docker
 - `docker compose up --build` — Build and run everything
 - Exposes: port 30000 (Foundry), port 8765 (MCP server)
@@ -35,7 +43,17 @@ Self-hosted MCP server + Foundry API Bridge module for controlling Foundry VTT f
 - `server/` — MCP server
   - `src/tools/` — MCP tool implementations
   - `src/bridge.ts` — WebSocket bridge to Foundry
+  - `src/http/` — Fastify REST surface for the character-creator frontend
   - `src/index.ts` — Server entry point
+- `frontend/` — React SPA (character creator). Temporary home; planned split
+  to its own repo once stable. No cross-package imports from `module/` or
+  `server/` — contract is the REST API at `/api/*`.
+  - `src/api/` — typed fetch wrappers for `/api/*`
+  - `src/i18n/` — vendored `en.json` from pf2e (Apache-2.0) + `t()` resolver
+  - `src/components/` — React components; tab ports go under `components/tabs/`
+  - `src/styles/pf2e/` — ported SCSS from foundryvtt/pf2e (Apache-2.0)
+  - `NOTICE` — attribution for pf2e-derived files
+- `_http/` — REST Client `.http` files for interactive endpoint testing
 - `Dockerfile` — Multi-stage build (server → module → production)
 - `docker-compose.yml` — Deployment config
 - `docker-entrypoint.sh` — Container startup script
@@ -48,8 +66,9 @@ Self-hosted MCP server + Foundry API Bridge module for controlling Foundry VTT f
 - Run linting before committing. Fix lint errors before pushing.
 
 ## Key Decisions
-- Module and server are independently buildable but deployed together via Docker
+- Module, server, and frontend are independently buildable but deployed together via Docker (frontend's prod serving TBD)
 - Module communicates with server over WebSocket (port 8765)
-- Server exposes MCP tools for Claude Code to control Foundry VTT
+- Server exposes MCP tools for Claude Code to control Foundry VTT, plus a REST surface (Fastify) at `/api/*` for the frontend
+- Frontend lives inside the monorepo during development; planned split to its own repo once stable — no cross-package imports to make the split clean
 - OpenAI SDK used specifically for GPT-image-1 map editing (not for chat)
 - No root package.json — each package manages its own dependencies
