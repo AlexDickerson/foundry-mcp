@@ -99,9 +99,9 @@ function ItemRow({ item, contents }: { item: PhysicalItem; contents: PhysicalIte
       : undefined;
 
   return (
-    <li className="rounded border border-neutral-200 bg-white" data-item-id={item.id} data-item-type={item.type}>
+    <li className="rounded border border-pf-border bg-white" data-item-id={item.id} data-item-type={item.type}>
       <div className="flex items-center gap-3 px-3 py-2">
-        <img src={item.img} alt="" className="h-8 w-8 flex-shrink-0 rounded border border-neutral-200 bg-neutral-50" />
+        <img src={item.img} alt="" className="h-8 w-8 flex-shrink-0 rounded border border-pf-border bg-pf-bg-dark" />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <span className="truncate text-sm text-neutral-900">{item.name}</span>
@@ -132,7 +132,7 @@ function ItemRow({ item, contents }: { item: PhysicalItem; contents: PhysicalIte
 function ContainerChildRow({ item }: { item: PhysicalItem }): React.ReactElement {
   return (
     <li className="flex items-center gap-3 px-3 py-1.5" data-item-id={item.id} data-item-type={item.type}>
-      <img src={item.img} alt="" className="h-6 w-6 flex-shrink-0 rounded border border-neutral-200 bg-neutral-50" />
+      <img src={item.img} alt="" className="h-6 w-6 flex-shrink-0 rounded border border-pf-border bg-pf-bg-dark" />
       <div className="min-w-0 flex-1">
         <span className="truncate text-sm text-neutral-800">{item.name}</span>
         {item.system.quantity > 1 && <span className="ml-2 text-xs text-neutral-500">×{item.system.quantity}</span>}

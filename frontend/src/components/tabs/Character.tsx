@@ -112,24 +112,24 @@ function AbilityBlock({
               data-attribute={ak}
               className={[
                 'relative flex flex-col items-center rounded border px-2 py-3',
-                isKey ? 'border-emerald-300 bg-emerald-50' : 'border-neutral-200 bg-white',
+                isKey ? 'border-pf-tertiary-dark bg-pf-tertiary/40' : 'border-pf-border bg-white',
               ].join(' ')}
             >
               {isKey && (
                 <span
-                  className="absolute right-1 top-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700"
+                  className="absolute right-1 top-1 text-[10px] font-semibold uppercase tracking-wider text-pf-primary"
                   title="Key attribute"
                 >
                   KEY
                 </span>
               )}
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-pf-alt-dark">
                 {t(a.shortLabel)}
               </span>
-              <span className="mt-0.5 font-mono text-2xl font-semibold tabular-nums text-neutral-900">
+              <span className="mt-0.5 font-mono text-2xl font-semibold tabular-nums text-pf-text">
                 {formatSignedInt(a.mod)}
               </span>
-              <span className="text-[10px] text-neutral-500">{t(a.label)}</span>
+              <span className="text-[10px] text-pf-alt">{t(a.label)}</span>
             </li>
           );
         })}
@@ -224,12 +224,12 @@ function StatTile({
 }): React.ReactElement {
   return (
     <div
-      className="flex flex-col items-center rounded border border-neutral-200 bg-white px-3 py-2"
+      className="flex flex-col items-center rounded border border-pf-border bg-white px-3 py-2"
       title={title}
       {...rest}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">{label}</span>
-      <span className="mt-0.5 font-mono text-xl font-semibold tabular-nums text-neutral-900">{value}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-pf-alt-dark">{label}</span>
+      <span className="mt-0.5 font-mono text-xl font-semibold tabular-nums text-pf-text">{value}</span>
       {rank !== undefined && <RankChip rank={rank} className="mt-1" />}
     </div>
   );
@@ -539,7 +539,7 @@ function XPBar({ value, max, pct }: { value: number; max: number; pct: number })
         aria-valuemax={max}
         title={`${clamped.toString()}% to next level`}
       >
-        <span className="block h-full bg-emerald-500" style={{ width: `${clamped.toString()}%` }} />
+        <span className="block h-full bg-pf-secondary" style={{ width: `${clamped.toString()}%` }} />
       </span>
     </span>
   );
@@ -548,8 +548,8 @@ function XPBar({ value, max, pct }: { value: number; max: number; pct: number })
 function MetaItem({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">{label}</span>
-      <span className="text-neutral-900">{children}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-pf-alt-dark">{label}</span>
+      <span className="text-pf-text">{children}</span>
     </div>
   );
 }
@@ -563,7 +563,7 @@ function ChipList({ label, items }: { label: string; items: string[] }): React.R
         {items.map((it) => (
           <li
             key={it}
-            className="rounded-full border border-neutral-300 bg-neutral-50 px-2.5 py-0.5 text-xs text-neutral-700"
+            className="rounded-full border border-pf-tertiary-dark bg-pf-tertiary/40 px-2.5 py-0.5 text-xs text-pf-alt-dark"
           >
             {it}
           </li>

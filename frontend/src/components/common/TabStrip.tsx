@@ -11,7 +11,7 @@ interface Props<Id extends string> {
 
 export function TabStrip<Id extends string>({ tabs, active, onChange }: Props<Id>): React.ReactElement {
   return (
-    <nav className="mb-6 flex border-b border-neutral-200" role="tablist">
+    <nav className="mb-6 flex border-b border-pf-border" role="tablist">
       {tabs.map((tab) => {
         const isActive = tab.id === active;
         return (
@@ -25,11 +25,11 @@ export function TabStrip<Id extends string>({ tabs, active, onChange }: Props<Id
               onChange(tab.id);
             }}
             className={[
-              'px-4 py-2 text-sm font-medium transition-colors',
+              'px-4 py-2 text-sm font-medium tracking-wide transition-colors',
               '-mb-px border-b-2',
               isActive
-                ? 'border-emerald-700 text-emerald-900'
-                : 'border-transparent text-neutral-500 hover:text-neutral-800',
+                ? 'border-pf-primary text-pf-primary'
+                : 'border-transparent text-pf-alt-dark hover:text-pf-primary',
             ].join(' ')}
           >
             {tab.label}
