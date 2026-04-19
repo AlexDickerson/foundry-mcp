@@ -93,6 +93,13 @@ cmd_nuke() {
 cmd_rebuild() {
   build_local
   echo "==> Restarting container..."
+  # `docker compose restart` no-ops silently if the container doesn't exist
+  # (e.g. first run after nuke, or Docker Desktop was restarted and didn't
+  # bring containers back up automatically). `up -d --no-recreate` creates
+  # and starts if missing, no-ops if running, and won't recreate on config
+  # drift. Then `restart` forces the Node process to reload the new dist
+  # when the container was already up.
+  $COMPOSE up -d --no-recreate
   $COMPOSE restart
   sleep 2
   cmd_status
