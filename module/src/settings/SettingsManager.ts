@@ -8,6 +8,7 @@ export function registerSettings(): void {
   if (!game.settings) {
     throw new Error('game.settings is not available');
   }
+  // @ts-expect-error v13 types narrowed namespace to 'core'; our custom module namespace is valid at runtime
   game.settings.register(MODULE_ID, CONFIG_KEY, {
     name: 'Module Configuration',
     scope: 'world',
@@ -16,6 +17,7 @@ export function registerSettings(): void {
     default: DEFAULT_CONFIG,
   });
 
+  // @ts-expect-error v13 types narrowed namespace to 'core'; our custom module namespace is valid at runtime
   game.settings.register(MODULE_ID, 'wsUrl', {
     name: 'WebSocket URL',
     hint: 'URL for WebSocket connection to the server',
@@ -27,6 +29,7 @@ export function registerSettings(): void {
     requiresReload: true,
   });
 
+  // @ts-expect-error v13 types narrowed namespace to 'core'; our custom module namespace is valid at runtime
   game.settings.register(MODULE_ID, 'apiKey', {
     name: 'API Key',
     hint: 'API key for server authorization (format: pk_...)',
@@ -50,6 +53,7 @@ export async function registerMenu(): Promise<void> {
     label: 'Configure',
     hint: 'Configure WebSocket and logging settings',
     icon: 'fas fa-cog',
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     type: ApiConfigForm as unknown as new () => FormApplication,
     restricted: true,
   });
@@ -59,6 +63,7 @@ export function getWsUrl(): string {
   if (!game.settings) {
     throw new Error('game.settings is not available');
   }
+  // @ts-expect-error v13 types narrowed namespace to 'core'; our custom module namespace is valid at runtime
   return game.settings.get(MODULE_ID, 'wsUrl') as string;
 }
 
@@ -66,6 +71,7 @@ export function getApiKey(): string {
   if (!game.settings) {
     throw new Error('game.settings is not available');
   }
+  // @ts-expect-error v13 types narrowed namespace to 'core'; our custom module namespace is valid at runtime
   return game.settings.get(MODULE_ID, 'apiKey') as string;
 }
 
@@ -73,6 +79,7 @@ export function getConfig(): ModuleConfig {
   if (!game.settings) {
     throw new Error('game.settings is not available');
   }
+  // @ts-expect-error v13 types narrowed namespace to 'core'; our custom module namespace is valid at runtime
   const config = game.settings.get(MODULE_ID, CONFIG_KEY);
   return config as ModuleConfig;
 }
@@ -81,5 +88,6 @@ export async function setConfig(config: ModuleConfig): Promise<void> {
   if (!game.settings) {
     throw new Error('game.settings is not available');
   }
+  // @ts-expect-error v13 types narrowed namespace to 'core'; our custom module namespace is valid at runtime
   await game.settings.set(MODULE_ID, CONFIG_KEY, config);
 }
