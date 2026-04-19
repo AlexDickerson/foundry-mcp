@@ -3,6 +3,8 @@ import { api, ApiRequestError } from '../../api/client';
 import type { CompendiumMatch, CompendiumSearchOptions } from '../../api/types';
 import { useDebounce } from '../../lib/useDebounce';
 
+type SortMode = 'alpha' | 'level';
+
 interface Props {
   title: string;
   /** Pre-filters applied to every search. Text query is layered on top. */
@@ -23,8 +25,30 @@ type FetchState =
 export function FeatPicker({ title, filters, onPick, onClose }: Props): React.ReactElement {
   const [query, setQuery] = useState('');
   const [state, setState] = useState<FetchState>({ kind: 'loading' });
+  const [sort, setSort] = useState<SortMode>('alpha');
   const debouncedQuery = useDebounce(query.trim(), 200);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Apply sort on top of whatever order the server returned. Client-side
+  // is fine because the server already caps results (limit 50 by default
+  // from the picker), so the sort runs over a tiny array. Entries missing
+  // a level sink to the bottom of level-sorted lists and stay alpha among
+  // themselves.
+  const visibleMatches = useMemo(() => {
+    if (state.kind !== 'ready') return [];
+    const copy = [...state.matches];
+    if (sort === 'level') {
+      copy.sort((a, b) => {
+        const al = a.level ?? Number.POSITIVE_INFINITY;
+        const bl = b.level ?? Number.POSITIVE_INFINITY;
+        if (al !== bl) return al - bl;
+        return a.name.localeCompare(b.name);
+      });
+    } else {
+      copy.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return copy;
+  }, [state, sort]);
 
   // Stable filter key for the effect dep array. Callers typically pass
   // a fresh object each render; we memoise so the fetch only refires
@@ -118,18 +142,21 @@ export function FeatPicker({ title, filters, onPick, onClose }: Props): React.Re
             className="w-full rounded border border-pf-border bg-white px-2 py-1 text-sm text-pf-text placeholder:text-pf-alt focus:border-pf-primary focus:outline-none"
             data-testid="feat-picker-input"
           />
-          <FilterSummary filters={filters} />
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <FilterSummary filters={filters} />
+            <SortToggle sort={sort} onChange={setSort} />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto" data-testid="feat-picker-results">
           {state.kind === 'loading' && <p className="p-4 text-sm italic text-pf-alt">Searching…</p>}
           {state.kind === 'error' && <p className="p-4 text-sm text-pf-primary">Search failed: {state.message}</p>}
-          {state.kind === 'ready' && state.matches.length === 0 && (
+          {state.kind === 'ready' && visibleMatches.length === 0 && (
             <p className="p-4 text-sm italic text-pf-alt">No matches. Loosen the filters or search term.</p>
           )}
-          {state.kind === 'ready' && state.matches.length > 0 && (
+          {state.kind === 'ready' && visibleMatches.length > 0 && (
             <ul className="divide-y divide-pf-border">
-              {state.matches.map((match) => (
+              {visibleMatches.map((match) => (
                 <li key={match.uuid}>
                   <MatchRow match={match} onPick={onPick} />
                 </li>
@@ -138,6 +165,45 @@ export function FeatPicker({ title, filters, onPick, onClose }: Props): React.Re
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function SortToggle({ sort, onChange }: { sort: SortMode; onChange: (next: SortMode) => void }): React.ReactElement {
+  const options: Array<{ value: SortMode; label: string }> = [
+    { value: 'alpha', label: 'A–Z' },
+    { value: 'level', label: 'Level' },
+  ];
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Sort results"
+      data-testid="feat-picker-sort"
+      className="inline-flex shrink-0 rounded border border-pf-border overflow-hidden text-[10px] font-semibold uppercase tracking-widest"
+    >
+      {options.map((opt) => {
+        const active = sort === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            data-sort-option={opt.value}
+            onClick={(): void => {
+              onChange(opt.value);
+            }}
+            className={[
+              'px-2 py-0.5 transition-colors',
+              active
+                ? 'bg-pf-primary text-white'
+                : 'bg-white text-pf-alt-dark hover:bg-pf-tertiary/40 hover:text-pf-primary',
+            ].join(' ')}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
