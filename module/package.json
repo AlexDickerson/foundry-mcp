@@ -25,7 +25,7 @@
   "author": "AI DM Project",
   "license": "MIT",
   "devDependencies": {
-    "@league-of-foundry-developers/foundry-vtt-types": "^12.331.5",
+    "@league-of-foundry-developers/foundry-vtt-types": "^13.345.1",
     "@types/jest": "^30.0.0",
     "eslint": "^10.2.1",
     "jest": "^30.3.0",
