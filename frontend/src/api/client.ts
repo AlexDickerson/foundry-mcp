@@ -34,7 +34,7 @@ async function request<T>(path: string): Promise<T> {
 
 function buildCompendiumQuery(opts: CompendiumSearchOptions): string {
   const params = new URLSearchParams();
-  params.set('q', opts.q);
+  if (opts.q !== undefined && opts.q.length > 0) params.set('q', opts.q);
   if (opts.packId !== undefined) params.set('packId', opts.packId);
   if (opts.documentType !== undefined) params.set('documentType', opts.documentType);
   if (opts.traits !== undefined && opts.traits.length > 0) params.set('traits', opts.traits.join(','));

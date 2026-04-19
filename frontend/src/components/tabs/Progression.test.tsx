@@ -1,13 +1,33 @@
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, cleanup, within } from '@testing-library/react';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
+import { render, cleanup, within, waitFor, fireEvent } from '@testing-library/react';
 import amiri from '../../fixtures/amiri-prepared.json';
-import type { PreparedActorItem } from '../../api/types';
+import { api } from '../../api/client';
+import type { CompendiumMatch, PreparedActorItem } from '../../api/types';
 import { Progression } from './Progression';
 
 const items = (amiri as unknown as { items: PreparedActorItem[] }).items;
 
+const picker_match: CompendiumMatch = {
+  packId: 'pf2e.feats-srd',
+  packLabel: 'Class Feats',
+  documentId: 'sudden',
+  uuid: 'Compendium.pf2e.feats-srd.Item.sudden',
+  name: 'Sudden Charge',
+  type: 'feat',
+  img: 'icons/sudden.webp',
+  level: 1,
+  traits: ['barbarian', 'fighter'],
+};
+
 describe('Progression tab', () => {
+  let searchSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    searchSpy = vi.spyOn(api, 'searchCompendium').mockResolvedValue({ matches: [picker_match] });
+  });
+
   afterEach(() => {
+    searchSpy.mockRestore();
     cleanup();
   });
 
@@ -108,5 +128,78 @@ describe('Progression tab', () => {
     const noClass = items.filter((i) => i.type !== 'class');
     const { container } = render(<Progression characterLevel={1} items={noClass} />);
     expect(container.textContent).toContain('No class item');
+  });
+
+  // --- Class-feat picker flow ---------------------------------------------
+
+  it('opens the picker when a class-feat slot chip is clicked', async () => {
+    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const row = container.querySelector('[data-level="1"]') as HTMLElement;
+    const trigger = row.querySelector('[data-slot="class-feat"] [data-testid="slot-open-picker"]') as HTMLElement;
+    expect(trigger, 'class-feat chip button').toBeTruthy();
+
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-testid="feat-picker"]')).toBeTruthy();
+    });
+
+    // Picker should ask the API for barbarian feats at level ≤ 1 from the feats-srd pack.
+    const call = searchSpy.mock.calls[0]?.[0];
+    expect(call?.traits).toEqual(['barbarian']);
+    expect(call?.maxLevel).toBe(1);
+    expect(call?.packId).toBe('pf2e.feats-srd');
+  });
+
+  it('commits the picked match into the level row and closes the picker', async () => {
+    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const row = container.querySelector('[data-level="1"]') as HTMLElement;
+    fireEvent.click(row.querySelector('[data-testid="slot-open-picker"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-match-uuid]')).toBeTruthy();
+    });
+    const matchRow = document.querySelector('[data-match-uuid="Compendium.pf2e.feats-srd.Item.sudden"]') as HTMLElement;
+    fireEvent.click(matchRow);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-testid="feat-picker"]')).toBeFalsy();
+    });
+
+    const pickEl = row.querySelector('[data-pick-uuid="Compendium.pf2e.feats-srd.Item.sudden"]');
+    expect(pickEl, 'pick chip on the level row').toBeTruthy();
+    expect(within(pickEl as HTMLElement).getByText('Sudden Charge')).toBeTruthy();
+  });
+
+  it('clearing a picked feat restores the open slot chip', async () => {
+    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const row = container.querySelector('[data-level="1"]') as HTMLElement;
+    fireEvent.click(row.querySelector('[data-testid="slot-open-picker"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-match-uuid]')).toBeTruthy();
+    });
+    fireEvent.click(document.querySelector('[data-match-uuid="Compendium.pf2e.feats-srd.Item.sudden"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(row.querySelector('[data-pick-uuid]')).toBeTruthy();
+    });
+
+    const clearBtn = within(row.querySelector('[data-slot="class-feat"]') as HTMLElement).getByLabelText(
+      /clear class feat pick/i,
+    );
+    fireEvent.click(clearBtn);
+
+    expect(row.querySelector('[data-pick-uuid]')).toBeFalsy();
+    expect(row.querySelector('[data-testid="slot-open-picker"]')).toBeTruthy();
+  });
+
+  it('leaves non-clickable slot chips rendered as static labels', () => {
+    const { container } = render(<Progression characterLevel={1} items={items} />);
+    // ancestry-feat at L1 is not yet a pickable slot type.
+    const row = container.querySelector('[data-level="1"]') as HTMLElement;
+    const ancestry = row.querySelector('[data-slot="ancestry-feat"]');
+    expect(ancestry, 'ancestry-feat chip').toBeTruthy();
+    expect(ancestry?.querySelector('[data-testid="slot-open-picker"]')).toBeNull();
   });
 });

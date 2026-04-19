@@ -6,7 +6,7 @@ export function registerCompendiumRoutes(app: FastifyInstance): void {
   app.get('/api/compendium/search', async (req) => {
     const { q, packId, documentType, traits, maxLevel, limit } = compendiumSearchQuery.parse(req.query);
     return sendCommand('find-in-compendium', {
-      name: q,
+      name: q ?? '',
       packId,
       documentType,
       traits,

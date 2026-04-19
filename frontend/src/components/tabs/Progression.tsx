@@ -1,6 +1,8 @@
-import type { ClassFeatureEntry, ClassItem, PreparedActorItem } from '../../api/types';
+import { useState } from 'react';
+import type { ClassFeatureEntry, ClassItem, CompendiumMatch, PreparedActorItem } from '../../api/types';
 import { isClassItem } from '../../api/types';
 import { SectionHeader } from '../common/SectionHeader';
+import { FeatPicker } from '../creator/FeatPicker';
 
 interface Props {
   characterLevel: number;
@@ -16,6 +18,12 @@ const ABILITY_BOOST_LEVELS: readonly number[] = [5, 10, 15, 20];
 // Levels every character can reach (pf2e core: 1-20).
 const LEVELS: readonly number[] = Array.from({ length: 20 }, (_, i) => i + 1);
 
+// Slot-key for the selection map. One level can open several slot types,
+// and each could eventually have its own pick (two class feats at L12,
+// a class feat + skill feat at L2, etc.), so we key by `${level}:${slot}`.
+type SlotKey = string;
+const slotKey = (level: number, slot: SlotType): SlotKey => `${level.toString()}:${slot}`;
+
 // Progression tab — vertical timeline of levels 1-20, each row showing
 // the auto-granted class features at that level plus chips for every
 // slot the pf2e rules open up (class feat, ancestry feat, skill feat,
@@ -26,40 +34,88 @@ const LEVELS: readonly number[] = Array.from({ length: 20 }, (_, i) => i + 1);
 // The current character level is highlighted; past levels are muted,
 // future levels render as a normal preview.
 //
-// Read-only for now — this tab is the bridge into Phase 3 creator work,
-// where the slot chips become clickable picks.
+// Class-feat slots are clickable — they open a compendium-search modal
+// (FeatPicker) scoped to the character's class trait and capped at the
+// slot's level. Picks are held in local state for now; the scratch-actor
+// mutation flow comes later.
 export function Progression({ characterLevel, items }: Props): React.ReactElement {
   const classItem = items.find(isClassItem);
+  const [picks, setPicks] = useState<Map<SlotKey, CompendiumMatch>>(new Map());
+  const [pickerTarget, setPickerTarget] = useState<{ level: number; slot: SlotType } | null>(null);
+
   if (!classItem) {
     return <p className="text-sm text-pf-alt-dark">No class item on this character.</p>;
   }
 
   const sys = classItem.system;
+  const classTrait = sys.slug ?? classItem.name.toLowerCase();
   const featuresByLevel = groupFeaturesByLevel(sys.items);
   const levelSlots = buildLevelSlotMap(sys);
+
+  const openPicker = (level: number, slot: SlotType): void => {
+    setPickerTarget({ level, slot });
+  };
+  const closePicker = (): void => {
+    setPickerTarget(null);
+  };
+  const commitPick = (match: CompendiumMatch): void => {
+    if (!pickerTarget) return;
+    const key = slotKey(pickerTarget.level, pickerTarget.slot);
+    setPicks((prev) => {
+      const next = new Map(prev);
+      next.set(key, match);
+      return next;
+    });
+    setPickerTarget(null);
+  };
+  const clearPick = (level: number, slot: SlotType): void => {
+    setPicks((prev) => {
+      const next = new Map(prev);
+      next.delete(slotKey(level, slot));
+      return next;
+    });
+  };
 
   return (
     <section className="space-y-4" data-section="progression">
       <div>
         <SectionHeader>{classItem.name} Progression</SectionHeader>
         <p className="mb-3 text-xs text-pf-alt">
-          Class features auto-granted at each level, plus the feat and skill slots the rules open.
+          Class features auto-granted at each level, plus the feat and skill slots the rules open. Click a Class Feat
+          chip to pick one; selections are held in memory until the scratch-actor flow lands.
         </p>
       </div>
       <ol className="space-y-1.5">
         {LEVELS.map((level) => {
           const features = featuresByLevel.get(level) ?? [];
           const slots = levelSlots.get(level) ?? [];
-          if (features.length === 0 && slots.length === 0 && level > characterLevel) {
-            // Filler level with nothing to show — still render so the
-            // ladder's cadence is visible.
-            return <LevelRow key={level} level={level} characterLevel={characterLevel} features={[]} slots={[]} />;
-          }
           return (
-            <LevelRow key={level} level={level} characterLevel={characterLevel} features={features} slots={slots} />
+            <LevelRow
+              key={level}
+              level={level}
+              characterLevel={characterLevel}
+              features={features}
+              slots={slots}
+              picks={picks}
+              onOpenPicker={openPicker}
+              onClearPick={clearPick}
+            />
           );
         })}
       </ol>
+      {pickerTarget && pickerTarget.slot === 'class-feat' && (
+        <FeatPicker
+          title={`Pick a Class Feat (Level ${pickerTarget.level.toString()})`}
+          filters={{
+            packId: 'pf2e.feats-srd',
+            documentType: 'Item',
+            traits: [classTrait],
+            maxLevel: pickerTarget.level,
+          }}
+          onPick={commitPick}
+          onClose={closePicker}
+        />
+      )}
     </section>
   );
 }
@@ -73,11 +129,17 @@ function LevelRow({
   characterLevel,
   features,
   slots,
+  picks,
+  onOpenPicker,
+  onClearPick,
 }: {
   level: number;
   characterLevel: number;
   features: ClassFeatureEntry[];
   slots: readonly SlotType[];
+  picks: Map<SlotKey, CompendiumMatch>;
+  onOpenPicker: (level: number, slot: SlotType) => void;
+  onClearPick: (level: number, slot: SlotType) => void;
 }): React.ReactElement {
   const state: LevelState = level < characterLevel ? 'past' : level === characterLevel ? 'current' : 'future';
   return (
@@ -93,7 +155,9 @@ function LevelRow({
       <LevelBadge level={level} state={state} />
       <div className="min-w-0 space-y-1.5">
         {features.length > 0 && <FeatureList features={features} />}
-        {slots.length > 0 && <SlotChips slots={slots} />}
+        {slots.length > 0 && (
+          <SlotChips level={level} slots={slots} picks={picks} onOpenPicker={onOpenPicker} onClearPick={onClearPick} />
+        )}
         {features.length === 0 && slots.length === 0 && (
           <span className="text-xs italic text-pf-alt">No class features or new slots.</span>
         )}
@@ -157,22 +221,100 @@ const SLOT_CLASSES: Record<SlotType, string> = {
   'ability-boosts': 'border-pf-rarity-unique bg-pf-rarity-unique/10 text-pf-rarity-unique',
 };
 
-function SlotChips({ slots }: { slots: readonly SlotType[] }): React.ReactElement {
+const CLICKABLE_SLOTS: ReadonlySet<SlotType> = new Set(['class-feat']);
+
+function SlotChips({
+  level,
+  slots,
+  picks,
+  onOpenPicker,
+  onClearPick,
+}: {
+  level: number;
+  slots: readonly SlotType[];
+  picks: Map<SlotKey, CompendiumMatch>;
+  onOpenPicker: (level: number, slot: SlotType) => void;
+  onClearPick: (level: number, slot: SlotType) => void;
+}): React.ReactElement {
   return (
     <ul className="flex flex-wrap gap-1" data-role="slots">
-      {slots.map((slot) => (
-        <li
-          key={slot}
-          data-slot={slot}
-          className={[
-            'rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
-            SLOT_CLASSES[slot],
-          ].join(' ')}
-        >
-          {SLOT_LABEL[slot]}
-        </li>
-      ))}
+      {slots.map((slot) => {
+        const pick = picks.get(slotKey(level, slot));
+        if (pick) {
+          return (
+            <li key={slot} data-slot={slot} data-pick-uuid={pick.uuid}>
+              <PickedChip
+                slot={slot}
+                pick={pick}
+                onClear={(): void => {
+                  onClearPick(level, slot);
+                }}
+              />
+            </li>
+          );
+        }
+        if (CLICKABLE_SLOTS.has(slot)) {
+          return (
+            <li key={slot} data-slot={slot}>
+              <button
+                type="button"
+                onClick={(): void => {
+                  onOpenPicker(level, slot);
+                }}
+                className={[
+                  'rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+                  SLOT_CLASSES[slot],
+                  'hover:brightness-95',
+                ].join(' ')}
+                data-testid="slot-open-picker"
+              >
+                + {SLOT_LABEL[slot]}
+              </button>
+            </li>
+          );
+        }
+        return (
+          <li
+            key={slot}
+            data-slot={slot}
+            className={[
+              'rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+              SLOT_CLASSES[slot],
+            ].join(' ')}
+          >
+            {SLOT_LABEL[slot]}
+          </li>
+        );
+      })}
     </ul>
+  );
+}
+
+function PickedChip({
+  slot,
+  pick,
+  onClear,
+}: {
+  slot: SlotType;
+  pick: CompendiumMatch;
+  onClear: () => void;
+}): React.ReactElement {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded border border-pf-border bg-white pl-1 pr-0.5 text-[11px] text-pf-text"
+      title={`${SLOT_LABEL[slot]}: ${pick.name}`}
+    >
+      {pick.img && <img src={pick.img} alt="" className="h-4 w-4 rounded bg-pf-bg-dark" />}
+      <span className="max-w-[16ch] truncate">{pick.name}</span>
+      <button
+        type="button"
+        aria-label={`Clear ${SLOT_LABEL[slot]} pick`}
+        onClick={onClear}
+        className="ml-0.5 rounded px-1 text-pf-alt-dark hover:bg-pf-bg-dark hover:text-pf-primary"
+      >
+        ×
+      </button>
+    </span>
   );
 }
 

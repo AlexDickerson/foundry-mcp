@@ -17,8 +17,12 @@ const traitsParam = z
   .transform((v) => (Array.isArray(v) ? v : v.split(',')).map((t) => t.trim()).filter((t) => t.length > 0))
   .optional();
 
+// `q` is optional so pickers can browse by trait/pack/level without a
+// text query. The handler short-circuits to an empty response unless
+// at least one of q / packId / traits / maxLevel is provided, to avoid
+// accidentally returning the entire compendium.
 export const compendiumSearchQuery = z.object({
-  q: z.string().min(1),
+  q: z.string().optional(),
   packId: z.string().optional(),
   documentType: z.string().optional(),
   traits: traitsParam,

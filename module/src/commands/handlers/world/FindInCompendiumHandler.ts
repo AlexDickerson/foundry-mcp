@@ -68,15 +68,24 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
   // query degenerates to a plain substring check. Ranking still privileges
   // contiguous phrase matches over scattered-token matches (see score()).
   const joinedQuery = params.name.trim().toLowerCase();
-  if (!joinedQuery) return { matches: [] };
-  const tokens = joinedQuery.split(/\s+/).filter((t) => t.length > 0);
-  if (tokens.length === 0) return { matches: [] };
+  const tokens = joinedQuery ? joinedQuery.split(/\s+/).filter((t) => t.length > 0) : [];
+  const hasNameFilter = tokens.length > 0;
 
   const limit = Math.max(1, Math.min(params.limit ?? 10, 100));
 
   const requiredTraits = (params.traits ?? []).map((t) => t.toLowerCase()).filter((t) => t.length > 0);
   const hasTraitFilter = requiredTraits.length > 0;
   const hasLevelFilter = typeof params.maxLevel === 'number';
+
+  // Guard rail: with no name and no other narrowing filter, returning
+  // every item in every pack is almost never what the caller wants
+  // and makes the network trip hurt. Force them to narrow.
+  const hasPackFilter = params.packId !== undefined;
+  const hasTypeFilter = params.documentType !== undefined;
+  if (!hasNameFilter && !hasTraitFilter && !hasLevelFilter && !hasPackFilter && !hasTypeFilter) {
+    return { matches: [] };
+  }
+
   // Ask Foundry for the extra index columns only when a filter or the
   // caller needs them. Plain name-only queries stay on the lean index.
   const indexFields = hasTraitFilter || hasLevelFilter ? ['system.traits.value', 'system.level.value'] : undefined;
@@ -114,8 +123,10 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
       const lower = entryName.toLowerCase();
       // Every token must appear somewhere in the name for this entry to
       // qualify. Ranking (below) then distinguishes "entire phrase present
-      // contiguously" from "tokens present but scattered".
-      if (!tokens.every((t) => lower.includes(t))) return;
+      // contiguously" from "tokens present but scattered". Browse mode
+      // (no tokens) skips the name check entirely and falls through to
+      // the trait/level filters.
+      if (hasNameFilter && !tokens.every((t) => lower.includes(t))) return;
 
       const entryTraits = extractTraits(entry);
       if (hasTraitFilter) {
@@ -136,7 +147,9 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
         name: entryName,
         type: entry.type ?? pack.metadata.type,
         img: entry.img ?? '',
-        rank: score(lower, joinedQuery),
+        // In browse mode every entry ranks equal; final sort falls back
+        // to alphabetical (below).
+        rank: hasNameFilter ? score(lower, joinedQuery) : 0,
       };
       // Only surface the extra fields when we asked Foundry for them,
       // so name-only queries keep getting the lean response.

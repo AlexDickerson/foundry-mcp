@@ -39,8 +39,10 @@ export interface ApiError {
 
 export interface CompendiumSearchOptions {
   /** Free-text query tokenised on whitespace; every token must appear
-   *  in a candidate's name. Required. */
-  q: string;
+   *  in a candidate's name. Optional — pickers can browse by trait /
+   *  pack / level alone. The server returns an empty response when
+   *  every filter field is empty, as a guard rail. */
+  q?: string;
   /** Restrict to a single pack (e.g. 'pf2e.feats-srd'). */
   packId?: string;
   /** Restrict to packs whose document type matches (e.g. 'Item'). */

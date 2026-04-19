@@ -174,13 +174,14 @@ describe('findInCompendiumHandler', () => {
     expect(result.matches).toHaveLength(10);
   });
 
-  it('returns empty matches for a blank query', async () => {
+  it('returns empty matches when nothing narrows the search', async () => {
+    // No q, no packId, no documentType, no traits, no maxLevel → guard
+    // rail kicks in and returns empty instead of dumping every pack.
     const p1 = createPack('pack', [{ _id: '1', name: 'Anything', type: 'npc' }]);
     setGame([p1]);
 
-    const result = await findInCompendiumHandler({ name: '   ' });
-
-    expect(result.matches).toEqual([]);
+    expect((await findInCompendiumHandler({ name: '   ' })).matches).toEqual([]);
+    expect((await findInCompendiumHandler({ name: '' })).matches).toEqual([]);
   });
 
   it('returns empty matches when packs collection is undefined', async () => {
@@ -273,21 +274,16 @@ describe('findInCompendiumHandler', () => {
 
   // --- Trait + level filters ----------------------------------------------
 
-  it('filters by a required trait', async () => {
+  it('filters by a required trait (name + trait)', async () => {
     const p1 = createPack('pf2e.feats-srd', [
       { _id: '1', name: 'Sudden Charge', type: 'feat', system: { traits: { value: ['barbarian', 'fighter'] } } },
       { _id: '2', name: 'Power Attack', type: 'feat', system: { traits: { value: ['fighter'] } } },
     ]);
     setGame([p1]);
 
-    const result = await findInCompendiumHandler({ name: '', traits: ['barbarian'] });
-    // name=''; but only 'sudden' gives hits under our tokenizer — so query instead with a wildcard.
-    // Swap: pass a letter common to both names.
-    const result2 = await findInCompendiumHandler({ name: 'a', traits: ['barbarian'] });
+    const result = await findInCompendiumHandler({ name: 'a', traits: ['barbarian'] });
 
-    // Empty-name still short-circuits before filtering.
-    expect(result.matches).toEqual([]);
-    expect(result2.matches.map((m) => m.name)).toEqual(['Sudden Charge']);
+    expect(result.matches.map((m) => m.name)).toEqual(['Sudden Charge']);
   });
 
   it('requires every trait in the filter to be present', async () => {
@@ -392,6 +388,67 @@ describe('findInCompendiumHandler', () => {
     await findInCompendiumHandler({ name: 'sudden' });
 
     expect(p1.getIndex.mock.calls[0]?.[0]).toBeUndefined();
+  });
+
+  // --- Browse mode (empty q, at least one other filter) -------------------
+
+  it('browses by trait alone (no text query)', async () => {
+    const p1 = createPack('pf2e.feats-srd', [
+      { _id: '1', name: 'Sudden Charge', type: 'feat', system: { traits: { value: ['barbarian', 'fighter'] } } },
+      { _id: '2', name: 'Rage', type: 'feat', system: { traits: { value: ['barbarian'] } } },
+      { _id: '3', name: 'Power Attack', type: 'feat', system: { traits: { value: ['fighter'] } } },
+    ]);
+    setGame([p1]);
+
+    const result = await findInCompendiumHandler({ name: '', traits: ['barbarian'] });
+
+    // No text → every barbarian-tagged feat, alphabetically.
+    expect(result.matches.map((m) => m.name)).toEqual(['Rage', 'Sudden Charge']);
+  });
+
+  it('browses by maxLevel alone', async () => {
+    const p1 = createPack('pf2e.feats-srd', [
+      { _id: '1', name: 'Sudden Charge', type: 'feat', system: { level: { value: 1 } } },
+      { _id: '2', name: 'Sudden Leap', type: 'feat', system: { level: { value: 8 } } },
+    ]);
+    setGame([p1]);
+
+    const result = await findInCompendiumHandler({ name: '', maxLevel: 2 });
+
+    expect(result.matches.map((m) => m.name)).toEqual(['Sudden Charge']);
+  });
+
+  it('browses by packId alone', async () => {
+    const p1 = createPack('pf2e.ancestries', [{ _id: '1', name: 'Human', type: 'ancestry' }]);
+    const p2 = createPack('pf2e.feats-srd', [{ _id: '2', name: 'Power Attack', type: 'feat' }]);
+    setGame([p1, p2]);
+
+    const result = await findInCompendiumHandler({ name: '', packId: 'pf2e.ancestries' });
+
+    expect(result.matches.map((m) => m.name)).toEqual(['Human']);
+  });
+
+  it('browses by documentType alone', async () => {
+    const actors = createPack('actors.pack', [{ _id: '1', name: 'Goblin', type: 'npc' }]);
+    const items = createPack('items.pack', [{ _id: '2', name: 'Potion', type: 'consumable' }], { type: 'Item' });
+    setGame([actors, items]);
+
+    const result = await findInCompendiumHandler({ name: '', documentType: 'Item' });
+
+    expect(result.matches.map((m) => m.name)).toEqual(['Potion']);
+  });
+
+  it('combines trait browse with a partial text narrow', async () => {
+    const p1 = createPack('pf2e.feats-srd', [
+      { _id: '1', name: 'Rage', type: 'feat', system: { traits: { value: ['barbarian'] } } },
+      { _id: '2', name: 'Raging Intimidation', type: 'feat', system: { traits: { value: ['barbarian'] } } },
+      { _id: '3', name: 'Sudden Charge', type: 'feat', system: { traits: { value: ['barbarian'] } } },
+    ]);
+    setGame([p1]);
+
+    const result = await findInCompendiumHandler({ name: 'rag', traits: ['barbarian'] });
+
+    expect(result.matches.map((m) => m.name)).toEqual(['Rage', 'Raging Intimidation']);
   });
 
   it('ignores entries missing a level when maxLevel filter is active', async () => {
