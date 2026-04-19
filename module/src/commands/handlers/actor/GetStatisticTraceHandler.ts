@@ -47,9 +47,7 @@ function resolveStatistic(actor: StatisticActor, slug: string): Statistic | null
   return null;
 }
 
-export function getStatisticTraceHandler(
-  params: GetStatisticTraceParams,
-): Promise<StatisticTraceResult> {
+export function getStatisticTraceHandler(params: GetStatisticTraceParams): Promise<StatisticTraceResult> {
   const actor = getGame().actors.get(params.actorId);
 
   if (!actor) {

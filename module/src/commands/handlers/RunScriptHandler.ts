@@ -20,13 +20,12 @@ interface FoundryGlobals {
 // treat the server flag as a defense-in-depth hint, not a hard boundary.
 export async function runScriptHandler(params: RunScriptParams): Promise<RunScriptResult> {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- eval IS the feature
-  const fn = new Function(
-    'game',
-    'canvas',
-    'CONFIG',
-    'Hooks',
-    `return (async () => {\n${params.script}\n})();`,
-  ) as (game: unknown, canvas: unknown, CONFIG: unknown, Hooks: unknown) => Promise<unknown>;
+  const fn = new Function('game', 'canvas', 'CONFIG', 'Hooks', `return (async () => {\n${params.script}\n})();`) as (
+    game: unknown,
+    canvas: unknown,
+    CONFIG: unknown,
+    Hooks: unknown,
+  ) => Promise<unknown>;
   const g = globalThis as unknown as FoundryGlobals;
   const result: unknown = await fn(g.game, g.canvas, g.CONFIG, g.Hooks);
 

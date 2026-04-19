@@ -53,7 +53,8 @@ export async function buildHttpApp(): Promise<FastifyInstance> {
       log.error(`api ${req.method} ${req.url} 504 ${msg}`);
       reply.code(504).send({
         error: msg,
-        suggestion: 'The Foundry module may be busy preparing data for a large world. Try again, or check the Foundry console for errors.',
+        suggestion:
+          'The Foundry module may be busy preparing data for a large world. Try again, or check the Foundry console for errors.',
       });
       return;
     }
