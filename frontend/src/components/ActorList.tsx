@@ -7,7 +7,11 @@ type State =
   | { kind: 'error'; message: string; suggestion?: string }
   | { kind: 'ready'; actors: ActorSummary[] };
 
-export function ActorList(): React.ReactElement {
+interface Props {
+  onSelect?: (actor: ActorSummary) => void;
+}
+
+export function ActorList({ onSelect }: Props = {}): React.ReactElement {
   const [state, setState] = useState<State>({ kind: 'loading' });
 
   useEffect(() => {
@@ -48,12 +52,30 @@ export function ActorList(): React.ReactElement {
 
   return (
     <ul className="divide-y divide-neutral-200 rounded border border-neutral-200">
-      {state.actors.map((actor) => (
-        <li key={actor.id} className="flex items-center gap-3 px-4 py-3">
-          <span className="flex-1 truncate font-medium">{actor.name}</span>
-          <span className="text-xs uppercase tracking-wide text-neutral-500">{actor.type}</span>
-        </li>
-      ))}
+      {state.actors.map((actor) => {
+        const isCharacter = actor.type === 'character';
+        const clickable = isCharacter && onSelect !== undefined;
+        return (
+          <li
+            key={actor.id}
+            className={[
+              'flex items-center gap-3 px-4 py-3',
+              clickable ? 'cursor-pointer hover:bg-neutral-50' : '',
+            ].join(' ')}
+            onClick={
+              clickable
+                ? (): void => {
+                    onSelect(actor);
+                  }
+                : undefined
+            }
+          >
+            <span className="flex-1 truncate font-medium">{actor.name}</span>
+            <span className="text-xs uppercase tracking-wide text-neutral-500">{actor.type}</span>
+            {clickable && <span className="text-neutral-400">→</span>}
+          </li>
+        );
+      })}
     </ul>
   );
 }
