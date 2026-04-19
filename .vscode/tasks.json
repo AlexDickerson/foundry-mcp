@@ -168,6 +168,11 @@
     },
     //  ─── Frontend (React SPA, Vite) ─────────────────────────────────────
     {
+      //  Long-running; isBackground + a background problemMatcher lets
+      //  VS Code know when Vite has actually finished starting so
+      //  preLaunchTask (the Chrome debug config) can proceed to attach
+      //  instead of hanging forever waiting for the task to "finish".
+      //  Matches Vite's startup banner: `VITE v8.x.x  ready in N ms`.
       "label": "frontend: dev",
       "detail": "Vite dev server on :5173 — proxies /api to foundry-mcp container on :8765",
       "type": "shell",
@@ -175,7 +180,15 @@
       "options": { "cwd": "${workspaceFolder}/frontend" },
       "isBackground": true,
       "presentation": { "panel": "dedicated", "group": "frontend", "reveal": "always" },
-      "problemMatcher": []
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": [{ "regexp": "^$", "file": 1, "location": 2, "message": 3 }],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\s*VITE\\s+v",
+          "endsPattern": "ready in "
+        }
+      }
     },
     {
       "label": "frontend: build",
