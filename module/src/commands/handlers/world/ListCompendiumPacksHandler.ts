@@ -37,7 +37,7 @@ export async function listCompendiumPacksHandler(
       type: pack.metadata.type,
     };
     if (pack.metadata.system !== undefined) info.system = pack.metadata.system;
-    if (pack.metadata.packageName !== undefined) info.packageName = pack.metadata.packageName;
+    info.packageName = pack.metadata.packageName;
     packs.push(info);
   });
 

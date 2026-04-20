@@ -352,7 +352,11 @@ describe('findInCompendiumHandler', () => {
     expect(result.matches[0]?.traits).toEqual(['barbarian', 'fighter']);
   });
 
-  it('omits level + traits on plain name-only queries', async () => {
+  it('surfaces level + traits on every query now that the index fields are always loaded', async () => {
+    // Switched from lean-by-default to always-loaded because the
+    // handler needs `system.ancestry.slug` for heritage filtering
+    // and `isVersatile` tagging regardless of query shape. Traits +
+    // level come along for free.
     const p1 = createPack('pf2e.feats-srd', [
       {
         _id: '1',
@@ -365,11 +369,11 @@ describe('findInCompendiumHandler', () => {
 
     const result = await findInCompendiumHandler({ name: 'sudden' });
 
-    expect(result.matches[0]?.level).toBeUndefined();
-    expect(result.matches[0]?.traits).toBeUndefined();
+    expect(result.matches[0]?.level).toBe(1);
+    expect(result.matches[0]?.traits).toEqual(['barbarian']);
   });
 
-  it('requests extra index fields from Foundry when filtering', async () => {
+  it('requests the full index-field set from Foundry on every query', async () => {
     const p1 = createPack('pf2e.feats-srd', [
       { _id: '1', name: 'Sudden Charge', type: 'feat', system: { traits: { value: ['barbarian'] } } },
     ]);
@@ -378,16 +382,27 @@ describe('findInCompendiumHandler', () => {
     await findInCompendiumHandler({ name: 'sudden', traits: ['barbarian'] });
 
     const call = p1.getIndex.mock.calls[0]?.[0] as { fields?: string[] } | undefined;
-    expect(call?.fields).toEqual(['system.traits.value', 'system.level.value']);
+    expect(call?.fields).toEqual([
+      'system.traits.value',
+      'system.level.value',
+      'system.publication.title',
+      'system.ancestry.slug',
+    ]);
   });
 
-  it('does not request extra index fields for name-only queries', async () => {
+  it('still loads the full index-field set even for name-only queries', async () => {
     const p1 = createPack('pf2e.feats-srd', [{ _id: '1', name: 'Sudden Charge', type: 'feat' }]);
     setGame([p1]);
 
     await findInCompendiumHandler({ name: 'sudden' });
 
-    expect(p1.getIndex.mock.calls[0]?.[0]).toBeUndefined();
+    const call = p1.getIndex.mock.calls[0]?.[0] as { fields?: string[] } | undefined;
+    expect(call?.fields).toEqual([
+      'system.traits.value',
+      'system.level.value',
+      'system.publication.title',
+      'system.ancestry.slug',
+    ]);
   });
 
   // --- Browse mode (empty q, at least one other filter) -------------------

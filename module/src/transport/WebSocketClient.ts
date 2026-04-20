@@ -102,7 +102,8 @@ export class WebSocketClient {
   // prematurely, but the caller should still await the result with
   // its own UI fallbacks.
   sendEvent(type: string, payload: unknown): Promise<unknown> {
-    if (this.socket?.readyState !== WS_OPEN) {
+    const socket = this.socket;
+    if (socket === null || socket.readyState !== WS_OPEN) {
       return Promise.reject(new Error('WebSocket is not connected'));
     }
     const bridgeId = generateBridgeId();
@@ -113,7 +114,7 @@ export class WebSocketClient {
       }, BRIDGE_EVENT_TIMEOUT_MS);
       this.pendingBridgeEvents.set(bridgeId, { resolve, reject, timer });
       const event: BridgeEvent = { bridgeId, type, payload };
-      this.socket!.send(JSON.stringify(event));
+      socket.send(JSON.stringify(event));
     });
   }
 

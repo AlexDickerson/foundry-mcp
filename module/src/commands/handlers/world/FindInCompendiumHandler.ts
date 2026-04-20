@@ -218,12 +218,11 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
         //   0:   browse mode (no text query) — final sort is alpha.
         rank: hasNameFilter ? (allTokensInName ? score(lower, joinedQuery) : 4) : 0,
       };
-      // Only surface the extra fields when we asked Foundry for them,
-      // so name-only queries keep getting the lean response.
-      if (indexFields) {
-        if (entryLevel !== undefined) match.level = entryLevel;
-        if (entryTraits.length > 0) match.traits = entryTraits;
-      }
+      // Surface the extra index-loaded fields on the match. The
+      // handler always loads traits / level / publication /
+      // ancestry.slug now, so no conditional on field presence.
+      if (entryLevel !== undefined) match.level = entryLevel;
+      if (entryTraits.length > 0) match.traits = entryTraits;
       // `system.ancestry === null` is the pf2e signal for a versatile
       // heritage. Emit the flag only in that case so it doesn't
       // appear on every item.

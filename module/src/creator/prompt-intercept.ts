@@ -111,8 +111,9 @@ async function handlePrompt(app: PickAThingPromptApp, wsClient: WebSocketClient)
 
 function sameChoiceValue(a: PickAThingChoice['value'], b: PickAThingChoice['value']): boolean {
   if (a === b) return true;
-  if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
-    // Deep-equal shallow objects (choice values are typically flat)
+  // Deep-equal shallow object-valued choices (pf2e's `Record`-shaped
+  // selection payloads). Primitive mismatches fall through to false.
+  if (typeof a === 'object' && typeof b === 'object') {
     return JSON.stringify(a) === JSON.stringify(b);
   }
   return false;
