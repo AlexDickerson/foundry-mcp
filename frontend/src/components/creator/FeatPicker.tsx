@@ -19,7 +19,7 @@ interface Props {
   /** Pre-filters applied to every search. Text query is layered on top.
    *  `packIds` scopes silently (caller concern — which Foundry packs
    *  to read from); the user-visible filter is by publication source. */
-  filters: Pick<CompendiumSearchOptions, 'packIds' | 'documentType' | 'traits' | 'maxLevel'>;
+  filters: Pick<CompendiumSearchOptions, 'packIds' | 'documentType' | 'traits' | 'maxLevel' | 'ancestrySlug'>;
   /** Character state for prereq evaluation. Matches whose prereqs we
    *  can parse + fail get muted; optional "hide unmet" toggle filters
    *  them out entirely. `unknown` (unparseable prereqs) is always
@@ -131,8 +131,9 @@ export function FeatPicker({ title, filters, characterContext, onPick, onClose }
         traits: filters.traits ?? [],
         maxLevel: filters.maxLevel ?? null,
         packIds: callerPackIdsKey,
+        ancestrySlug: filters.ancestrySlug ?? null,
       }),
-    [selectedSources, filters.documentType, filters.traits, filters.maxLevel, callerPackIdsKey],
+    [selectedSources, filters.documentType, filters.traits, filters.maxLevel, callerPackIdsKey, filters.ancestrySlug],
   );
 
   useEffect(() => {
@@ -151,6 +152,7 @@ export function FeatPicker({ title, filters, characterContext, onPick, onClose }
     if (filters.documentType !== undefined) opts.documentType = filters.documentType;
     if (filters.traits !== undefined) opts.traits = filters.traits;
     if (filters.maxLevel !== undefined) opts.maxLevel = filters.maxLevel;
+    if (filters.ancestrySlug !== undefined) opts.ancestrySlug = filters.ancestrySlug;
     api
       .searchCompendium(opts)
       .then((result) => {
@@ -369,18 +371,12 @@ export function FeatPicker({ title, filters, characterContext, onPick, onClose }
               <p className="p-4 text-sm italic text-pf-alt">No matches. Loosen the filters or search term.</p>
             )}
             {state.kind === 'ready' && visibleMatches.length > 0 && (
-              <ul className="divide-y divide-pf-border">
-                {visibleMatches.map((match) => (
-                  <li key={match.uuid}>
-                    <MatchRow
-                      match={match}
-                      active={detailTarget?.uuid === match.uuid}
-                      evaluation={evaluations.get(match.uuid)}
-                      onSelect={setDetailTarget}
-                    />
-                  </li>
-                ))}
-              </ul>
+              <MatchList
+                matches={visibleMatches}
+                evaluations={evaluations}
+                activeUuid={detailTarget?.uuid}
+                onSelect={setDetailTarget}
+              />
             )}
           </div>
           {detailOpen && (
@@ -711,6 +707,75 @@ function FilterSummary({ filters }: { filters: Props['filters'] }): React.ReactE
   if (filters.maxLevel !== undefined) parts.push(`level ≤ ${filters.maxLevel.toString()}`);
   if (parts.length === 0) return null;
   return <p className="text-[10px] uppercase tracking-widest text-pf-alt">{parts.join(' · ')}</p>;
+}
+
+// Split results into ancestry-specific + versatile buckets when any
+// match carries `isVersatile`. Keeps the existing flat list otherwise
+// so non-heritage searches render unchanged.
+function MatchList({
+  matches,
+  evaluations,
+  activeUuid,
+  onSelect,
+}: {
+  matches: CompendiumMatch[];
+  evaluations: Map<string, Evaluation>;
+  activeUuid: string | undefined;
+  onSelect: (m: CompendiumMatch) => void;
+}): React.ReactElement {
+  const ancestrySpecific = matches.filter((m) => m.isVersatile !== true);
+  const versatile = matches.filter((m) => m.isVersatile === true);
+
+  if (versatile.length === 0) {
+    return (
+      <ul className="divide-y divide-pf-border">
+        {matches.map((match) => (
+          <li key={match.uuid}>
+            <MatchRow
+              match={match}
+              active={activeUuid === match.uuid}
+              evaluation={evaluations.get(match.uuid)}
+              onSelect={onSelect}
+            />
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <>
+      {ancestrySpecific.length > 0 && (
+        <ul className="divide-y divide-pf-border" data-match-group="ancestry-specific">
+          {ancestrySpecific.map((match) => (
+            <li key={match.uuid}>
+              <MatchRow
+                match={match}
+                active={activeUuid === match.uuid}
+                evaluation={evaluations.get(match.uuid)}
+                onSelect={onSelect}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+      <h3 className="border-t border-pf-border bg-pf-bg-dark/40 px-3 py-1.5 font-serif text-xs font-semibold uppercase tracking-widest text-pf-alt-dark">
+        Versatile Heritages
+      </h3>
+      <ul className="divide-y divide-pf-border" data-match-group="versatile">
+        {versatile.map((match) => (
+          <li key={match.uuid}>
+            <MatchRow
+              match={match}
+              active={activeUuid === match.uuid}
+              evaluation={evaluations.get(match.uuid)}
+              onSelect={onSelect}
+            />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
 }
 
 function MatchRow({

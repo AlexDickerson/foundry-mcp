@@ -1,4 +1,6 @@
 import type {
+  ActorItemRef,
+  ActorRef,
   ActorSummary,
   ApiError,
   CompendiumDocument,
@@ -25,10 +27,22 @@ export class ApiRequestError extends Error {
   }
 }
 
-async function request<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { Accept: 'application/json' },
-  });
+interface RequestOptions {
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  body?: unknown;
+}
+
+async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+  const method = opts.method ?? 'GET';
+  const init: RequestInit = {
+    method,
+    headers:
+      opts.body !== undefined
+        ? { Accept: 'application/json', 'Content-Type': 'application/json' }
+        : { Accept: 'application/json' },
+  };
+  if (opts.body !== undefined) init.body = JSON.stringify(opts.body);
+  const res = await fetch(`${BASE}${path}`, init);
   if (!res.ok) {
     let body: ApiError = { error: `HTTP ${res.status.toString()}` };
     try {
@@ -48,6 +62,7 @@ function buildCompendiumQuery(opts: CompendiumSearchOptions): string {
   if (opts.documentType !== undefined) params.set('documentType', opts.documentType);
   if (opts.traits !== undefined && opts.traits.length > 0) params.set('traits', opts.traits.join(','));
   if (opts.sources !== undefined && opts.sources.length > 0) params.set('sources', opts.sources.join(','));
+  if (opts.ancestrySlug !== undefined && opts.ancestrySlug.length > 0) params.set('ancestrySlug', opts.ancestrySlug);
   if (opts.maxLevel !== undefined) params.set('maxLevel', opts.maxLevel.toString());
   if (opts.limit !== undefined) params.set('limit', opts.limit.toString());
   return params.toString();
@@ -66,6 +81,24 @@ export const api = {
   },
   getCompendiumDocument: (uuid: string): Promise<{ document: CompendiumDocument }> =>
     request<{ document: CompendiumDocument }>(`/compendium/document?uuid=${encodeURIComponent(uuid)}`),
+  createActor: (body: {
+    name: string;
+    type: string;
+    folder?: string;
+    img?: string;
+    system?: Record<string, unknown>;
+  }): Promise<ActorRef> => request<ActorRef>('/actors', { method: 'POST', body }),
+  updateActor: (
+    id: string,
+    patch: { name?: string; img?: string; folder?: string; system?: Record<string, unknown> },
+  ): Promise<ActorRef> => request<ActorRef>(`/actors/${id}`, { method: 'PATCH', body: patch }),
+  addItemFromCompendium: (
+    id: string,
+    body: { packId: string; itemId: string; name?: string; quantity?: number },
+  ): Promise<ActorItemRef> =>
+    request<ActorItemRef>(`/actors/${id}/items/from-compendium`, { method: 'POST', body }),
+  deleteActorItem: (id: string, itemId: string): Promise<{ success: boolean }> =>
+    request<{ success: boolean }>(`/actors/${id}/items/${itemId}`, { method: 'DELETE' }),
   listCompendiumSources: (
     opts: {
       documentType?: string;

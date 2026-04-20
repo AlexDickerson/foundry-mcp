@@ -1112,6 +1112,12 @@ export interface FindInCompendiumParams {
    *  list (case-insensitive). Used by the source-book filter in the
    *  picker ("Pathfinder Player Core", "GM Core", ...). */
   sources?: string[];
+  /** Optional — restrict heritage-style items to those whose
+   *  `system.ancestry.slug` matches. Items with `system.ancestry ===
+   *  null` (versatile heritages like Aiuvarin) are passed through
+   *  regardless so the heritage picker still surfaces them. Items
+   *  without any `system.ancestry` field at all are unaffected. */
+  ancestrySlug?: string;
   /** Max results to return. Defaults to 10. */
   limit?: number;
 }
@@ -1129,6 +1135,11 @@ export interface CompendiumMatch {
    *  the response small. */
   level?: number;
   traits?: string[];
+  /** Set to `true` for heritage items with `system.ancestry === null`
+   *  (versatile heritages like Aiuvarin, Changeling, Beastkin). Absent
+   *  for ancestry-specific heritages and for items outside the
+   *  heritage tree. Callers group the picker list by this flag. */
+  isVersatile?: boolean;
 }
 
 export interface FindInCompendiumResult {

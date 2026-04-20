@@ -12,6 +12,31 @@ export interface ActorSummary {
   img: string;
 }
 
+// Narrow result shape returned by create-actor / update-actor — just
+// enough to thread the new id back to the caller and to log a name /
+// folder change. The full actor is re-fetched via /api/actors/:id/
+// prepared when the caller actually needs to render it.
+export interface ActorRef {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  folder: string | null;
+}
+
+// Result shape for add-item-from-compendium. Returns the newly-
+// created embedded item id so the wizard can remember which item to
+// delete when the user changes their pick.
+export interface ActorItemRef {
+  id: string;
+  name: string;
+  type: string;
+  img: string;
+  actorId: string;
+  actorName: string;
+}
+
 export interface PreparedActorItem {
   id: string;
   name: string;
@@ -59,6 +84,11 @@ export interface CompendiumSearchOptions {
    *  publication title is any of these (case-insensitive). Drives the
    *  source-book filter in the picker. */
   sources?: string[];
+  /** Restrict heritage-style items to those whose `system.ancestry.slug`
+   *  matches. Versatile heritages (ancestry === null) still come
+   *  through so the picker surfaces them; items without any
+   *  `system.ancestry` field are unaffected. */
+  ancestrySlug?: string;
   /** Max results. Clamped server-side to 1-100, defaults to 10. */
   limit?: number;
 }
@@ -76,6 +106,11 @@ export interface CompendiumMatch {
    *  searches lean). */
   level?: number;
   traits?: string[];
+  /** Set on heritage matches whose `system.ancestry === null` — pf2e's
+   *  tag for versatile heritages (Aiuvarin, Changeling, Beastkin …).
+   *  Absent for ancestry-specific heritages and for non-heritage items.
+   *  The picker uses this to render a "Versatile Heritages" section. */
+  isVersatile?: boolean;
 }
 
 export interface CompendiumPack {

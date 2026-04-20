@@ -30,9 +30,15 @@ export interface EnrichOptions {
 }
 
 export function enrichDescription(html: string, opts?: EnrichOptions): string {
+  // Flavor-intro normalisation: pf2e wraps some ancestries' /
+  // classes' opening paragraph in `<p><em>…</em></p>` (book-layout
+  // flair). In-app those read as unexpected italics while sibling
+  // entries show as plain prose, so strip the whole-paragraph em
+  // wrapper. Inline `<em>` inside text stays put.
+  const normalised = stripBlockItalicWrappers(html);
   // Damage first — its content can contain nested brackets so the
   // walker-based scanner handles it cleanly before any regex passes.
-  const damagePass = replaceDamageTokens(html, opts?.heightening);
+  const damagePass = replaceDamageTokens(normalised, opts?.heightening);
   // If heightening was requested but no `@Damage[...]` token was
   // rewritten (common for older pf2e spells whose descriptions are
   // plain prose), fall back to a regex that targets "NdS <type>
@@ -308,6 +314,20 @@ function extractFallbackLabel(uuid: string): string {
   // as a weak hint so at least something sensible shows.
   const parts = uuid.split('.');
   return parts.length >= 2 ? (parts[parts.length - 2] ?? 'link') : 'link';
+}
+
+// ─── Italic-wrapper normalisation ──────────────────────────────────────
+
+// Match `<p>` optional whitespace, `<em>` opening, content up to the
+// first `</em>` (non-greedy) that doesn't contain another block
+// boundary, optional whitespace, `</p>`. Replaces with `<p>…</p>` —
+// the em wrapper drops but any inline emphasis inside the paragraph
+// is preserved (another `<em>` inside the content would short-circuit
+// the non-greedy match anyway).
+const BLOCK_EM_PATTERN = /<p>\s*<em>([\s\S]*?)<\/em>\s*<\/p>/gi;
+
+function stripBlockItalicWrappers(html: string): string {
+  return html.replace(BLOCK_EM_PATTERN, (_match, inner: string) => `<p>${inner}</p>`);
 }
 
 // ─── HTML escaping ─────────────────────────────────────────────────────

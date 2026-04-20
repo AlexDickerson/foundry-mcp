@@ -28,6 +28,7 @@ export const compendiumSearchQuery = z.object({
   documentType: z.string().optional(),
   traits: csvParam,
   sources: csvParam,
+  ancestrySlug: z.string().optional(),
   maxLevel: z.coerce.number().int().nonnegative().max(30).optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
 });
@@ -50,6 +51,44 @@ export const getCompendiumDocumentQuery = z.object({
 
 export const evalBody = z.object({
   script: z.string().min(1).max(100_000),
+});
+
+// Minimal creation payload for the character-creator flow: a type +
+// a (possibly empty) name is enough to instantiate a blank actor that
+// the wizard will patch piecemeal. Callers can seed `system` as well
+// when they already have partial details.
+export const createActorBody = z.object({
+  name: z.string(),
+  type: z.string().min(1),
+  folder: z.string().optional(),
+  img: z.string().optional(),
+  system: z.record(z.string(), z.unknown()).optional(),
+});
+
+// Partial-merge update. Any subset of fields can be supplied; Foundry
+// does a deep merge on `system`, so patching e.g. `system.details.age`
+// leaves every other detail untouched.
+export const updateActorBody = z.object({
+  name: z.string().optional(),
+  img: z.string().optional(),
+  folder: z.string().optional(),
+  system: z.record(z.string(), z.unknown()).optional(),
+});
+
+// Item-on-actor operations for the wizard's piecemeal picks
+// (ancestry, heritage, class, background, deity). Copies the source
+// document out of the compendium, strips its `_id`, and attaches it
+// to the target actor.
+export const addItemFromCompendiumBody = z.object({
+  packId: z.string().min(1),
+  itemId: z.string().min(1),
+  name: z.string().optional(),
+  quantity: z.coerce.number().int().positive().optional(),
+});
+
+export const actorItemIdParams = z.object({
+  id: z.string().min(1),
+  itemId: z.string().min(1),
 });
 
 export interface ErrorResponse {

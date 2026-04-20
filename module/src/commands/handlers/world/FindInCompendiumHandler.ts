@@ -15,6 +15,10 @@ interface FoundrySystemSlice {
   traits?: { value?: unknown };
   level?: { value?: unknown };
   publication?: { title?: unknown };
+  // Heritages (and a few other child-of-ancestry items) carry a
+  // parent-ancestry reference here. Versatile heritages set this to
+  // null; most other item types omit it entirely.
+  ancestry?: { slug?: unknown } | null;
 }
 
 interface FoundryIndexEntry {
@@ -79,6 +83,8 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
   const hasLevelFilter = typeof params.maxLevel === 'number';
   const allowedSources = (params.sources ?? []).map((s) => s.toLowerCase()).filter((s) => s.length > 0);
   const hasSourceFilter = allowedSources.length > 0;
+  const ancestrySlug = params.ancestrySlug?.toLowerCase();
+  const hasAncestryFilter = typeof ancestrySlug === 'string' && ancestrySlug.length > 0;
 
   // Guard rail: with no name and no other narrowing filter, returning
   // every item in every pack is almost never what the caller wants
@@ -90,9 +96,16 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
   }
 
   // Always include traits (so the name query can hit trait tags),
-  // levels (free — level filter + display), and publication titles
-  // (source filter + display-ready).
-  const indexFields = ['system.traits.value', 'system.level.value', 'system.publication.title'];
+  // levels (free — level filter + display), publication titles
+  // (source filter + display-ready), and the heritage ancestry link
+  // (used both for the `ancestrySlug` filter and for surfacing the
+  // `isVersatile` flag on heritage results so the picker can group).
+  const indexFields = [
+    'system.traits.value',
+    'system.level.value',
+    'system.publication.title',
+    'system.ancestry.slug',
+  ];
 
   // Collect all candidate packs first so we can await getIndex for each in
   // sequence — packs have internal caching so the cost is bounded by the
@@ -164,6 +177,18 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
         if (!allowedSources.includes(entrySource.toLowerCase())) return;
       }
 
+      if (hasAncestryFilter) {
+        const entryAncestrySlug = extractAncestrySlug(entry);
+        // Three cases:
+        //   - entry has no ancestry field at all (not a heritage-like
+        //     item) → pass through
+        //   - entry has ancestry === null (versatile heritage) → pass
+        //   - entry has an ancestry slug → must match
+        if (entryAncestrySlug !== undefined && entryAncestrySlug !== null && entryAncestrySlug !== ancestrySlug) {
+          return;
+        }
+      }
+
       const match: ScoredMatch = {
         packId: pack.collection,
         packLabel: pack.metadata.label,
@@ -183,6 +208,12 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
       if (indexFields) {
         if (entryLevel !== undefined) match.level = entryLevel;
         if (entryTraits.length > 0) match.traits = entryTraits;
+      }
+      // `system.ancestry === null` is the pf2e signal for a versatile
+      // heritage. Emit the flag only in that case so it doesn't
+      // appear on every item.
+      if (extractAncestrySlug(entry) === null) {
+        match.isVersatile = true;
       }
       scored.push(match);
     });
@@ -212,4 +243,17 @@ function extractLevel(entry: FoundryIndexEntry): number | undefined {
 function extractSource(entry: FoundryIndexEntry): string | undefined {
   const raw = entry.system?.publication?.title;
   return typeof raw === 'string' && raw.length > 0 ? raw : undefined;
+}
+
+// Return the entry's ancestry slug (lowercased), `null` for versatile
+// heritages (where pf2e explicitly sets `system.ancestry = null`), or
+// `undefined` when the field isn't present at all. The tri-state
+// mirrors how the caller treats each case — "no field" means the
+// filter doesn't apply to this item.
+function extractAncestrySlug(entry: FoundryIndexEntry): string | null | undefined {
+  const anc = entry.system?.ancestry;
+  if (anc === undefined) return undefined;
+  if (anc === null) return null;
+  const slug = anc.slug;
+  return typeof slug === 'string' && slug.length > 0 ? slug.toLowerCase() : null;
 }
