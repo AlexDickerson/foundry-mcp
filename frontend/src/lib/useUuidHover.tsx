@@ -98,8 +98,12 @@ export function useUuidHover(): {
   };
 
   const handleMouseOver = (target: Element | null, _related: Element | null): void => {
-    const link = target?.closest('a[data-uuid]') as HTMLAnchorElement | null;
-    if (!link) return;
+    // Any element carrying `data-uuid` triggers a hover preview —
+    // enricher anchors use the attribute, and callers like the
+    // ChoiceSet prompt modal set it directly on a span inside an
+    // otherwise-interactive button.
+    const link = target?.closest('[data-uuid]') as HTMLElement | null;
+    if (!link || link.hasAttribute('data-uuid-popover')) return;
     const uuid = link.getAttribute('data-uuid');
     if (!uuid) return;
     cancelClose();
@@ -122,8 +126,8 @@ export function useUuidHover(): {
   };
 
   const handleMouseOut = (target: Element | null, related: Element | null): void => {
-    const link = target?.closest('a[data-uuid]');
-    if (!link) return;
+    const link = target?.closest('[data-uuid]') as HTMLElement | null;
+    if (!link || link.hasAttribute('data-uuid-popover')) return;
     // If we were about to open but the user slid off before the delay
     // elapsed, just drop the pending open — no popover was ever shown.
     cancelOpen();

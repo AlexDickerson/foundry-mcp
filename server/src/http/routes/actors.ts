@@ -7,6 +7,7 @@ import {
   addItemFromCompendiumBody,
   createActorBody,
   updateActorBody,
+  updateActorItemBody,
 } from '../schemas.js';
 
 export function registerActorRoutes(app: FastifyInstance): void {
@@ -55,5 +56,11 @@ export function registerActorRoutes(app: FastifyInstance): void {
   app.delete('/api/actors/:id/items/:itemId', async (req) => {
     const { id, itemId } = actorItemIdParams.parse(req.params);
     return sendCommand('delete-actor-item', { actorId: id, itemId });
+  });
+
+  app.patch('/api/actors/:id/items/:itemId', async (req) => {
+    const { id, itemId } = actorItemIdParams.parse(req.params);
+    const body = updateActorItemBody.parse(req.body);
+    return sendCommand('update-actor-item', { actorId: id, itemId, ...body });
   });
 }

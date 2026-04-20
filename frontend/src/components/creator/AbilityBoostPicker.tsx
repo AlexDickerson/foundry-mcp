@@ -33,7 +33,9 @@ const ABILITY_LABEL: Record<AbilityKey, string> = {
 // swap on the span forces React to tear down / re-mount the element,
 // which replays the CSS keyframe animation every toggle — enough to
 // cue "the number just moved" without a digit-by-digit counter.
-function BoostedMod({ mod, boosted }: { mod: number; boosted: boolean }): React.ReactElement {
+// Exported so the creator's attribute step can reuse the same
+// animated tile treatment instead of drifting its own styling.
+export function BoostedMod({ mod, boosted }: { mod: number; boosted: boolean }): React.ReactElement {
   const display = boosted ? mod + 1 : mod;
   return (
     <span

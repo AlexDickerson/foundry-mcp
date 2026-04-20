@@ -634,6 +634,11 @@ export interface AddItemFromCompendiumParams {
   itemId: string;
   name?: string;
   quantity?: number;
+  /** Shallow-merged into the copied item's `system` before creation.
+   *  Used by the character-creator to tag feats with the slot
+   *  location pf2e expects (`system.location = 'class-1'`, etc.)
+   *  so the sheet and Progression tab can match them to slots. */
+  systemOverrides?: Record<string, unknown>;
 }
 
 export interface UpdateActorItemParams {

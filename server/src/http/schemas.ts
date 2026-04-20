@@ -84,11 +84,37 @@ export const addItemFromCompendiumBody = z.object({
   itemId: z.string().min(1),
   name: z.string().optional(),
   quantity: z.coerce.number().int().positive().optional(),
+  // Pass-through overrides merged into the created item's
+  // `system` — used by the creator to tag feats with their
+  // `location` slot string.
+  systemOverrides: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const actorItemIdParams = z.object({
   id: z.string().min(1),
   itemId: z.string().min(1),
+});
+
+// Shallow-merge patch on an embedded item. `system` keys can use
+// Foundry dot-notation (e.g. `boosts.2.selected`) to target nested
+// fields without clobbering siblings; the module handler applies
+// them verbatim through `actor.updateEmbeddedDocuments`.
+export const updateActorItemBody = z.object({
+  name: z.string().optional(),
+  img: z.string().optional(),
+  system: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const bridgeIdParam = z.object({
+  id: z.string().min(1),
+});
+
+// Response body the frontend POSTs back to resolve a pending bridge
+// event. `value` is echoed verbatim to the module — no schema check
+// because the module's caller gets to validate against its own
+// domain (e.g. the ChoiceSet prompt matches against its choice list).
+export const resolvePromptBody = z.object({
+  value: z.unknown(),
 });
 
 export interface ErrorResponse {

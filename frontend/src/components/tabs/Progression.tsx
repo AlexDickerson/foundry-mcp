@@ -67,6 +67,44 @@ export function Progression({ characterLevel, items, characterContext }: Props):
   const [picks, setPicks] = useState<Map<SlotKey, Pick>>(new Map());
   const [pickerTarget, setPickerTarget] = useState<{ level: number; slot: SlotType } | null>(null);
 
+  // Hydrate the picks Map from embedded feat items' `system.location`
+  // strings. pf2e tags feats added via its own "Add to Slot" flow
+  // with `<category>-<level>` (e.g. "ancestry-1", "class-2"); the
+  // character-creator wizard sets the same string when it
+  // piecemeal-adds L1 feats. This seeds the chips so the progression
+  // timeline reflects what's already on the actor. Local edits from
+  // within this tab continue to mutate the same Map.
+  useEffect(() => {
+    const hydrated = new Map<SlotKey, Pick>();
+    for (const item of items) {
+      if (item.type !== 'feat') continue;
+      const rawLocation = (item.system as { location?: unknown } | null)?.location;
+      if (typeof rawLocation !== 'string' || rawLocation.length === 0) continue;
+      const parsed = parseFeatLocation(rawLocation);
+      if (parsed === null) continue;
+      hydrated.set(slotKey(parsed.level, parsed.slot), {
+        kind: 'feat',
+        match: {
+          packId: '',
+          packLabel: '',
+          documentId: item.id,
+          // Use the actor-local item id as a stand-in uuid: the
+          // PreparedActor payload drops `flags.core.sourceId` so we
+          // don't know the compendium origin. Hover previews won't
+          // resolve, but the chip shows name + img correctly.
+          uuid: item.id,
+          name: item.name,
+          type: item.type,
+          img: item.img,
+        },
+      });
+    }
+    setPicks(hydrated);
+    // Only re-hydrate when the list of items itself changes identity —
+    // in practice that's when the actor refetches, not on every
+    // internal picks mutation.
+  }, [items]);
+
   if (!classItem) {
     return <p className="text-sm text-pf-alt-dark">No class item on this character.</p>;
   }
@@ -694,6 +732,19 @@ function groupFeaturesByLevel(items: ClassItem['system']['items']): Map<number, 
   }
   for (const [, arr] of out) arr.sort((a, b) => a.name.localeCompare(b.name));
   return out;
+}
+
+// Parse pf2e's `<category>-<level>` slot location strings into the
+// Progression tab's slot taxonomy. Returns null for anything we
+// don't model (archetype-N, etc. — pf2e archetype feats live
+// outside the stock level chassis).
+function parseFeatLocation(location: string): { slot: SlotType; level: number } | null {
+  const match = /^(ancestry|class|skill|general)-(\d+)$/.exec(location);
+  if (!match) return null;
+  const level = Number(match[2]);
+  if (!Number.isFinite(level) || level < 1) return null;
+  const prefix = match[1] as 'ancestry' | 'class' | 'skill' | 'general';
+  return { slot: `${prefix}-feat`, level };
 }
 
 function buildLevelSlotMap(sys: ClassItem['system']): Map<number, readonly SlotType[]> {

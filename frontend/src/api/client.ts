@@ -94,11 +94,25 @@ export const api = {
   ): Promise<ActorRef> => request<ActorRef>(`/actors/${id}`, { method: 'PATCH', body: patch }),
   addItemFromCompendium: (
     id: string,
-    body: { packId: string; itemId: string; name?: string; quantity?: number },
+    body: {
+      packId: string;
+      itemId: string;
+      name?: string;
+      quantity?: number;
+      systemOverrides?: Record<string, unknown>;
+    },
   ): Promise<ActorItemRef> =>
     request<ActorItemRef>(`/actors/${id}/items/from-compendium`, { method: 'POST', body }),
   deleteActorItem: (id: string, itemId: string): Promise<{ success: boolean }> =>
     request<{ success: boolean }>(`/actors/${id}/items/${itemId}`, { method: 'DELETE' }),
+  updateActorItem: (
+    id: string,
+    itemId: string,
+    patch: { name?: string; img?: string; system?: Record<string, unknown> },
+  ): Promise<ActorItemRef> =>
+    request<ActorItemRef>(`/actors/${id}/items/${itemId}`, { method: 'PATCH', body: patch }),
+  resolvePrompt: (bridgeId: string, value: unknown | null): Promise<{ ok: boolean }> =>
+    request<{ ok: boolean }>(`/prompts/${bridgeId}/resolve`, { method: 'POST', body: { value } }),
   listCompendiumSources: (
     opts: {
       documentType?: string;

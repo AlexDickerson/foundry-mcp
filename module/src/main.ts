@@ -1,4 +1,5 @@
 import { ConfigManager } from '@/config/ConfigManager';
+import { installPromptInterception } from '@/creator/prompt-intercept';
 import { registerSettings, registerMenu, getWsUrl, getApiKey } from '@/settings/SettingsManager';
 import { WebSocketClient } from '@/transport';
 import {
@@ -289,6 +290,8 @@ function initializeWebSocket(
         console.error('Foundry API Bridge | Command execution failed:', error);
       });
   });
+
+  installPromptInterception(wsClient);
 
   wsClient.connect();
 }

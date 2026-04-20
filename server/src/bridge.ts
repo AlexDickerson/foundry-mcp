@@ -5,6 +5,68 @@ import { COMMAND_TIMEOUT_MS } from './config.js';
 import { log } from './logger.js';
 
 // ---------------------------------------------------------------------------
+// Module-initiated bridge events — the module pushes these for things like
+// pf2e ChoiceSet prompts that need a frontend user to answer. We keep a
+// Map of unresolved prompts plus a lightweight SSE fan-out for frontend
+// subscribers. The module's `sendEvent` awaits until the frontend POSTs a
+// resolution via `resolveBridgeEvent` below.
+// ---------------------------------------------------------------------------
+
+interface PendingBridgeEvent {
+  bridgeId: string;
+  type: string;
+  payload: unknown;
+  createdAt: number;
+}
+
+const pendingBridgeEvents = new Map<string, PendingBridgeEvent>();
+const sseSubscribers = new Set<(chunk: string) => void>();
+
+export function getPendingBridgeEvents(): PendingBridgeEvent[] {
+  return Array.from(pendingBridgeEvents.values());
+}
+
+export function subscribeToBridgeEvents(onEvent: (chunk: string) => void): () => void {
+  sseSubscribers.add(onEvent);
+  return () => {
+    sseSubscribers.delete(onEvent);
+  };
+}
+
+function broadcastSse(payload: { kind: 'added' | 'removed'; event: PendingBridgeEvent }): void {
+  // SSE chunk format: "event: ...\ndata: ...\n\n" per the spec. Using a
+  // single "data" line and a JSON payload keeps the frontend parser
+  // trivial.
+  const chunk = `data: ${JSON.stringify(payload)}\n\n`;
+  for (const send of sseSubscribers) {
+    try {
+      send(chunk);
+    } catch (err) {
+      // Dead subscriber — best-effort drop it.
+      sseSubscribers.delete(send);
+      log.warn(`SSE subscriber write failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+}
+
+/** Resolve a pending bridge event with a value produced by the frontend.
+ *  Sends the reply back over the module socket and removes the pending
+ *  entry. Returns true when the event existed; false when it had already
+ *  been resolved / timed out / never registered. */
+export function resolveBridgeEvent(bridgeId: string, data: unknown): boolean {
+  const pending = pendingBridgeEvents.get(bridgeId);
+  if (!pending) return false;
+  pendingBridgeEvents.delete(bridgeId);
+  broadcastSse({ kind: 'removed', event: pending });
+  if (!foundrySocket || foundrySocket.readyState !== WebSocket.OPEN) {
+    log.warn(`Bridge event ${bridgeId.slice(0, 8)} resolved but Foundry is disconnected`);
+    return true;
+  }
+  foundrySocket.send(JSON.stringify({ bridgeId, success: true, data }));
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Foundry Bridge — WebSocket connection to the Foundry module
 // ---------------------------------------------------------------------------
 
@@ -109,22 +171,42 @@ wss.on('connection', (ws: WebSocket) => {
 
   ws.on('message', (raw: Buffer) => {
     try {
-      const msg = JSON.parse(raw.toString()) as {
-        id: string;
-        success: boolean;
-        data?: unknown;
-        error?: string;
-      };
-      const pending = pendingCommands.get(msg.id);
-      if (!pending) {
-        log.warn(`Received response for unknown command: ${msg.id.slice(0, 8)}`);
+      const msg = JSON.parse(raw.toString()) as Record<string, unknown>;
+
+      // Module-initiated bridge event: store + broadcast for frontend
+      // subscribers. The module is blocking on our reply; we dispatch
+      // it from `resolveBridgeEvent` once the frontend POSTs back.
+      if (typeof msg['bridgeId'] === 'string' && typeof msg['type'] === 'string' && 'payload' in msg) {
+        const bridgeId = msg['bridgeId'];
+        const type = msg['type'];
+        const entry: PendingBridgeEvent = {
+          bridgeId,
+          type,
+          payload: msg['payload'],
+          createdAt: Date.now(),
+        };
+        pendingBridgeEvents.set(bridgeId, entry);
+        broadcastSse({ kind: 'added', event: entry });
+        log.info(`bridge-event << ${type} [${bridgeId.slice(0, 8)}]`);
         return;
       }
-      pendingCommands.delete(msg.id);
-      if (msg.success) {
-        pending.resolve(msg.data);
+
+      // Command response: correlate against pendingCommands.
+      if (typeof msg['id'] !== 'string' || typeof msg['success'] !== 'boolean') {
+        log.warn(`Ignoring unrecognised Foundry message: ${JSON.stringify(msg).slice(0, 200)}`);
+        return;
+      }
+      const response = msg as { id: string; success: boolean; data?: unknown; error?: string };
+      const pending = pendingCommands.get(response.id);
+      if (!pending) {
+        log.warn(`Received response for unknown command: ${response.id.slice(0, 8)}`);
+        return;
+      }
+      pendingCommands.delete(response.id);
+      if (response.success) {
+        pending.resolve(response.data);
       } else {
-        pending.reject(new Error(msg.error ?? 'Command failed'));
+        pending.reject(new Error(response.error ?? 'Command failed'));
       }
     } catch (err) {
       log.error(`Failed to parse Foundry message: ${err}`);
@@ -137,6 +219,12 @@ wss.on('connection', (ws: WebSocket) => {
     for (const [id, pending] of pendingCommands) {
       pending.reject(new Error('Foundry module disconnected'));
       pendingCommands.delete(id);
+    }
+    // Any unanswered bridge events are dead — tell subscribers so the
+    // frontend can clear its modal instead of staring at a stale prompt.
+    for (const [bridgeId, entry] of pendingBridgeEvents) {
+      pendingBridgeEvents.delete(bridgeId);
+      broadcastSse({ kind: 'removed', event: entry });
     }
   });
 
