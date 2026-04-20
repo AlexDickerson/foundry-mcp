@@ -39,15 +39,7 @@ function resetPendingActor(): void {
 // delete the previous pick for that slot). "Finish" lands the user
 // on the live sheet view for further allocation.
 
-type Step =
-  | 'identity'
-  | 'ancestry'
-  | 'class'
-  | 'background'
-  | 'attributes'
-  | 'skills'
-  | 'languages'
-  | 'review';
+type Step = 'identity' | 'ancestry' | 'class' | 'background' | 'attributes' | 'skills' | 'languages' | 'review';
 
 // Picker targets are decoupled from wizard steps: heritage selection
 // lives inside the ancestry step rather than owning a step of its own
@@ -188,7 +180,10 @@ type PickerFilters = Pick<
   'packIds' | 'documentType' | 'traits' | 'anyTraits' | 'ancestrySlug' | 'maxLevel'
 >;
 
-const STATIC_PICKER_FILTERS: Record<Exclude<PickerTarget, 'heritage' | 'class-feat' | 'ancestry-feat'>, PickerFilters> = {
+const STATIC_PICKER_FILTERS: Record<
+  Exclude<PickerTarget, 'heritage' | 'class-feat' | 'ancestry-feat'>,
+  PickerFilters
+> = {
   ancestry: { packIds: ['pf2e.ancestries'], documentType: 'Item' },
   class: { packIds: ['pf2e.classes'], documentType: 'Item' },
   background: { packIds: ['pf2e.backgrounds'], documentType: 'Item' },
@@ -203,10 +198,7 @@ interface Props {
 // Actor lifecycle: wizard opens → creating → ready (actor exists in
 // Foundry, piecemeal patches flow through). Failed creation blocks
 // the UI with a retry button.
-type CreatorState =
-  | { kind: 'creating' }
-  | { kind: 'ready'; actorId: string }
-  | { kind: 'error'; message: string };
+type CreatorState = { kind: 'creating' } | { kind: 'ready'; actorId: string } | { kind: 'error'; message: string };
 
 export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElement {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -260,14 +252,7 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
     return (): void => {
       clearTimeout(timeout);
     };
-  }, [
-    actorId,
-    draft.name,
-    draft.gender,
-    draft.age,
-    draft.ethnicity,
-    draft.nationality,
-  ]);
+  }, [actorId, draft.name, draft.gender, draft.age, draft.ethnicity, draft.nationality]);
 
   const jumpToSection = (id: Step): void => {
     const el = document.getElementById(`creator-section-${id}`);
@@ -417,8 +402,12 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
           <CreatorSection id="identity" title="Identity">
             <IdentityStep
               draft={draft}
-              onChange={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
-              onPickDeity={(): void => setOpenPicker('deity')}
+              onChange={(patch): void => {
+                setDraft((d) => ({ ...d, ...patch }));
+              }}
+              onPickDeity={(): void => {
+                setOpenPicker('deity');
+              }}
             />
           </CreatorSection>
 
@@ -428,9 +417,15 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
               heritage={draft.heritage?.match ?? null}
               ancestryFeat={draft.ancestryFeat?.match ?? null}
               ancestrySlugResolved={draft.ancestrySlug !== null}
-              onPickAncestry={(): void => setOpenPicker('ancestry')}
-              onPickHeritage={(): void => setOpenPicker('heritage')}
-              onPickAncestryFeat={(): void => setOpenPicker('ancestry-feat')}
+              onPickAncestry={(): void => {
+                setOpenPicker('ancestry');
+              }}
+              onPickHeritage={(): void => {
+                setOpenPicker('heritage');
+              }}
+              onPickAncestryFeat={(): void => {
+                setOpenPicker('ancestry-feat');
+              }}
             />
           </CreatorSection>
 
@@ -439,11 +434,15 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
               classPick={draft.class?.match ?? null}
               classFeat={draft.classFeat?.match ?? null}
               classSlugResolved={draft.classSlug !== null}
-              onPickClass={(): void => setOpenPicker('class')}
-              onPickClassFeat={(): void => setOpenPicker('class-feat')}
-              onL1FeatAvailability={(grants): void =>
-                setDraft((d) => (d.classGrantsL1Feat === grants ? d : { ...d, classGrantsL1Feat: grants }))
-              }
+              onPickClass={(): void => {
+                setOpenPicker('class');
+              }}
+              onPickClassFeat={(): void => {
+                setOpenPicker('class-feat');
+              }}
+              onL1FeatAvailability={(grants): void => {
+                setDraft((d) => (d.classGrantsL1Feat === grants ? d : { ...d, classGrantsL1Feat: grants }));
+              }}
             />
           </CreatorSection>
 
@@ -451,7 +450,9 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
             <PickerCard
               label="Background"
               selection={draft.background?.match ?? null}
-              onOpen={(): void => setOpenPicker('background')}
+              onOpen={(): void => {
+                setOpenPicker('background');
+              }}
             />
           </CreatorSection>
 
@@ -468,7 +469,9 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
               ancestryBoosts={draft.ancestryBoosts}
               backgroundBoosts={draft.backgroundBoosts}
               classKeyAbility={draft.classKeyAbility}
-              onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
+              onDraftPatch={(patch): void => {
+                setDraft((d) => ({ ...d, ...patch }));
+              }}
             />
           </CreatorSection>
 
@@ -480,7 +483,9 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
               classItemId={draft.class?.itemId ?? null}
               skillPicks={draft.skillPicks}
               intMod={computeIntMod(draft)}
-              onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
+              onDraftPatch={(patch): void => {
+                setDraft((d) => ({ ...d, ...patch }));
+              }}
             />
           </CreatorSection>
 
@@ -490,10 +495,12 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
               ancestryPick={draft.ancestry?.match ?? null}
               languagePicks={draft.languagePicks}
               intMod={computeIntMod(draft)}
-              onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
-              onAllowanceResolved={(n): void =>
-                setDraft((d) => (d.languageAllowance === n ? d : { ...d, languageAllowance: n }))
-              }
+              onDraftPatch={(patch): void => {
+                setDraft((d) => ({ ...d, ...patch }));
+              }}
+              onAllowanceResolved={(n): void => {
+                setDraft((d) => (d.languageAllowance === n ? d : { ...d, languageAllowance: n }));
+              }}
             />
           </CreatorSection>
 
@@ -516,7 +523,9 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
               title={`Choose a ${PICKER_LABEL[openPicker]}`}
               filters={pickerFilters}
               onPick={applyPick}
-              onClose={(): void => setOpenPicker(null)}
+              onClose={(): void => {
+                setOpenPicker(null);
+              }}
             />
           )}
         </>
@@ -554,7 +563,9 @@ function StepNav({
           <li key={s} className="contents">
             <button
               type="button"
-              onClick={(): void => onJump(s)}
+              onClick={(): void => {
+                onJump(s);
+              }}
               data-step={s}
               aria-current={isActive ? 'step' : undefined}
               className={[
@@ -649,7 +660,9 @@ function IdentityStep({
               id={`creator-${key}`}
               type="text"
               value={draft[key]}
-              onChange={(e): void => onChange({ [key]: e.target.value } as Partial<Draft>)}
+              onChange={(e): void => {
+                onChange({ [key]: e.target.value } as Partial<Draft>);
+              }}
               autoFocus={autoFocus}
               placeholder={placeholder}
               className="mt-1 w-full rounded border border-pf-border bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-pf-text focus:border-pf-primary focus:outline-none"
@@ -720,10 +733,12 @@ function ClassStep({
 
   useEffect(() => {
     if (classPick === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDocState({ kind: 'idle' });
       return;
     }
     const uuid = classPick.uuid;
+
     setDocState({ kind: 'loading', uuid });
     let cancelled = false;
     void api
@@ -824,11 +839,7 @@ function FeatSlot({
             data-uuid={selection.uuid}
             className="inline-flex items-center gap-1.5 rounded border border-pf-border bg-white px-2 py-1 text-xs text-pf-text"
           >
-            <img
-              src={selection.img ?? ''}
-              alt=""
-              className="h-4 w-4 rounded bg-pf-bg-dark"
-            />
+            <img src={selection.img} alt="" className="h-4 w-4 rounded bg-pf-bg-dark" />
             <span className="truncate">{selection.name}</span>
           </span>
           <button
@@ -877,7 +888,7 @@ function extractGrantsL1ClassFeat(system: unknown): boolean {
 
 function extractLevel1Features(system: unknown): ClassFeatureEntry[] {
   const items = (system as { items?: Record<string, unknown> } | null)?.items;
-  if (items === undefined || items === null) return [];
+  if (items === undefined) return [];
   const out: ClassFeatureEntry[] = [];
   for (const raw of Object.values(items)) {
     if (typeof raw !== 'object' || raw === null) continue;
@@ -981,7 +992,7 @@ function PickerCard({
   }
   return (
     <div className="flex items-start gap-3" data-picker-card={label.toLowerCase()}>
-      {selection.img !== undefined && (
+      {selection.img !== '' && (
         <img
           src={selection.img}
           alt=""
@@ -1120,11 +1131,9 @@ function AttributesStep({
   // deep-merge targets the exact nested field.
   const patchItem = (itemId: string | null, systemKey: string, value: unknown): void => {
     if (actorId === null || itemId === null) return;
-    void api
-      .updateActorItem(actorId, itemId, { system: { [systemKey]: value } })
-      .catch((err: unknown) => {
-        console.warn(`Failed to flush ${systemKey}`, err);
-      });
+    void api.updateActorItem(actorId, itemId, { system: { [systemKey]: value } }).catch((err: unknown) => {
+      console.warn(`Failed to flush ${systemKey}`, err);
+    });
   };
 
   const toggleFreeBoost = (key: AbilityKey): void => {
@@ -1181,7 +1190,9 @@ function AttributesStep({
         state={classDoc}
         placeholderText="Pick a class on the previous step to choose its key attribute."
         picks={classKeyAbility !== null ? [classKeyAbility] : [null]}
-        onPick={(_slot, key): void => setClassKeyAbility(key)}
+        onPick={(_slot, key): void => {
+          setClassKeyAbility(key);
+        }}
       />
       <FreeBoostBlock selected={levelOneBoosts} onToggle={toggleFreeBoost} />
     </div>
@@ -1192,17 +1203,16 @@ function AttributesStep({
 // its boost config. Cached per-pick so flipping between sources
 // doesn't refetch. Returns an SourceDocState; callers render from
 // whichever state surfaces.
-function useSourceSlots(
-  pick: CompendiumMatch | null,
-  parse: (system: unknown) => ParsedSlot[],
-): SourceDocState {
+function useSourceSlots(pick: CompendiumMatch | null, parse: (system: unknown) => ParsedSlot[]): SourceDocState {
   const [state, setState] = useState<SourceDocState>({ kind: 'idle' });
   useEffect(() => {
     if (pick === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState({ kind: 'idle' });
       return;
     }
     const uuid = pick.uuid;
+
     setState({ kind: 'loading', uuid });
     let cancelled = false;
     void api
@@ -1245,9 +1255,7 @@ function BoostSourceBlock({
   const flawSlots = flaws?.kind === 'ready' ? flaws.slots : [];
   return (
     <section>
-      <h3 className="mb-2 font-serif text-xs font-semibold uppercase tracking-widest text-pf-alt-dark">
-        {label}
-      </h3>
+      <h3 className="mb-2 font-serif text-xs font-semibold uppercase tracking-widest text-pf-alt-dark">{label}</h3>
       {state.kind === 'idle' && <p className="text-xs italic text-pf-alt-dark">{placeholderText}</p>}
       {state.kind === 'loading' && <p className="text-xs italic text-pf-alt-dark">Loading…</p>}
       {state.kind === 'error' && <p className="text-xs text-pf-primary">Couldn&apos;t load: {state.message}</p>}
@@ -1258,13 +1266,13 @@ function BoostSourceBlock({
         <ul className="space-y-2">
           {state.slots.map((slot, idx) => (
             <li key={idx.toString()} className="flex items-center gap-3">
-              <span className="w-14 shrink-0 text-[10px] uppercase tracking-widest text-pf-alt">
-                Boost {idx + 1}
-              </span>
+              <span className="w-14 shrink-0 text-[10px] uppercase tracking-widest text-pf-alt">Boost {idx + 1}</span>
               <BoostSlotPicker
                 slot={slot}
                 selected={picks[idx] ?? null}
-                onPick={(key): void => onPick(idx, key)}
+                onPick={(key): void => {
+                  onPick(idx, key);
+                }}
               />
             </li>
           ))}
@@ -1352,7 +1360,9 @@ function BoostSlotPicker({
             key={key}
             type="button"
             aria-pressed={isActive}
-            onClick={(): void => onPick(key)}
+            onClick={(): void => {
+              onPick(key);
+            }}
             data-boost-option={key}
             className={[
               'rounded border px-2 py-1 text-xs font-semibold uppercase tracking-widest transition-colors',
@@ -1397,7 +1407,9 @@ function FreeBoostBlock({
               disabled={locked}
               data-attribute-tile={key}
               aria-pressed={picked}
-              onClick={(): void => onToggle(key)}
+              onClick={(): void => {
+                onToggle(key);
+              }}
               className={[
                 'flex flex-col items-center rounded border px-2 py-3 transition-colors',
                 picked
@@ -1434,12 +1446,16 @@ function parseAncestryOrBackgroundSlots(system: unknown): ParsedSlot[] {
   if (boosts === undefined || boosts === null || typeof boosts !== 'object') return [];
   const out: ParsedSlot[] = [];
   // Iterate numerically indexed keys in order.
-  const keys = Object.keys(boosts).filter((k) => /^\d+$/.test(k)).sort((a, b) => Number(a) - Number(b));
+  const keys = Object.keys(boosts)
+    .filter((k) => /^\d+$/.test(k))
+    .sort((a, b) => Number(a) - Number(b));
   for (const k of keys) {
     const slot = (boosts as Record<string, unknown>)[k] as { value?: unknown } | null;
     const raw = slot?.value;
     if (!Array.isArray(raw)) continue;
-    const options = raw.filter((v): v is AbilityKey => typeof v === 'string' && (ABILITY_KEYS as readonly string[]).includes(v));
+    const options = raw.filter(
+      (v): v is AbilityKey => typeof v === 'string' && (ABILITY_KEYS as readonly string[]).includes(v),
+    );
     if (options.length === 1) {
       out.push({ kind: 'fixed', options });
     } else if (options.length === 0) {
@@ -1455,7 +1471,9 @@ function parseAncestryOrBackgroundSlots(system: unknown): ParsedSlot[] {
 function parseClassKeyAbility(system: unknown): ParsedSlot | null {
   const key = (system as { keyAbility?: { value?: unknown } } | null)?.keyAbility?.value;
   if (!Array.isArray(key)) return null;
-  const options = key.filter((v): v is AbilityKey => typeof v === 'string' && (ABILITY_KEYS as readonly string[]).includes(v));
+  const options = key.filter(
+    (v): v is AbilityKey => typeof v === 'string' && (ABILITY_KEYS as readonly string[]).includes(v),
+  );
   if (options.length === 0) return null;
   if (options.length === 1) return { kind: 'fixed', options };
   return { kind: 'free', options };
@@ -1521,12 +1539,14 @@ function SkillsStep({
 
   useEffect(() => {
     if (backgroundPick === null || classPick === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState({ kind: 'idle' });
       return;
     }
     const bgUuid = backgroundPick.uuid;
     const clsUuid = classPick.uuid;
     const compositeKey = `${bgUuid}|${clsUuid}`;
+
     setState({ kind: 'loading', uuid: compositeKey });
     let cancelled = false;
     void Promise.all([api.getCompendiumDocument(bgUuid), api.getCompendiumDocument(clsUuid)])
@@ -1581,8 +1601,7 @@ function SkillsStep({
     );
   }
   if (state.kind === 'loading') return <p className="text-sm italic text-pf-alt-dark">Loading…</p>;
-  if (state.kind === 'error')
-    return <p className="text-sm text-pf-primary">Couldn&apos;t load: {state.message}</p>;
+  if (state.kind === 'error') return <p className="text-sm text-pf-primary">Couldn&apos;t load: {state.message}</p>;
 
   const freeAllowance = (state.classTrained.additional ?? 0) + Math.max(0, intMod);
   const fixedFromClass = new Set(state.classTrained.value);
@@ -1626,9 +1645,8 @@ function SkillsStep({
           Free trainings
         </h3>
         <p className="mb-2 text-xs text-pf-alt-dark">
-          Pick {freeAllowance} skill{freeAllowance === 1 ? '' : 's'} — {state.classTrained.additional ?? 0} from
-          class{intMod > 0 ? ` + ${intMod.toString()} from Intelligence` : ''}.
-          {' '}
+          Pick {freeAllowance} skill{freeAllowance === 1 ? '' : 's'} — {state.classTrained.additional ?? 0} from class
+          {intMod > 0 ? ` + ${intMod.toString()} from Intelligence` : ''}.{' '}
           <span className="tabular-nums">{skillPicks.length}</span>/{freeAllowance} picked.
         </p>
         <ul className="grid grid-cols-2 gap-1 sm:grid-cols-3">
@@ -1643,7 +1661,9 @@ function SkillsStep({
                   disabled={fixed || locked}
                   aria-pressed={picked || fixed}
                   data-skill={skill.slug}
-                  onClick={(): void => togglePick(skill.slug)}
+                  onClick={(): void => {
+                    togglePick(skill.slug);
+                  }}
                   className={[
                     'flex w-full items-center justify-between rounded border px-2 py-1 text-xs transition-colors',
                     fixed
@@ -1730,10 +1750,12 @@ function LanguagesStep({
 
   useEffect(() => {
     if (ancestryPick === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState({ kind: 'idle' });
       return;
     }
     const uuid = ancestryPick.uuid;
+
     setState({ kind: 'loading', uuid });
     let cancelled = false;
     void api
@@ -1784,14 +1806,11 @@ function LanguagesStep({
 
   if (state.kind === 'idle') {
     return (
-      <p className="text-sm italic text-pf-alt-dark">
-        Pick an ancestry on the earlier steps to choose languages.
-      </p>
+      <p className="text-sm italic text-pf-alt-dark">Pick an ancestry on the earlier steps to choose languages.</p>
     );
   }
   if (state.kind === 'loading') return <p className="text-sm italic text-pf-alt-dark">Loading…</p>;
-  if (state.kind === 'error')
-    return <p className="text-sm text-pf-primary">Couldn&apos;t load: {state.message}</p>;
+  if (state.kind === 'error') return <p className="text-sm text-pf-primary">Couldn&apos;t load: {state.message}</p>;
 
   const allowance = Math.max(0, intMod) + state.data.bonusCount;
   const suggested = state.data.suggested;
@@ -1839,10 +1858,9 @@ function LanguagesStep({
         </h3>
         <p className="mb-2 text-xs text-pf-alt-dark">
           Pick {allowance} more — {intMod > 0 ? `${intMod.toString()} from Intelligence` : 'none from Intelligence'}
-          {state.data.bonusCount > 0 ? ` + ${state.data.bonusCount.toString()} from your ancestry` : ''}.
-          {' '}
-          <span className="tabular-nums">{languagePicks.length}</span>/{allowance} picked. Suggested
-          languages (from your ancestry) sit first.
+          {state.data.bonusCount > 0 ? ` + ${state.data.bonusCount.toString()} from your ancestry` : ''}.{' '}
+          <span className="tabular-nums">{languagePicks.length}</span>/{allowance} picked. Suggested languages (from
+          your ancestry) sit first.
         </p>
         {allowance === 0 ? (
           <p className="text-xs italic text-pf-alt">No extra language picks available.</p>
@@ -1858,7 +1876,9 @@ function LanguagesStep({
                     disabled={locked}
                     aria-pressed={picked}
                     data-language={lang.slug}
-                    onClick={(): void => togglePick(lang.slug)}
+                    onClick={(): void => {
+                      togglePick(lang.slug);
+                    }}
                     className={[
                       'flex w-full items-center justify-between rounded border px-2 py-1 text-xs transition-colors',
                       picked
@@ -1911,8 +1931,9 @@ function prettyLanguageLabel(slug: string): string {
 }
 
 function normaliseTrainedSkills(system: unknown): TrainedSkillsDoc {
-  const ts = (system as { trainedSkills?: { value?: unknown; lore?: unknown; additional?: unknown } } | null)?.trainedSkills;
-  const value = Array.isArray(ts?.value) ? (ts.value.filter((v): v is string => typeof v === 'string')) : [];
+  const ts = (system as { trainedSkills?: { value?: unknown; lore?: unknown; additional?: unknown } } | null)
+    ?.trainedSkills;
+  const value = Array.isArray(ts?.value) ? ts.value.filter((v): v is string => typeof v === 'string') : [];
   const lore = Array.isArray(ts?.lore) ? ts.lore.filter((v): v is string => typeof v === 'string') : [];
   const additional = typeof ts?.additional === 'number' ? ts.additional : 0;
   return { value, lore, additional };
@@ -1956,21 +1977,10 @@ function ReviewStep({ draft }: { draft: Draft }): React.ReactElement {
     ['Heritage', draft.heritage?.match.name ?? null],
     ['Ancestry Feat', draft.ancestryFeat?.match.name ?? null],
     ['Class', draft.class?.match.name ?? null],
-    [
-      'Class Feat',
-      draft.classFeat?.match.name ?? (draft.classGrantsL1Feat === false ? UNAVAILABLE : null),
-    ],
+    ['Class Feat', draft.classFeat?.match.name ?? (draft.classGrantsL1Feat === false ? UNAVAILABLE : null)],
     ['Background', draft.background?.match.name ?? null],
-    [
-      'L1 Boosts',
-      draft.levelOneBoosts.length > 0
-        ? draft.levelOneBoosts.map((k) => k.toUpperCase()).join(', ')
-        : null,
-    ],
-    [
-      'Free Skills',
-      draft.skillPicks.length > 0 ? draft.skillPicks.map(prettySkillLabel).join(', ') : null,
-    ],
+    ['L1 Boosts', draft.levelOneBoosts.length > 0 ? draft.levelOneBoosts.map((k) => k.toUpperCase()).join(', ') : null],
+    ['Free Skills', draft.skillPicks.length > 0 ? draft.skillPicks.map(prettySkillLabel).join(', ') : null],
     [
       'Additional Languages',
       draft.languagePicks.length > 0
@@ -2077,12 +2087,7 @@ const ABILITY_LABEL: Record<AbilityKey, string> = {
 // caller to commit into the draft. Order matters: add first so a
 // transient network failure doesn't leave the actor with zero items
 // for the slot.
-async function persistPick(
-  actorId: string,
-  target: PickerTarget,
-  match: CompendiumMatch,
-  draft: Draft,
-): Promise<Slot> {
+async function persistPick(actorId: string, target: PickerTarget, match: CompendiumMatch, draft: Draft): Promise<Slot> {
   // L1 feats need a `system.location` slot tag so pf2e and the
   // Progression tab recognise them as filling the slot. Non-feat
   // picks don't need this — pf2e matches those via their category.

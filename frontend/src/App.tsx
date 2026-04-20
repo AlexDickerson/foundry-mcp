@@ -21,7 +21,7 @@ export function App(): React.ReactElement {
           <div className="mb-4">
             <button
               type="button"
-              onClick={(): void => setView({ kind: 'create' })}
+              onClick={(): void => { setView({ kind: 'create' }); }}
               className="rounded border border-pf-primary bg-pf-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-pf-primary-dark"
             >
               + Create Character
@@ -36,12 +36,12 @@ export function App(): React.ReactElement {
       )}
       {view.kind === 'create' && (
         <CharacterCreator
-          onBack={(): void => setView({ kind: 'list' })}
-          onFinish={(actorId): void => setView({ kind: 'sheet', actorId })}
+          onBack={(): void => { setView({ kind: 'list' }); }}
+          onFinish={(actorId): void => { setView({ kind: 'sheet', actorId }); }}
         />
       )}
       {view.kind === 'sheet' && (
-        <CharacterSheet actorId={view.actorId} onBack={(): void => setView({ kind: 'list' })} />
+        <CharacterSheet actorId={view.actorId} onBack={(): void => { setView({ kind: 'list' }); }} />
       )}
     </main>
   );

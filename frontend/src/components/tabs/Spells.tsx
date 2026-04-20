@@ -71,11 +71,11 @@ function EntryBlock({
   spells: SpellItem[];
   characterLevel: number;
 }): React.ReactElement {
-  const traditionRaw = entry.system.tradition?.value;
-  const tradition = typeof traditionRaw === 'string' && traditionRaw !== '' ? traditionRaw : null;
-  const prepRaw: string | undefined = entry.system.prepared?.value;
-  const prep = typeof prepRaw === 'string' && prepRaw.length > 0 ? prepRaw : null;
-  const flexible = entry.system.prepared?.flexible === true;
+  const traditionRaw = entry.system.tradition.value;
+  const tradition = traditionRaw !== '' ? traditionRaw : null;
+  const prepRaw = entry.system.prepared.value;
+  const prep = prepRaw.length > 0 ? prepRaw : null;
+  const flexible = entry.system.prepared.flexible === true;
   const meta = [
     tradition !== null ? capitalise(tradition) : null,
     prep !== null ? (flexible ? `Flexible ${capitalise(prep)}` : capitalise(prep)) : null,
@@ -167,8 +167,7 @@ function SpellCard({
   spell: SpellItem;
   characterLevel: number;
 }): React.ReactElement {
-  const traitsRaw = spell.system.traits?.value;
-  const traits = Array.isArray(traitsRaw) ? traitsRaw.filter((t) => t !== 'cantrip') : [];
+  const traits = spell.system.traits.value.filter((t) => t !== 'cantrip');
   const castCost = formatCastCost(spell.system.time?.value);
   const description = spell.system.description?.value ?? '';
   const heightening = computeHeighteningStep(spell, characterLevel);
@@ -256,8 +255,7 @@ function SpellMeta({ spell }: { spell: SpellItem }): React.ReactElement | null {
 //  - Leveled spells use `location.heightenedLevel` when set by a
 //    prepared-slot assignment; otherwise they sit at their base rank.
 function effectiveRank(spell: SpellItem, characterLevel: number): number {
-  const baseRaw = spell.system.level?.value;
-  const base = typeof baseRaw === 'number' ? baseRaw : 0;
+  const base = spell.system.level.value;
   if (isCantripSpell(spell)) {
     const auto = Math.max(1, Math.ceil(characterLevel / 2));
     return Math.max(base, auto);
@@ -275,8 +273,7 @@ function computeHeighteningStep(
   spell: SpellItem,
   characterLevel: number,
 ): { delta: number; perStep: string } | null {
-  const baseRaw = spell.system.level?.value;
-  const base = typeof baseRaw === 'number' ? baseRaw : 0;
+  const base = spell.system.level.value;
   const cast = effectiveRank(spell, characterLevel);
   const delta = cast - base;
   if (delta <= 0) return null;
@@ -310,7 +307,7 @@ function formatArea(area: SpellItem['system']['area']): string | null {
   if (area === undefined || area === null) return null;
   const { value, type } = area;
   if (value === undefined || value === '' || value === 0) return null;
-  const v = typeof value === 'number' ? `${value.toString()}-foot` : String(value);
+  const v = typeof value === 'number' ? `${value.toString()}-foot` : value;
   return type !== undefined && type !== '' ? `${v} ${type}` : v;
 }
 
@@ -332,5 +329,6 @@ function capitaliseSlug(s: string): string {
 function ordinal(n: number): string {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
-  return `${n.toString()}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+  const suffix = s[(v - 20) % 10] ?? s[v] ?? s[0] ?? 'th';
+  return `${n.toString()}${suffix}`;
 }

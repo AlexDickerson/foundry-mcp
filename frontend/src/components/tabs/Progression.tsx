@@ -99,27 +99,26 @@ export function Progression({ characterLevel, items, characterContext }: Props):
         },
       });
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPicks(hydrated);
     // Only re-hydrate when the list of items itself changes identity —
     // in practice that's when the actor refetches, not on every
     // internal picks mutation.
   }, [items]);
 
-  if (!classItem) {
-    return <p className="text-sm text-pf-alt-dark">No class item on this character.</p>;
-  }
-
-  const sys = classItem.system;
-  const classTrait = sys.slug ?? classItem.name.toLowerCase();
   // Prefetched full documents for every class feature on this class,
   // indexed by uuid. A ref-backed cache survives React 18 StrictMode's
   // double-mount (cleanup cancels the first run but the cached docs
   // live on). `docsVersion` bumps to force a re-render after each
   // cache write since React can't observe ref mutations.
+  //
+  // Declared before the `!classItem` early return so React can call the
+  // hooks in the same order on every render.
   const featureDocCacheRef = useRef<Map<string, CompendiumDocument>>(new Map());
   const featureDocErrorsRef = useRef<Set<string>>(new Set());
   const [docsVersion, setDocsVersion] = useState(0);
   useEffect(() => {
+    if (!classItem) return;
     const all = Object.values(classItem.system.items);
     if (all.length === 0) return;
     let cancelled = false;
@@ -134,17 +133,19 @@ export function Progression({ characterLevel, items, characterContext }: Props):
         if (cache.has(entry.uuid)) continue;
         try {
           const result = await api.getCompendiumDocument(entry.uuid);
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cancelled toggles asynchronously in cleanup
           if (cancelled) return;
           cache.set(entry.uuid, result.document);
           errors.delete(entry.uuid);
           setDocsVersion((v) => v + 1);
         } catch (err) {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- cancelled toggles asynchronously in cleanup
           if (cancelled) return;
           // Record the miss so the popover can show "couldn't load"
           // instead of a forever-spinning "Loading…".
           errors.add(entry.uuid);
           setDocsVersion((v) => v + 1);
-          // eslint-disable-next-line no-console
+
           console.warn('Failed to prefetch class feature', entry.uuid, err);
         }
       }
@@ -154,6 +155,13 @@ export function Progression({ characterLevel, items, characterContext }: Props):
       cancelled = true;
     };
   }, [classItem]);
+
+  if (!classItem) {
+    return <p className="text-sm text-pf-alt-dark">No class item on this character.</p>;
+  }
+
+  const sys = classItem.system;
+  const classTrait = sys.slug ?? classItem.name.toLowerCase();
   // `docsVersion` read ensures dependents of the cache re-render when
   // it grows. Not semantically meaningful, just a subscription hook.
   void docsVersion;
@@ -206,6 +214,7 @@ export function Progression({ characterLevel, items, characterContext }: Props):
         </p>
       </div>
       <ol className="space-y-1.5">
+        {/* eslint-disable-next-line react-hooks/refs -- cache snapshot taken per render; docsVersion bump in useEffect re-renders whenever either cache mutates */}
         {LEVELS.map((level) => {
           const features = featuresByLevel.get(level) ?? [];
           const slots = levelSlots.get(level) ?? [];

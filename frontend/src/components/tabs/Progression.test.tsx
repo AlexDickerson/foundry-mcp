@@ -6,8 +6,22 @@ import type { CompendiumMatch, PreparedActorItem, PreparedCharacter } from '../.
 import { fromPreparedCharacter } from '../../prereqs';
 import { Progression } from './Progression';
 
-const items = (amiri as unknown as { items: PreparedActorItem[] }).items;
+const rawItems = (amiri as unknown as { items: PreparedActorItem[] }).items;
+const items = rawItems;
 const ctx = fromPreparedCharacter(amiri as unknown as PreparedCharacter);
+
+// Strip `system.location` off feat items so Progression's hydration
+// doesn't pre-fill L1 slot chips. Picker-flow tests drive the slot
+// chip interactions manually; hydration has its own coverage below.
+function itemsWithoutFeatLocations(): PreparedActorItem[] {
+  return rawItems.map((item) => {
+    if (item.type !== 'feat') return item;
+    const sys = item.system as { location?: unknown };
+    if (typeof sys.location !== 'string') return item;
+    const { location: _, ...rest } = sys;
+    return { ...item, system: rest as PreparedActorItem['system'] };
+  });
+}
 
 const picker_match: CompendiumMatch = {
   packId: 'pf2e.feats-srd',
@@ -135,7 +149,9 @@ describe('Progression tab', () => {
   // --- Class-feat picker flow ---------------------------------------------
 
   it('opens the picker when a class-feat slot chip is clicked', async () => {
-    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
+    const { container } = render(
+      <Progression characterLevel={1} items={itemsWithoutFeatLocations()} characterContext={ctx} />,
+    );
     const row = container.querySelector('[data-level="1"]') as HTMLElement;
     const trigger = row.querySelector('[data-slot="class-feat"] [data-testid="slot-open-picker"]') as HTMLElement;
     expect(trigger, 'class-feat chip button').toBeTruthy();
@@ -150,19 +166,26 @@ describe('Progression tab', () => {
     const call = searchSpy.mock.calls[0]?.[0];
     expect(call?.traits).toEqual(['barbarian']);
     expect(call?.maxLevel).toBe(1);
-    expect(call?.packId).toBe('pf2e.feats-srd');
+    expect(call?.packIds).toEqual(['pf2e.feats-srd']);
   });
 
   it('commits the picked match into the level row and closes the picker', async () => {
-    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
+    const { container } = render(
+      <Progression characterLevel={1} items={itemsWithoutFeatLocations()} characterContext={ctx} />,
+    );
     const row = container.querySelector('[data-level="1"]') as HTMLElement;
     fireEvent.click(row.querySelector('[data-testid="slot-open-picker"]') as HTMLElement);
 
     await waitFor(() => {
       expect(document.querySelector('[data-match-uuid]')).toBeTruthy();
     });
+    // Two-pane flow: click the row to open detail, then confirm via Pick.
     const matchRow = document.querySelector('[data-match-uuid="Compendium.pf2e.feats-srd.Item.sudden"]') as HTMLElement;
     fireEvent.click(matchRow);
+    await waitFor(() => {
+      expect(document.querySelector('[data-testid="feat-picker-detail"]')).toBeTruthy();
+    });
+    fireEvent.click(document.querySelector('[data-testid="feat-picker-pick"]') as HTMLElement);
 
     await waitFor(() => {
       expect(document.querySelector('[data-testid="feat-picker"]')).toBeFalsy();
@@ -174,7 +197,9 @@ describe('Progression tab', () => {
   });
 
   it('clearing a picked feat restores the open slot chip', async () => {
-    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
+    const { container } = render(
+      <Progression characterLevel={1} items={itemsWithoutFeatLocations()} characterContext={ctx} />,
+    );
     const row = container.querySelector('[data-level="1"]') as HTMLElement;
     fireEvent.click(row.querySelector('[data-testid="slot-open-picker"]') as HTMLElement);
 
@@ -182,6 +207,10 @@ describe('Progression tab', () => {
       expect(document.querySelector('[data-match-uuid]')).toBeTruthy();
     });
     fireEvent.click(document.querySelector('[data-match-uuid="Compendium.pf2e.feats-srd.Item.sudden"]') as HTMLElement);
+    await waitFor(() => {
+      expect(document.querySelector('[data-testid="feat-picker-detail"]')).toBeTruthy();
+    });
+    fireEvent.click(document.querySelector('[data-testid="feat-picker-pick"]') as HTMLElement);
 
     await waitFor(() => {
       expect(row.querySelector('[data-pick-uuid]')).toBeTruthy();

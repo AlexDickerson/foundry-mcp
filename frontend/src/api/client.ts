@@ -112,7 +112,7 @@ export const api = {
     patch: { name?: string; img?: string; system?: Record<string, unknown> },
   ): Promise<ActorItemRef> =>
     request<ActorItemRef>(`/actors/${id}/items/${itemId}`, { method: 'PATCH', body: patch }),
-  resolvePrompt: (bridgeId: string, value: unknown | null): Promise<{ ok: boolean }> =>
+  resolvePrompt: (bridgeId: string, value: unknown): Promise<{ ok: boolean }> =>
     request<{ ok: boolean }>(`/prompts/${bridgeId}/resolve`, { method: 'POST', body: { value } }),
   listCompendiumSources: (
     opts: {

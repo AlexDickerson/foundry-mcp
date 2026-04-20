@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, cleanup } from '@testing-library/react';
+import { render, cleanup, fireEvent } from '@testing-library/react';
 import amiri from '../../fixtures/amiri-prepared.json';
 import type { PreparedActorItem } from '../../api/types';
 import { Inventory } from './Inventory';
@@ -8,6 +8,15 @@ const items = (amiri as unknown as { items: PreparedActorItem[] }).items;
 
 // Amiri's backpack id — referenced by all 9 items stowed inside.
 const BACKPACK_ID = 'l25ZlJJVpWamk5Ye';
+
+// Grid is the default view; tests that care about container nesting
+// (backpack-with-contents) run in list view, so they flip the toggle
+// first. This helper finds the List button and clicks it.
+function selectListView(container: HTMLElement): void {
+  const listBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'List');
+  if (!listBtn) throw new Error('List toggle button not found');
+  fireEvent.click(listBtn);
+}
 
 describe('Inventory tab', () => {
   afterEach(() => {
@@ -64,6 +73,7 @@ describe('Inventory tab', () => {
 
   it('expands the Backpack to show its nine stowed items', () => {
     const { container } = render(<Inventory items={items} />);
+    selectListView(container);
     const contents = container.querySelector(`[data-container-contents="${BACKPACK_ID}"]`);
     expect(contents, 'backpack contents panel').toBeTruthy();
     const childNames = Array.from((contents as HTMLElement).querySelectorAll('[data-item-id]')).map(
@@ -87,6 +97,7 @@ describe('Inventory tab', () => {
 
   it('nests stowed items under their container, not at the top level', () => {
     const { container } = render(<Inventory items={items} />);
+    selectListView(container);
     // Top-level list items are direct children of the section's primary
     // <ul>. Check via item-id so we don't confuse ourselves with nested
     // textContent (Backpack's <li> contains its children's text too).

@@ -745,8 +745,8 @@ export function isSpellItem(item: PreparedActorItem): item is SpellItem {
 }
 
 export function isCantripSpell(spell: SpellItem): boolean {
-  const traits = spell.system.traits?.value;
-  return Array.isArray(traits) && traits.includes('cantrip');
+  const traits = spell.system.traits.value;
+  return traits.includes('cantrip');
 }
 
 export interface PreparedCharacter {

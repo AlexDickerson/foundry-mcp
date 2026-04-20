@@ -48,10 +48,8 @@ export function usePendingPrompts(): PendingPrompt[] {
             if (prev.some((p) => p.bridgeId === msg.event.bridgeId)) return prev;
             return [...prev, msg.event];
           }
-          if (msg.kind === 'removed') {
-            return prev.filter((p) => p.bridgeId !== msg.event.bridgeId);
-          }
-          return prev;
+          // Only other SseMessage kind is 'removed'.
+          return prev.filter((p) => p.bridgeId !== msg.event.bridgeId);
         });
       } catch (err) {
         console.warn('Failed to parse prompt SSE chunk', err);

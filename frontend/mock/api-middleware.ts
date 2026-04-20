@@ -54,7 +54,7 @@ export function mockApi(fixturesDir: string): Plugin {
 
       server.middlewares.use((req, res, next) => {
         const url = req.url ?? '';
-        if (req.method !== 'GET') return next();
+        if (req.method !== 'GET') { next(); return; }
 
         if (url === '/api/actors' || url.startsWith('/api/actors?')) {
           const list: ActorSummary[] = fixtures.map((f) => ({
@@ -63,7 +63,7 @@ export function mockApi(fixturesDir: string): Plugin {
             type: f.type,
             img: f.img,
           }));
-          return sendJson(res, 200, list);
+          sendJson(res, 200, list); return;
         }
 
         const preparedMatch = /^\/api\/actors\/([^/?]+)\/prepared(?:\?.*)?$/.exec(url);
@@ -71,12 +71,12 @@ export function mockApi(fixturesDir: string): Plugin {
           const id = preparedMatch[1] ?? '';
           const actor = fixtures.find((f) => f.id === id);
           if (!actor) {
-            return sendJson(res, 404, {
+            sendJson(res, 404, {
               error: `Actor ${id} not found in fixtures`,
               suggestion: 'Drop a new <id>-prepared.json into frontend/src/fixtures/',
-            });
+            }); return;
           }
-          return sendJson(res, 200, actor);
+          sendJson(res, 200, actor); return;
         }
 
         if (isAssetRequest(url)) {

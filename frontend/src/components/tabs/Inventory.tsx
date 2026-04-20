@@ -100,7 +100,7 @@ function ViewToggle({
         type="button"
         className={`${base} ${view === 'grid' ? active : inactive}`}
         aria-pressed={view === 'grid'}
-        onClick={(): void => onChange('grid')}
+        onClick={(): void => { onChange('grid'); }}
       >
         Grid
       </button>
@@ -108,7 +108,7 @@ function ViewToggle({
         type="button"
         className={`${base} border-l border-pf-border ${view === 'list' ? active : inactive}`}
         aria-pressed={view === 'list'}
-        onClick={(): void => onChange('list')}
+        onClick={(): void => { onChange('list'); }}
       >
         List
       </button>
@@ -265,7 +265,7 @@ function GridTile({ item }: { item: PhysicalItem }): React.ReactElement {
               <p className="truncate font-serif text-sm font-semibold text-pf-text">{item.name}</p>
               <p className="text-[10px] uppercase tracking-widest text-pf-alt-dark">
                 {item.type}
-                {item.system.quantity > 1 && ` · ×${item.system.quantity}`}
+                {item.system.quantity > 1 && ` · ×${item.system.quantity.toString()}`}
               </p>
             </div>
           </div>

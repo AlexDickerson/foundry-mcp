@@ -54,14 +54,17 @@ export function PromptModal({ prompt }: Props): React.ReactElement {
   const selectedUuid = selectedChoice !== null ? extractUuid(selectedChoice.value) : null;
   useEffect(() => {
     if (selectedUuid === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetail({ kind: 'idle' });
       return;
     }
     const cached = docCache.current.get(selectedUuid);
     if (cached !== undefined) {
+       
       setDetail({ kind: 'ready', uuid: selectedUuid, doc: cached });
       return;
     }
+     
     setDetail({ kind: 'loading', uuid: selectedUuid });
     let cancelled = false;
     void api
@@ -81,7 +84,7 @@ export function PromptModal({ prompt }: Props): React.ReactElement {
     };
   }, [selectedUuid]);
 
-  const resolve = async (value: unknown | null): Promise<void> => {
+  const resolve = async (value: unknown): Promise<void> => {
     if (resolving) return;
     setResolving(true);
     try {
@@ -142,7 +145,7 @@ export function PromptModal({ prompt }: Props): React.ReactElement {
                         <button
                           type="button"
                           disabled={resolving}
-                          onClick={(): void => setSelectedIndex(index)}
+                          onClick={(): void => { setSelectedIndex(index); }}
                           className={[
                             'flex w-full items-center gap-2 px-3 py-2 text-left text-sm disabled:opacity-50',
                             isActive

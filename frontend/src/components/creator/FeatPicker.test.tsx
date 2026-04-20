@@ -72,7 +72,7 @@ describe('FeatPicker', () => {
       expect(searchSpy).toHaveBeenCalled();
     });
     const call = searchSpy.mock.calls[0]?.[0];
-    expect(call?.packId).toBe('pf2e.feats-srd');
+    expect(call?.packIds).toEqual(['pf2e.feats-srd']);
     expect(call?.documentType).toBe('Item');
     expect(call?.traits).toEqual(['barbarian']);
     expect(call?.maxLevel).toBe(1);
@@ -80,16 +80,22 @@ describe('FeatPicker', () => {
     expect(call?.q).toBe('');
   });
 
-  it('calls onPick with the selected match', async () => {
+  it('calls onPick with the selected match via the detail panel Pick button', async () => {
     const onPick = vi.fn();
-    const { container } = render(
+    const { container, getByTestId } = render(
       <FeatPicker title="t" filters={{ traits: ['barbarian'] }} onPick={onPick} onClose={vi.fn()} />,
     );
     await waitFor(() => {
       expect(container.querySelector('[data-match-uuid]')).toBeTruthy();
     });
+    // Two-pane flow: clicking a row opens the detail panel; picking
+    // happens via the Pick button in the panel footer.
     const row = container.querySelector('[data-match-uuid="Compendium.pf2e.feats-srd.Item.a"]') as HTMLElement;
     fireEvent.click(row);
+    await waitFor(() => {
+      expect(container.querySelector('[data-testid="feat-picker-detail"]')).toBeTruthy();
+    });
+    fireEvent.click(getByTestId('feat-picker-pick'));
     expect(onPick).toHaveBeenCalledTimes(1);
     expect(onPick.mock.calls[0]?.[0].name).toBe('Sudden Charge');
   });

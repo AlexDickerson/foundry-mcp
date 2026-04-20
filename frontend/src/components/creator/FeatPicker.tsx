@@ -282,15 +282,18 @@ export function FeatPicker({ title, filters, characterContext, onPick, onClose }
   // case once the background prefetch has caught up.
   useEffect(() => {
     if (!detailTarget) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetail({ kind: 'idle' });
       return;
     }
     const cached = docCacheRef.current.get(detailTarget.uuid);
     if (cached) {
+       
       setDetail({ kind: 'ready', doc: cached });
       return;
     }
     let cancelled = false;
+     
     setDetail({ kind: 'loading', uuid: detailTarget.uuid });
     api
       .getCompendiumDocument(detailTarget.uuid)
@@ -398,7 +401,7 @@ export function FeatPicker({ title, filters, characterContext, onPick, onClose }
               detail={detail}
               prereqCache={prereqCacheRef}
               onPick={(): void => {
-                if (detailTarget) onPick(detailTarget);
+                onPick(detailTarget);
               }}
               onClose={(): void => {
                 setDetailTarget(null);
@@ -870,7 +873,7 @@ function DetailPanel({
   target: CompendiumMatch | null;
   detail: DetailState;
   /** Shared cache — populated by the list-level prefetch, read here. */
-  prereqCache: React.MutableRefObject<Map<string, string | null>>;
+  prereqCache: React.RefObject<Map<string, string | null>>;
   onPick: () => void;
   onClose: () => void;
 }): React.ReactElement | null {
@@ -884,6 +887,7 @@ function DetailPanel({
   useEffect(() => {
     const prereqs = bio.prerequisites;
     if (!prereqs || prereqs.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPrereqResolutions(new Map());
       return;
     }
@@ -893,6 +897,7 @@ function DetailPanel({
       const cached = prereqCache.current.get(p.toLowerCase());
       if (cached !== undefined) initial.set(p, cached);
     }
+     
     setPrereqResolutions(initial);
 
     // The prefetch usually has these cached already, but fall back to
@@ -1084,7 +1089,7 @@ interface DetailBio {
 // don't want to lock this to one type's schema.
 function extractDetailBio(doc: CompendiumDocument | null): DetailBio {
   if (!doc) return {};
-  const sys = doc.system as Record<string, unknown>;
+  const sys = doc.system;
   const bio: DetailBio = {};
 
   const description = (sys['description'] as { value?: unknown } | undefined)?.value;

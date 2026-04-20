@@ -143,14 +143,19 @@ export function useUuidHover(): {
   // rendered inside a createPortal target outside the root container,
   // so we keep a ref to the latest closures and re-attach native
   // listeners to each popover div in the effect below.
+  // eslint-disable-next-line react-hooks/refs -- snapshot latest closures so the effect below sees fresh handleMouseOver/Out
   latestHandlersRef.current = {
-    over: (e) => handleMouseOver(e.target as Element | null, (e.relatedTarget as Element | null) ?? null),
-    out: (e) => handleMouseOut(e.target as Element | null, (e.relatedTarget as Element | null) ?? null),
+    over: (e) => {
+      handleMouseOver(e.target as Element | null, (e.relatedTarget as Element | null) ?? null);
+    },
+    out: (e) => {
+      handleMouseOut(e.target as Element | null, (e.relatedTarget as Element | null) ?? null);
+    },
   };
 
   useEffect(() => {
-    const overProxy = (e: MouseEvent): void => latestHandlersRef.current.over(e);
-    const outProxy = (e: MouseEvent): void => latestHandlersRef.current.out(e);
+    const overProxy = (e: MouseEvent): void => { latestHandlersRef.current.over(e); };
+    const outProxy = (e: MouseEvent): void => { latestHandlersRef.current.out(e); };
     const attached: HTMLDivElement[] = [];
     for (const el of popoverElsRef.current.values()) {
       el.addEventListener('mouseover', overProxy);
