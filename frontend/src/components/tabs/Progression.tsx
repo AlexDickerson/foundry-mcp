@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import type { ClassFeatureEntry, ClassItem, CompendiumMatch, PreparedActorItem } from '../../api/types';
 import { isClassItem } from '../../api/types';
+import type { CharacterContext } from '../../prereqs';
 import { SectionHeader } from '../common/SectionHeader';
 import { FeatPicker } from '../creator/FeatPicker';
 
 interface Props {
   characterLevel: number;
   items: PreparedActorItem[];
+  characterContext: CharacterContext;
 }
 
 // pf2e ability boosts happen at these fixed levels (4 boosts each). This
@@ -38,7 +40,7 @@ const slotKey = (level: number, slot: SlotType): SlotKey => `${level.toString()}
 // (FeatPicker) scoped to the character's class trait and capped at the
 // slot's level. Picks are held in local state for now; the scratch-actor
 // mutation flow comes later.
-export function Progression({ characterLevel, items }: Props): React.ReactElement {
+export function Progression({ characterLevel, items, characterContext }: Props): React.ReactElement {
   const classItem = items.find(isClassItem);
   const [picks, setPicks] = useState<Map<SlotKey, CompendiumMatch>>(new Map());
   const [pickerTarget, setPickerTarget] = useState<{ level: number; slot: SlotType } | null>(null);
@@ -49,6 +51,14 @@ export function Progression({ characterLevel, items }: Props): React.ReactElemen
 
   const sys = classItem.system;
   const classTrait = sys.slug ?? classItem.name.toLowerCase();
+  // Ancestry slot picker needs the ancestry's trait (e.g. "human").
+  // The ancestry item on the character carries `system.slug`; fall back
+  // to the lower-cased name if the slug is missing.
+  const ancestryItem = items.find((i) => i.type === 'ancestry');
+  const ancestryTrait =
+    ancestryItem !== undefined
+      ? (((ancestryItem.system as { slug?: unknown }).slug as string | undefined) ?? ancestryItem.name.toLowerCase())
+      : undefined;
   const featuresByLevel = groupFeaturesByLevel(sys.items);
   const levelSlots = buildLevelSlotMap(sys);
 
@@ -76,13 +86,17 @@ export function Progression({ characterLevel, items }: Props): React.ReactElemen
     });
   };
 
+  const pickerFilters = pickerTarget
+    ? buildPickerFilters(pickerTarget.slot, pickerTarget.level, classTrait, ancestryTrait)
+    : null;
+
   return (
     <section className="space-y-4" data-section="progression">
       <div>
         <SectionHeader>{classItem.name} Progression</SectionHeader>
         <p className="mb-3 text-xs text-pf-alt">
-          Class features auto-granted at each level, plus the feat and skill slots the rules open. Click a Class Feat
-          chip to pick one; selections are held in memory until the scratch-actor flow lands.
+          Class features auto-granted at each level, plus the feat and skill slots the rules open. Click a feat chip to
+          pick one; selections are held in memory until the scratch-actor flow lands.
         </p>
       </div>
       <ol className="space-y-1.5">
@@ -103,21 +117,68 @@ export function Progression({ characterLevel, items }: Props): React.ReactElemen
           );
         })}
       </ol>
-      {pickerTarget && pickerTarget.slot === 'class-feat' && (
+      {pickerTarget && pickerFilters && (
         <FeatPicker
-          title={`Pick a Class Feat (Level ${pickerTarget.level.toString()})`}
-          filters={{
-            packId: 'pf2e.feats-srd',
-            documentType: 'Item',
-            traits: [classTrait],
-            maxLevel: pickerTarget.level,
-          }}
+          title={pickerTitleFor(pickerTarget.slot, pickerTarget.level)}
+          filters={pickerFilters}
+          characterContext={characterContext}
           onPick={commitPick}
           onClose={closePicker}
         />
       )}
     </section>
   );
+}
+
+// Map from slot kind → the name used in the picker header. Only covers
+// slot types the picker actually handles; other slots (skill increase,
+// ability boosts) don't open a feat picker.
+const PICKER_TITLE: Partial<Record<SlotType, string>> = {
+  'class-feat': 'Class Feat',
+  'ancestry-feat': 'Ancestry Feat',
+  'skill-feat': 'Skill Feat',
+  'general-feat': 'General Feat',
+};
+
+function pickerTitleFor(slot: SlotType, level: number): string {
+  return `Pick a ${PICKER_TITLE[slot] ?? 'Feat'} (Level ${level.toString()})`;
+}
+
+interface PickerFilters {
+  packIds: string[];
+  documentType: string;
+  traits: string[];
+  maxLevel: number;
+}
+
+// Different feat slot types narrow on different pf2e trait tags. All of
+// them live in the feats-srd pack, all items. Skill feat slots only
+// accept items tagged `skill`; general slots accept anything tagged
+// `general` (which by pf2e convention includes skill feats). Ancestry
+// slots are scoped to the character's ancestry trait.
+function buildPickerFilters(
+  slot: SlotType,
+  level: number,
+  classTrait: string,
+  ancestryTrait: string | undefined,
+): PickerFilters | null {
+  const base = {
+    packIds: ['pf2e.feats-srd'],
+    documentType: 'Item',
+    maxLevel: level,
+  };
+  switch (slot) {
+    case 'class-feat':
+      return { ...base, traits: [classTrait] };
+    case 'ancestry-feat':
+      return ancestryTrait !== undefined ? { ...base, traits: [ancestryTrait] } : null;
+    case 'skill-feat':
+      return { ...base, traits: ['skill'] };
+    case 'general-feat':
+      return { ...base, traits: ['general'] };
+    default:
+      return null;
+  }
 }
 
 // ─── Row ───────────────────────────────────────────────────────────────
@@ -221,7 +282,7 @@ const SLOT_CLASSES: Record<SlotType, string> = {
   'ability-boosts': 'border-pf-rarity-unique bg-pf-rarity-unique/10 text-pf-rarity-unique',
 };
 
-const CLICKABLE_SLOTS: ReadonlySet<SlotType> = new Set(['class-feat']);
+const CLICKABLE_SLOTS: ReadonlySet<SlotType> = new Set(['class-feat', 'ancestry-feat', 'skill-feat', 'general-feat']);
 
 function SlotChips({
   level,

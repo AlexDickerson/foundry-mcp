@@ -11,6 +11,7 @@ import { Feats } from '../components/tabs/Feats';
 import { Inventory } from '../components/tabs/Inventory';
 import { Proficiencies } from '../components/tabs/Proficiencies';
 import { Progression } from '../components/tabs/Progression';
+import { fromPreparedCharacter } from '../prereqs';
 
 type State =
   | { kind: 'loading' }
@@ -97,7 +98,11 @@ export function CharacterSheet({ actorId, onBack }: Props): React.ReactElement {
           {activeTab === 'feats' && <Feats items={state.actor.items} />}
           {activeTab === 'proficiencies' && <Proficiencies system={state.actor.system} />}
           {activeTab === 'progression' && (
-            <Progression characterLevel={state.actor.system.details.level.value} items={state.actor.items} />
+            <Progression
+              characterLevel={state.actor.system.details.level.value}
+              items={state.actor.items}
+              characterContext={fromPreparedCharacter(state.actor)}
+            />
           )}
           {activeTab === 'background' && <Background details={state.actor.system.details} />}
         </>

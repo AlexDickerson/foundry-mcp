@@ -1,4 +1,13 @@
-import type { ActorSummary, ApiError, CompendiumMatch, CompendiumSearchOptions, PreparedActor } from './types';
+import type {
+  ActorSummary,
+  ApiError,
+  CompendiumDocument,
+  CompendiumMatch,
+  CompendiumPack,
+  CompendiumSearchOptions,
+  CompendiumSource,
+  PreparedActor,
+} from './types';
 
 // Dev: Vite proxies /api → :8765. Prod: served same-origin or via a reverse
 // proxy that preserves /api. Either way, paths are relative.
@@ -35,9 +44,10 @@ async function request<T>(path: string): Promise<T> {
 function buildCompendiumQuery(opts: CompendiumSearchOptions): string {
   const params = new URLSearchParams();
   if (opts.q !== undefined && opts.q.length > 0) params.set('q', opts.q);
-  if (opts.packId !== undefined) params.set('packId', opts.packId);
+  if (opts.packIds !== undefined && opts.packIds.length > 0) params.set('packId', opts.packIds.join(','));
   if (opts.documentType !== undefined) params.set('documentType', opts.documentType);
   if (opts.traits !== undefined && opts.traits.length > 0) params.set('traits', opts.traits.join(','));
+  if (opts.sources !== undefined && opts.sources.length > 0) params.set('sources', opts.sources.join(','));
   if (opts.maxLevel !== undefined) params.set('maxLevel', opts.maxLevel.toString());
   if (opts.limit !== undefined) params.set('limit', opts.limit.toString());
   return params.toString();
@@ -48,4 +58,30 @@ export const api = {
   getPreparedActor: (id: string): Promise<PreparedActor> => request<PreparedActor>(`/actors/${id}/prepared`),
   searchCompendium: (opts: CompendiumSearchOptions): Promise<{ matches: CompendiumMatch[] }> =>
     request<{ matches: CompendiumMatch[] }>(`/compendium/search?${buildCompendiumQuery(opts)}`),
+  listCompendiumPacks: (opts: { documentType?: string } = {}): Promise<{ packs: CompendiumPack[] }> => {
+    const params = new URLSearchParams();
+    if (opts.documentType !== undefined) params.set('documentType', opts.documentType);
+    const qs = params.toString();
+    return request<{ packs: CompendiumPack[] }>(`/compendium/packs${qs ? `?${qs}` : ''}`);
+  },
+  getCompendiumDocument: (uuid: string): Promise<{ document: CompendiumDocument }> =>
+    request<{ document: CompendiumDocument }>(`/compendium/document?uuid=${encodeURIComponent(uuid)}`),
+  listCompendiumSources: (
+    opts: {
+      documentType?: string;
+      packIds?: string[];
+      q?: string;
+      traits?: string[];
+      maxLevel?: number;
+    } = {},
+  ): Promise<{ sources: CompendiumSource[] }> => {
+    const params = new URLSearchParams();
+    if (opts.documentType !== undefined) params.set('documentType', opts.documentType);
+    if (opts.packIds !== undefined && opts.packIds.length > 0) params.set('packId', opts.packIds.join(','));
+    if (opts.q !== undefined && opts.q.length > 0) params.set('q', opts.q);
+    if (opts.traits !== undefined && opts.traits.length > 0) params.set('traits', opts.traits.join(','));
+    if (opts.maxLevel !== undefined) params.set('maxLevel', opts.maxLevel.toString());
+    const qs = params.toString();
+    return request<{ sources: CompendiumSource[] }>(`/compendium/sources${qs ? `?${qs}` : ''}`);
+  },
 };

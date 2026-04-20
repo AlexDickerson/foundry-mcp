@@ -43,8 +43,9 @@ export interface CompendiumSearchOptions {
    *  pack / level alone. The server returns an empty response when
    *  every filter field is empty, as a guard rail. */
   q?: string;
-  /** Restrict to a single pack (e.g. 'pf2e.feats-srd'). */
-  packId?: string;
+  /** Restrict to one or more packs (e.g. ['pf2e.feats-srd']). When
+   *  omitted, every pack matching `documentType` is searched. */
+  packIds?: string[];
   /** Restrict to packs whose document type matches (e.g. 'Item'). */
   documentType?: string;
   /** Every trait in this list must be present on `system.traits.value`.
@@ -54,6 +55,10 @@ export interface CompendiumSearchOptions {
   /** Cap `system.level.value`. Creator pickers use this to hide feats
    *  the character doesn't yet qualify for. */
   maxLevel?: number;
+  /** OR-filter on `system.publication.title`. Matches if the candidate's
+   *  publication title is any of these (case-insensitive). Drives the
+   *  source-book filter in the picker. */
+  sources?: string[];
   /** Max results. Clamped server-side to 1-100, defaults to 10. */
   limit?: number;
 }
@@ -71,6 +76,31 @@ export interface CompendiumMatch {
    *  searches lean). */
   level?: number;
   traits?: string[];
+}
+
+export interface CompendiumPack {
+  id: string;
+  label: string;
+  type: string;
+  system?: string;
+  packageName?: string;
+}
+
+export interface CompendiumSource {
+  title: string;
+  count: number;
+}
+
+export interface CompendiumDocument {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  /** Full `system.*` slice. Shape varies by item type; the picker's
+   *  detail renderer reads description / level / traits / prerequisites
+   *  defensively. */
+  system: Record<string, unknown>;
 }
 
 // ─── PF2e character-specific shapes (used by the Proficiencies tab) ────

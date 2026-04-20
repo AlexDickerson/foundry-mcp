@@ -90,6 +90,9 @@ export type CommandType =
   | 'get-compendiums'
   | 'get-compendium'
   | 'find-in-compendium'
+  | 'list-compendium-packs'
+  | 'list-compendium-sources'
+  | 'get-compendium-document'
   | 'find-or-create-folder'
   | 'list-roll-tables'
   | 'get-roll-table'
@@ -1089,8 +1092,11 @@ export interface FindInCompendiumParams {
   /** Substring (case-insensitive) to match against document names. Tokenized
    *  on whitespace — all tokens must appear in the name. */
   name: string;
-  /** Optional — restrict to a single pack (e.g. 'pf2e.pathfinder-bestiary'). */
-  packId?: string;
+  /** Optional — restrict to one or more packs (e.g. 'pf2e.feats-srd' or
+   *  ['pf2e.feats-srd', 'pf2e.classfeatures']). A string and a
+   *  single-element array behave identically. When omitted, every pack
+   *  (filtered by documentType if provided) is searched. */
+  packId?: string | string[];
   /** Optional — restrict to packs of this document type (e.g. 'Actor', 'Item'). */
   documentType?: string;
   /** Optional — require every trait in this list to be present on the
@@ -1101,6 +1107,11 @@ export interface FindInCompendiumParams {
   /** Optional — cap `system.level.value` at this level. Used by feat
    *  pickers to hide feats the character doesn't yet qualify for. */
   maxLevel?: number;
+  /** Optional — OR-filter on `system.publication.title`. A candidate
+   *  qualifies if its publication title matches any value in the
+   *  list (case-insensitive). Used by the source-book filter in the
+   *  picker ("Pathfinder Player Core", "GM Core", ...). */
+  sources?: string[];
   /** Max results to return. Defaults to 10. */
   limit?: number;
 }
@@ -1122,6 +1133,72 @@ export interface CompendiumMatch {
 
 export interface FindInCompendiumResult {
   matches: CompendiumMatch[];
+}
+
+export interface ListCompendiumPacksParams {
+  /** Optional filter — restrict to packs of this document type
+   *  (e.g. 'Item', 'Actor', 'JournalEntry'). */
+  documentType?: string;
+}
+
+export interface CompendiumPackInfo {
+  id: string; // pack.collection (e.g. 'pf2e.feats-srd')
+  label: string; // pack.metadata.label (e.g. 'Class Feats')
+  type: string; // pack.metadata.type (e.g. 'Item')
+  system?: string; // pack.metadata.system
+  packageName?: string; // pack.metadata.packageName
+}
+
+export interface ListCompendiumPacksResult {
+  packs: CompendiumPackInfo[];
+}
+
+export interface ListCompendiumSourcesParams {
+  /** Optional — restrict the walk to packs of this document type. */
+  documentType?: string;
+  /** Optional — restrict the walk to these packs (e.g.
+   *  ['pf2e.feats-srd']). When omitted, every pack matching
+   *  documentType is walked. */
+  packId?: string | string[];
+  /** Free-text query applied to names and trait tags, same semantics
+   *  as find-in-compendium. When present, only matching entries are
+   *  counted per source. */
+  name?: string;
+  /** AND-required traits, same semantics as find-in-compendium. */
+  traits?: string[];
+  /** Cap on `system.level.value`, same semantics as find-in-compendium. */
+  maxLevel?: number;
+}
+
+export interface CompendiumSource {
+  title: string;
+  /** How many entries across the scanned packs were published here.
+   *  Lets the UI show a count next to each source. */
+  count: number;
+}
+
+export interface ListCompendiumSourcesResult {
+  sources: CompendiumSource[];
+}
+
+export interface GetCompendiumDocumentParams {
+  uuid: string; // e.g. 'Compendium.pf2e.feats-srd.Item.abc123'
+}
+
+export interface CompendiumDocumentData {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  /** Full `system.*` slice as serialized by `document.toObject(false)`.
+   *  Shape varies by item type; the picker treats it as raw data and
+   *  reads only what its renderer needs. */
+  system: Record<string, unknown>;
+}
+
+export interface GetCompendiumDocumentResult {
+  document: CompendiumDocumentData;
 }
 
 /** Folder document types Foundry supports. The set mirrors
@@ -1424,6 +1501,9 @@ export interface CommandParamsMap {
   'get-compendiums': GetCompendiumsParams;
   'get-compendium': GetCompendiumParams;
   'find-in-compendium': FindInCompendiumParams;
+  'list-compendium-packs': ListCompendiumPacksParams;
+  'list-compendium-sources': ListCompendiumSourcesParams;
+  'get-compendium-document': GetCompendiumDocumentParams;
   'find-or-create-folder': FindOrCreateFolderParams;
   'list-roll-tables': ListRollTablesParams;
   'get-roll-table': GetRollTableParams;
@@ -1515,6 +1595,9 @@ export interface CommandResultMap {
   'get-compendiums': CompendiumMetadata[];
   'get-compendium': CompendiumData;
   'find-in-compendium': FindInCompendiumResult;
+  'list-compendium-packs': ListCompendiumPacksResult;
+  'list-compendium-sources': ListCompendiumSourcesResult;
+  'get-compendium-document': GetCompendiumDocumentResult;
   'find-or-create-folder': FindOrCreateFolderResult;
   'list-roll-tables': RollTableSummary[];
   'get-roll-table': RollTableResult;

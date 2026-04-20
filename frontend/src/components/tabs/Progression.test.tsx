@@ -2,10 +2,12 @@ import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { render, cleanup, within, waitFor, fireEvent } from '@testing-library/react';
 import amiri from '../../fixtures/amiri-prepared.json';
 import { api } from '../../api/client';
-import type { CompendiumMatch, PreparedActorItem } from '../../api/types';
+import type { CompendiumMatch, PreparedActorItem, PreparedCharacter } from '../../api/types';
+import { fromPreparedCharacter } from '../../prereqs';
 import { Progression } from './Progression';
 
 const items = (amiri as unknown as { items: PreparedActorItem[] }).items;
+const ctx = fromPreparedCharacter(amiri as unknown as PreparedCharacter);
 
 const picker_match: CompendiumMatch = {
   packId: 'pf2e.feats-srd',
@@ -32,25 +34,25 @@ describe('Progression tab', () => {
   });
 
   it('renders all 20 character levels', () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     const rows = container.querySelectorAll('[data-level]');
     expect(rows).toHaveLength(20);
   });
 
   it("marks the character's current level", () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     const row = container.querySelector('[data-level="1"]');
     expect(row?.getAttribute('data-state')).toBe('current');
   });
 
   it('marks higher levels as future', () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     expect(container.querySelector('[data-level="2"]')?.getAttribute('data-state')).toBe('future');
     expect(container.querySelector('[data-level="20"]')?.getAttribute('data-state')).toBe('future');
   });
 
   it('marks lower levels as past when character has advanced', () => {
-    const { container } = render(<Progression characterLevel={5} items={items} />);
+    const { container } = render(<Progression characterLevel={5} items={items} characterContext={ctx} />);
     expect(container.querySelector('[data-level="1"]')?.getAttribute('data-state')).toBe('past');
     expect(container.querySelector('[data-level="4"]')?.getAttribute('data-state')).toBe('past');
     expect(container.querySelector('[data-level="5"]')?.getAttribute('data-state')).toBe('current');
@@ -58,20 +60,20 @@ describe('Progression tab', () => {
   });
 
   it("shows Amiri's level-1 Barbarian features (Instinct, Rage)", () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     const row = container.querySelector('[data-level="1"]') as HTMLElement;
     expect(within(row).getByText('Instinct')).toBeTruthy();
     expect(within(row).getByText('Rage')).toBeTruthy();
   });
 
   it("places Brutality at level 5 (one of Barbarian's class features)", () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     const row = container.querySelector('[data-level="5"]') as HTMLElement;
     expect(within(row).getByText('Brutality')).toBeTruthy();
   });
 
   it('renders class feat slot at every classFeatLevels entry', () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     // Barbarian classFeatLevels: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
     for (const level of [1, 2, 4, 6, 8]) {
       const row = container.querySelector(`[data-level="${level.toString()}"]`);
@@ -84,7 +86,7 @@ describe('Progression tab', () => {
   });
 
   it('renders ancestry feat slot at the core rulebook levels', () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     // ancestryFeatLevels: [1, 5, 9, 13, 17]
     for (const level of [1, 5, 9, 13, 17]) {
       const row = container.querySelector(`[data-level="${level.toString()}"]`);
@@ -97,7 +99,7 @@ describe('Progression tab', () => {
   });
 
   it('renders ability-boosts slot at levels 5, 10, 15, 20', () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     for (const level of [5, 10, 15, 20]) {
       const row = container.querySelector(`[data-level="${level.toString()}"]`);
       expect(
@@ -109,7 +111,7 @@ describe('Progression tab', () => {
   });
 
   it('renders skill increase slot starting at level 3', () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     for (const level of [3, 5, 7, 9]) {
       const row = container.querySelector(`[data-level="${level.toString()}"]`);
       expect(
@@ -126,14 +128,14 @@ describe('Progression tab', () => {
 
   it('falls back to a friendly message when no class item is present', () => {
     const noClass = items.filter((i) => i.type !== 'class');
-    const { container } = render(<Progression characterLevel={1} items={noClass} />);
+    const { container } = render(<Progression characterLevel={1} items={noClass} characterContext={ctx} />);
     expect(container.textContent).toContain('No class item');
   });
 
   // --- Class-feat picker flow ---------------------------------------------
 
   it('opens the picker when a class-feat slot chip is clicked', async () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     const row = container.querySelector('[data-level="1"]') as HTMLElement;
     const trigger = row.querySelector('[data-slot="class-feat"] [data-testid="slot-open-picker"]') as HTMLElement;
     expect(trigger, 'class-feat chip button').toBeTruthy();
@@ -152,7 +154,7 @@ describe('Progression tab', () => {
   });
 
   it('commits the picked match into the level row and closes the picker', async () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     const row = container.querySelector('[data-level="1"]') as HTMLElement;
     fireEvent.click(row.querySelector('[data-testid="slot-open-picker"]') as HTMLElement);
 
@@ -172,7 +174,7 @@ describe('Progression tab', () => {
   });
 
   it('clearing a picked feat restores the open slot chip', async () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     const row = container.querySelector('[data-level="1"]') as HTMLElement;
     fireEvent.click(row.querySelector('[data-testid="slot-open-picker"]') as HTMLElement);
 
@@ -195,7 +197,7 @@ describe('Progression tab', () => {
   });
 
   it('leaves non-clickable slot chips rendered as static labels', () => {
-    const { container } = render(<Progression characterLevel={1} items={items} />);
+    const { container } = render(<Progression characterLevel={1} items={items} characterContext={ctx} />);
     // ancestry-feat at L1 is not yet a pickable slot type.
     const row = container.querySelector('[data-level="1"]') as HTMLElement;
     const ancestry = row.querySelector('[data-slot="ancestry-feat"]');

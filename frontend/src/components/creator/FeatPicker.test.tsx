@@ -44,7 +44,7 @@ describe('FeatPicker', () => {
     const { container, getByText } = render(
       <FeatPicker
         title="Pick a Class Feat (Level 1)"
-        filters={{ packId: 'pf2e.feats-srd', documentType: 'Item', traits: ['barbarian'], maxLevel: 1 }}
+        filters={{ packIds: ['pf2e.feats-srd'], documentType: 'Item', traits: ['barbarian'], maxLevel: 1 }}
         onPick={vi.fn()}
         onClose={vi.fn()}
       />,
@@ -63,7 +63,7 @@ describe('FeatPicker', () => {
     render(
       <FeatPicker
         title="t"
-        filters={{ packId: 'pf2e.feats-srd', documentType: 'Item', traits: ['barbarian'], maxLevel: 1 }}
+        filters={{ packIds: ['pf2e.feats-srd'], documentType: 'Item', traits: ['barbarian'], maxLevel: 1 }}
         onPick={vi.fn()}
         onClose={vi.fn()}
       />,
