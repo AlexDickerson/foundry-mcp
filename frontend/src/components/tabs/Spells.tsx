@@ -6,13 +6,14 @@ import { SectionHeader } from '../common/SectionHeader';
 
 interface Props {
   items: PreparedActorItem[];
+  characterLevel: number;
 }
 
 // Spells tab — read-only view of the character's spellcastingEntry +
 // spell items, grouped by entry then by rank (cantrips first). Slot
 // counts, prepared/spontaneous daily prep, and heightening choices are
 // intentionally out of scope; those stay on the Foundry sheet for now.
-export function Spells({ items }: Props): React.ReactElement {
+export function Spells({ items, characterLevel }: Props): React.ReactElement {
   // Hook first — must run on every render regardless of empty-state.
   const uuidHover = useUuidHover();
   const entries = items.filter(isSpellcastingEntryItem);
@@ -43,12 +44,17 @@ export function Spells({ items }: Props): React.ReactElement {
       onMouseOut={uuidHover.delegationHandlers.onMouseOut}
     >
       {entries.map((entry) => (
-        <EntryBlock key={entry.id} entry={entry} spells={byEntry.get(entry.id) ?? []} />
+        <EntryBlock
+          key={entry.id}
+          entry={entry}
+          spells={byEntry.get(entry.id) ?? []}
+          characterLevel={characterLevel}
+        />
       ))}
       {orphans.length > 0 && (
         <div data-testid="spells-orphans">
           <SectionHeader>Orphaned Spells</SectionHeader>
-          <RankedSpellList spells={orphans} />
+          <RankedSpellList spells={orphans} characterLevel={characterLevel} />
         </div>
       )}
       {uuidHover.popover}
@@ -59,9 +65,11 @@ export function Spells({ items }: Props): React.ReactElement {
 function EntryBlock({
   entry,
   spells,
+  characterLevel,
 }: {
   entry: SpellcastingEntryItem;
   spells: SpellItem[];
+  characterLevel: number;
 }): React.ReactElement {
   const traditionRaw = entry.system.tradition?.value;
   const tradition = typeof traditionRaw === 'string' && traditionRaw !== '' ? traditionRaw : null;
@@ -83,21 +91,28 @@ function EntryBlock({
       {spells.length === 0 ? (
         <p className="text-xs italic text-neutral-400">No spells.</p>
       ) : (
-        <RankedSpellList spells={spells} />
+        <RankedSpellList spells={spells} characterLevel={characterLevel} />
       )}
     </div>
   );
 }
 
-function RankedSpellList({ spells }: { spells: SpellItem[] }): React.ReactElement {
+function RankedSpellList({
+  spells,
+  characterLevel,
+}: {
+  spells: SpellItem[];
+  characterLevel: number;
+}): React.ReactElement {
   const cantrips = spells.filter(isCantripSpell);
   const regular = spells.filter((s) => !isCantripSpell(s));
 
   const byRank = new Map<number, SpellItem[]>();
   for (const s of regular) {
-    const arr = byRank.get(effectiveRank(s)) ?? [];
+    const rank = effectiveRank(s, characterLevel);
+    const arr = byRank.get(rank) ?? [];
     arr.push(s);
-    byRank.set(effectiveRank(s), arr);
+    byRank.set(rank, arr);
   }
   const ranks = [...byRank.keys()].sort((a, b) => a - b);
 
@@ -105,33 +120,62 @@ function RankedSpellList({ spells }: { spells: SpellItem[] }): React.ReactElemen
 
   return (
     <div className="space-y-4">
-      {cantrips.length > 0 && <RankGroup label="Cantrips" spells={[...cantrips].sort(sortByName)} />}
+      {cantrips.length > 0 && (
+        <RankGroup
+          label="Cantrips"
+          spells={[...cantrips].sort(sortByName)}
+          characterLevel={characterLevel}
+        />
+      )}
       {ranks.map((r) => (
-        <RankGroup key={r} label={`${ordinal(r)}-Rank Spells`} spells={[...(byRank.get(r) ?? [])].sort(sortByName)} />
+        <RankGroup
+          key={r}
+          label={`${ordinal(r)}-Rank Spells`}
+          spells={[...(byRank.get(r) ?? [])].sort(sortByName)}
+          characterLevel={characterLevel}
+        />
       ))}
     </div>
   );
 }
 
-function RankGroup({ label, spells }: { label: string; spells: SpellItem[] }): React.ReactElement {
+function RankGroup({
+  label,
+  spells,
+  characterLevel,
+}: {
+  label: string;
+  spells: SpellItem[];
+  characterLevel: number;
+}): React.ReactElement {
   return (
     <div data-spell-rank={label}>
       <h3 className="mb-1 font-serif text-xs font-semibold uppercase tracking-widest text-pf-alt-dark">{label}</h3>
       <ul className="space-y-1">
         {spells.map((spell) => (
-          <SpellCard key={spell.id} spell={spell} />
+          <SpellCard key={spell.id} spell={spell} characterLevel={characterLevel} />
         ))}
       </ul>
     </div>
   );
 }
 
-function SpellCard({ spell }: { spell: SpellItem }): React.ReactElement {
+function SpellCard({
+  spell,
+  characterLevel,
+}: {
+  spell: SpellItem;
+  characterLevel: number;
+}): React.ReactElement {
   const traitsRaw = spell.system.traits?.value;
   const traits = Array.isArray(traitsRaw) ? traitsRaw.filter((t) => t !== 'cantrip') : [];
   const castCost = formatCastCost(spell.system.time?.value);
   const description = spell.system.description?.value ?? '';
-  const enriched = description.length > 0 ? enrichDescription(description) : '';
+  const heightening = computeHeighteningStep(spell, characterLevel);
+  const enriched =
+    description.length > 0
+      ? enrichDescription(description, heightening !== null ? { heightening } : undefined)
+      : '';
 
   return (
     <li
@@ -170,7 +214,7 @@ function SpellCard({ spell }: { spell: SpellItem }): React.ReactElement {
           <SpellMeta spell={spell} />
           {enriched.length > 0 ? (
             <div
-              className="mt-2 leading-relaxed [&_.pf-damage]:font-semibold [&_.pf-damage]:text-pf-primary [&_.pf-template]:italic [&_.pf-template]:text-pf-secondary [&_a]:cursor-pointer [&_a]:text-pf-primary [&_a]:underline [&_p]:my-2"
+              className="mt-2 leading-relaxed [&_.pf-damage]:font-semibold [&_.pf-damage]:text-pf-primary [&_.pf-damage-heightened]:text-pf-prof-master [&_.pf-template]:italic [&_.pf-template]:text-pf-secondary [&_a]:cursor-pointer [&_a]:text-pf-primary [&_a]:underline [&_p]:my-2"
               dangerouslySetInnerHTML={{ __html: enriched }}
             />
           ) : (
@@ -205,14 +249,51 @@ function SpellMeta({ spell }: { spell: SpellItem }): React.ReactElement | null {
 
 // ─── Helpers ───────────────────────────────────────────────────────────
 
-// The rank a spell is actually cast/slotted at. For prepared slots and
-// spontaneous repertoire entries, pf2e stores the slot's rank in
-// `location.heightenedLevel`; fall back to the spell's base rank.
-function effectiveRank(spell: SpellItem): number {
+// The rank a spell is actually cast/slotted at.
+//  - Cantrips auto-heighten to ceil(characterLevel / 2); the stored
+//    `location.heightenedLevel` is unreliable (often 0 or the base
+//    rank regardless of the caster's level).
+//  - Leveled spells use `location.heightenedLevel` when set by a
+//    prepared-slot assignment; otherwise they sit at their base rank.
+function effectiveRank(spell: SpellItem, characterLevel: number): number {
+  const baseRaw = spell.system.level?.value;
+  const base = typeof baseRaw === 'number' ? baseRaw : 0;
+  if (isCantripSpell(spell)) {
+    const auto = Math.max(1, Math.ceil(characterLevel / 2));
+    return Math.max(base, auto);
+  }
   const heightened = spell.system.location?.heightenedLevel;
-  if (typeof heightened === 'number' && heightened > 0) return heightened;
-  const base = spell.system.level?.value;
-  return typeof base === 'number' ? base : 0;
+  if (typeof heightened === 'number' && heightened > base) return heightened;
+  return base;
+}
+
+// Heightening input for the damage enricher. Returns null when the
+// spell isn't heightened above its base rank, lacks interval-type
+// heightening, or exposes no damage step — those cases render the
+// description unchanged.
+function computeHeighteningStep(
+  spell: SpellItem,
+  characterLevel: number,
+): { delta: number; perStep: string } | null {
+  const baseRaw = spell.system.level?.value;
+  const base = typeof baseRaw === 'number' ? baseRaw : 0;
+  const cast = effectiveRank(spell, characterLevel);
+  const delta = cast - base;
+  if (delta <= 0) return null;
+  const h = spell.system.heightening;
+  if (h === undefined || h.type !== 'interval') return null;
+  const interval = typeof h.interval === 'number' && h.interval > 0 ? h.interval : 1;
+  const damageMap = h.damage;
+  if (damageMap === undefined) return null;
+  // Pick the first entry that parses as dice — pf2e sometimes emits
+  // non-dice scalars (flat-add bonuses, condition durations) as
+  // additional keys alongside the dice value.
+  const perStep = Object.values(damageMap).find((v) => typeof v === 'string' && /^\s*\d+d\d+\s*$/.test(v));
+  if (perStep === undefined) return null;
+  // pf2e `interval` says "per N ranks". Scale delta accordingly.
+  const steps = Math.floor(delta / interval);
+  if (steps <= 0) return null;
+  return { delta: steps, perStep };
 }
 
 function formatCastCost(time: string | undefined): string | null {

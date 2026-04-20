@@ -658,6 +658,18 @@ export function isSpellcastingEntryItem(item: PreparedActorItem): item is Spellc
   return item.type === 'spellcastingEntry';
 }
 
+export interface SpellHeightening {
+  // 'interval': each +N steps above base rank applies `damage` / `area` /
+  // etc. once more. 'fixed': explicit per-rank overrides in `levels`.
+  type?: 'interval' | 'fixed';
+  interval?: number;
+  // Keyed by partition id; values are dice expressions ("2d6") applied
+  // per step. pf2e sometimes emits entries for non-damage scalars
+  // alongside real dice — the reader filters those out.
+  damage?: Record<string, string>;
+  levels?: Record<string, unknown>;
+}
+
 export interface SpellItemSystem {
   slug: string | null;
   // Base rank of the spell. Cantrips also carry the `cantrip` trait —
@@ -676,6 +688,7 @@ export interface SpellItemSystem {
   range?: { value: string };
   area?: { type?: string; value?: number | string } | null;
   target?: { value: string };
+  heightening?: SpellHeightening;
   [key: string]: unknown;
 }
 

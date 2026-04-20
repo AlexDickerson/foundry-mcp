@@ -20,10 +20,27 @@ const TEMPLATE_PATTERN = /@Template\[([^\]]+)\](?:\{([^}]+)\})?/g;
 const CHECK_PATTERN = /@Check\[([^\]]+)\](?:\{([^}]+)\})?/g;
 const INLINE_ROLL_PATTERN = /\[\[\/(\w+)\s+([^\]]+)\]\](?:\{([^}]+)\})?/g;
 
-export function enrichDescription(html: string): string {
+// Heightening context: apply to the FIRST @Damage token in a
+// description. `delta` is the number of rank steps above the spell's
+// base (e.g. 3 for a cantrip auto-heightened from rank 1 to rank 4),
+// and `perStep` is the dice added each step (e.g. "2d6"). Multi-
+// partition damage only heightens the first partition.
+export interface EnrichOptions {
+  heightening?: { delta: number; perStep: string };
+}
+
+export function enrichDescription(html: string, opts?: EnrichOptions): string {
   // Damage first — its content can contain nested brackets so the
   // walker-based scanner handles it cleanly before any regex passes.
-  let out = replaceDamageTokens(html);
+  const damagePass = replaceDamageTokens(html, opts?.heightening);
+  // If heightening was requested but no `@Damage[...]` token was
+  // rewritten (common for older pf2e spells whose descriptions are
+  // plain prose), fall back to a regex that targets "NdS <type>
+  // damage" in the surrounding text.
+  let out =
+    opts?.heightening !== undefined && !damagePass.heightened
+      ? heightenPlainTextDamage(damagePass.html, opts.heightening)
+      : damagePass.html;
   // Inline rolls ([[/r 1d4 #flavor]]{label}) next — contained to their
   // own [[…]] delimiters so order-sensitive to sit before any single-
   // bracket regex. Most pf2e inline rolls carry an explicit label.
@@ -124,10 +141,18 @@ function capitaliseFirst(s: string): string {
 
 // ─── @Damage ───────────────────────────────────────────────────────────
 
-function replaceDamageTokens(input: string): string {
+function replaceDamageTokens(
+  input: string,
+  heightening?: { delta: number; perStep: string },
+): { html: string; heightened: boolean } {
   const prefix = '@Damage[';
   let out = '';
   let i = 0;
+  // Heightening applies to the FIRST @Damage token only — most pf2e
+  // spells have one primary damage line plus a heightened paragraph
+  // that *describes* the +Nd… delta. Subsequent damage tokens stay at
+  // base (e.g. persistent conditions, splash damage, crit specs).
+  let heightenedOnce = false;
   while (i < input.length) {
     const next = input.indexOf(prefix, i);
     if (next === -1) {
@@ -151,11 +176,101 @@ function replaceDamageTokens(input: string): string {
         labelEnd = closeIdx + 1;
       }
     }
-    const display = label !== undefined && label.trim().length > 0 ? label : formatDamageContent(parsed.content);
-    out += `<span class="pf-damage" title="@Damage[${escapeAttr(parsed.content)}]">${escapeText(display)}</span>`;
+
+    let content = parsed.content;
+    let didHeighten = false;
+    if (!heightenedOnce && heightening !== undefined && heightening.delta > 0) {
+      const heightened = heightenDamageContent(content, heightening.perStep, heightening.delta);
+      if (heightened !== null) {
+        content = heightened;
+        didHeighten = true;
+        heightenedOnce = true;
+      }
+    }
+
+    const display = label !== undefined && label.trim().length > 0 ? label : formatDamageContent(content);
+    const classes = didHeighten ? 'pf-damage pf-damage-heightened' : 'pf-damage';
+    const titleAttr = didHeighten
+      ? `@Damage[${escapeAttr(parsed.content)}] · heightened +${heightening?.delta.toString() ?? '0'}`
+      : `@Damage[${escapeAttr(parsed.content)}]`;
+    out += `<span class="${classes}" title="${escapeAttr(titleAttr)}">${escapeText(display)}</span>`;
     i = labelEnd;
   }
-  return out;
+  return { html: out, heightened: heightenedOnce };
+}
+
+// Fallback for spell descriptions that store damage as prose ("…deals
+// 3d6 fire damage…") instead of `@Damage[]` enricher tokens. We look
+// for the first "NdS (type?) damage" match and rewrite the dice. The
+// lookbehind-ish guard (checking that we aren't inside a `<span class=
+// "pf-damage">`) isn't watertight, but @Damage-token spans won't
+// survive the first pass as literal "NdS damage" either, so in
+// practice the passes don't step on each other.
+function heightenPlainTextDamage(input: string, heightening: { delta: number; perStep: string }): string {
+  const step = parseDice(heightening.perStep);
+  if (step === null) return input;
+  const pattern = /(\d+)d(\d+)(\s+(?:[a-z]+\s+)?damage)/i;
+  const m = pattern.exec(input);
+  if (!m) return input;
+  const count = Number(m[1]);
+  const die = Number(m[2]);
+  if (!Number.isFinite(count) || !Number.isFinite(die)) return input;
+  if (die !== step.die) return input;
+  const newCount = count + step.count * heightening.delta;
+  const baseText = `${count.toString()}d${die.toString()}`;
+  const replaced = `<span class="pf-damage pf-damage-heightened" title="${escapeAttr(`base ${baseText} · heightened +${heightening.delta.toString()}`)}">${newCount.toString()}d${die.toString()}</span>${m[3] ?? ''}`;
+  return input.slice(0, m.index) + replaced + input.slice(m.index + m[0].length);
+}
+
+// Try to add `delta` copies of `perStep` dice to the first damage
+// expression inside `content`. Returns a rewritten content string (e.g.
+// "9d6[fire]" from "3d6[fire]" + 2d6 × 3), or null when the base /
+// step don't share the same die so merging isn't safe.
+function heightenDamageContent(content: string, perStep: string, delta: number): string | null {
+  // Parse the first "NdS" (+ optional constant) at the start of the
+  // content, tolerating a leading "(" for expressions like "(1d6+2)".
+  const firstExpr = parseLeadingDice(content);
+  if (firstExpr === null) return null;
+  const step = parseDice(perStep);
+  if (step === null) return null;
+  if (firstExpr.die !== step.die) return null; // only merge same die
+  const newCount = firstExpr.count + step.count * delta;
+  const rebuilt = firstExpr.const === 0 ? `${newCount.toString()}d${firstExpr.die.toString()}` : `${newCount.toString()}d${firstExpr.die.toString()}+${firstExpr.const.toString()}`;
+  // Splice the rewritten dice back in. `match` is the exact text we
+  // matched against so a regex-free replace keeps nested brackets
+  // unharmed.
+  return content.slice(0, firstExpr.start) + rebuilt + content.slice(firstExpr.end);
+}
+
+interface ParsedDice {
+  count: number;
+  die: number;
+  const: number;
+  start: number;
+  end: number;
+}
+
+function parseLeadingDice(content: string): ParsedDice | null {
+  // Skip a single leading "(" so expressions like "(1d6+2)[fire]"
+  // still heighten — we rewrite only the dice portion and leave the
+  // surrounding punctuation intact.
+  const m = /^\(?(\d+)d(\d+)(?:\s*\+\s*(\d+))?/.exec(content);
+  if (!m) return null;
+  const count = Number(m[1]);
+  const die = Number(m[2]);
+  const cst = m[3] !== undefined ? Number(m[3]) : 0;
+  if (!Number.isFinite(count) || !Number.isFinite(die)) return null;
+  const start = content.startsWith('(') ? 1 : 0;
+  return { count, die, const: cst, start, end: m[0].length };
+}
+
+function parseDice(expr: string): { count: number; die: number } | null {
+  const m = /^\s*(\d+)d(\d+)\s*$/.exec(expr);
+  if (!m) return null;
+  const count = Number(m[1]);
+  const die = Number(m[2]);
+  if (!Number.isFinite(count) || !Number.isFinite(die)) return null;
+  return { count, die };
 }
 
 // Starts *inside* the opening bracket and consumes until the matching

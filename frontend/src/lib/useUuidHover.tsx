@@ -7,13 +7,20 @@ import { enrichDescription } from './foundry-enrichers';
 // Hover previews for `@UUID[...]` enricher links inside a rendered
 // description. The caller keeps their own `dangerouslySetInnerHTML`
 // container; this hook returns mouse-over / mouse-out delegation
-// handlers to spread onto it, plus a portaled popover to render
-// once. Fetching is lazy — the full document is pulled on first
-// hover per UUID and cached per hook instance.
+// handlers to spread onto it, plus a stack of portaled popovers.
+//
+// Nested hovers: hovering a `@UUID` anchor *inside* an already-open
+// popover opens a new popover to the right of the parent, aligned at
+// the parent's top edge. Any number of levels stack this way; moving
+// the cursor back into a parent trims the deeper levels. Fetching is
+// lazy and cached per hook instance.
 
-interface HoverState {
+interface HoverLevel {
   uuid: string;
-  rect: DOMRect;
+  // Link bounding rect at open time. Only the root level (index 0)
+  // uses this — deeper levels chain off the previous popover's
+  // computed position.
+  anchorRect: DOMRect;
 }
 
 type DocState =
@@ -33,11 +40,16 @@ export function useUuidHover(): {
   };
   popover: React.ReactElement | null;
 } {
-  const [hover, setHover] = useState<HoverState | null>(null);
+  const [stack, setStack] = useState<HoverLevel[]>([]);
   const [docs, setDocs] = useState<Map<string, DocState>>(new Map());
   const cacheRef = useRef<Map<string, DocState>>(new Map());
   const closeTimerRef = useRef<number | null>(null);
   const openTimerRef = useRef<number | null>(null);
+  const popoverElsRef = useRef<Map<number, HTMLDivElement>>(new Map());
+  const latestHandlersRef = useRef<{
+    over: (e: MouseEvent) => void;
+    out: (e: MouseEvent) => void;
+  }>({ over: () => {}, out: () => {} });
 
   useEffect(
     () => () => {
@@ -53,10 +65,14 @@ export function useUuidHover(): {
       closeTimerRef.current = null;
     }
   };
-  const scheduleClose = (): void => {
+  // Trim the popover stack down to `targetLength` after the close
+  // delay. Cursor bridging (e.g. moving from anchor → popover or
+  // popover N → popover M) calls this to close deeper levels without
+  // losing the visual parent the user is heading toward.
+  const scheduleCloseToLength = (targetLength: number): void => {
     cancelClose();
     closeTimerRef.current = window.setTimeout(() => {
-      setHover(null);
+      setStack((s) => (s.length > targetLength ? s.slice(0, targetLength) : s));
       closeTimerRef.current = null;
     }, HOVER_CLOSE_DELAY_MS);
   };
@@ -81,59 +97,147 @@ export function useUuidHover(): {
     setDocs(new Map(cacheRef.current));
   };
 
-  const onMouseOver = (e: React.MouseEvent<HTMLElement>): void => {
-    const link = (e.target as HTMLElement).closest('a[data-uuid]') as HTMLAnchorElement | null;
+  const handleMouseOver = (target: Element | null, _related: Element | null): void => {
+    const link = target?.closest('a[data-uuid]') as HTMLAnchorElement | null;
     if (!link) return;
     const uuid = link.getAttribute('data-uuid');
     if (!uuid) return;
     cancelClose();
-    if (hover?.uuid === uuid) return;
+    // Figure out which level this link lives in. Links inside popover
+    // N open level N+1; links in the main content open level 0.
+    const ownerPop = link.closest<HTMLElement>('[data-uuid-popover]');
+    const parentLevel = ownerPop !== null ? Number(ownerPop.dataset['popoverLevel']) : -1;
+    const newLevel = parentLevel + 1;
+    // Already showing this uuid at this level — no-op.
+    if (stack[newLevel]?.uuid === uuid) return;
     // Prefetch during the open delay so the popover opens with cached
     // content when possible instead of flashing the loading state.
     void loadDoc(uuid);
     cancelOpen();
+    const anchorRect = link.getBoundingClientRect();
     openTimerRef.current = window.setTimeout(() => {
-      setHover({ uuid, rect: link.getBoundingClientRect() });
+      setStack((curr) => [...curr.slice(0, newLevel), { uuid, anchorRect }]);
       openTimerRef.current = null;
     }, HOVER_OPEN_DELAY_MS);
   };
 
-  const onMouseOut = (e: React.MouseEvent<HTMLElement>): void => {
-    const link = (e.target as HTMLElement).closest('a[data-uuid]');
+  const handleMouseOut = (target: Element | null, related: Element | null): void => {
+    const link = target?.closest('a[data-uuid]');
     if (!link) return;
     // If we were about to open but the user slid off before the delay
     // elapsed, just drop the pending open — no popover was ever shown.
     cancelOpen();
-    const related = e.relatedTarget as Element | null;
-    // Moving into the popover itself keeps it open so the user can
-    // scroll / read the preview without it dismissing.
+    // Moving into a popover keeps that level (and anything below)
+    // alive. The popover's own onMouseEnter decides what to trim.
     if (related && related.closest('[data-uuid-popover]')) return;
-    // Moving between text inside the same link: we'd get an
-    // onMouseOut + onMouseOver pair; the close delay (~140ms) covers
-    // the gap so the popover doesn't flicker.
-    scheduleClose();
+    // Moving off every link / popover: close everything after a beat
+    // so the cursor can still bridge back in without flicker.
+    scheduleCloseToLength(0);
   };
 
-  let popover: React.ReactElement | null = null;
-  if (hover) {
+  // React's root-level event delegation doesn't fire for elements
+  // rendered inside a createPortal target outside the root container,
+  // so we keep a ref to the latest closures and re-attach native
+  // listeners to each popover div in the effect below.
+  latestHandlersRef.current = {
+    over: (e) => handleMouseOver(e.target as Element | null, (e.relatedTarget as Element | null) ?? null),
+    out: (e) => handleMouseOut(e.target as Element | null, (e.relatedTarget as Element | null) ?? null),
+  };
+
+  useEffect(() => {
+    const overProxy = (e: MouseEvent): void => latestHandlersRef.current.over(e);
+    const outProxy = (e: MouseEvent): void => latestHandlersRef.current.out(e);
+    const attached: HTMLDivElement[] = [];
+    for (const el of popoverElsRef.current.values()) {
+      el.addEventListener('mouseover', overProxy);
+      el.addEventListener('mouseout', outProxy);
+      attached.push(el);
+    }
+    return () => {
+      for (const el of attached) {
+        el.removeEventListener('mouseover', overProxy);
+        el.removeEventListener('mouseout', outProxy);
+      }
+    };
+    // The popoverElsRef map is populated by ref callbacks as popovers
+    // mount/unmount; re-run every time the stack length changes so
+    // newly-mounted popover elements get their listeners.
+  }, [stack.length]);
+
+  const onMouseOver = (e: React.MouseEvent<HTMLElement>): void => {
+    handleMouseOver(e.target as Element, (e.relatedTarget as Element | null) ?? null);
+  };
+  const onMouseOut = (e: React.MouseEvent<HTMLElement>): void => {
+    handleMouseOut(e.target as Element, (e.relatedTarget as Element | null) ?? null);
+  };
+
+  const positions = stack.reduce<Array<{ top: number; left: number }>>((acc, level, idx) => {
     const maxLeft = window.innerWidth - POPOVER_WIDTH - 12;
-    const left = Math.max(12, Math.min(hover.rect.left, maxLeft));
-    const top = hover.rect.bottom + POPOVER_GAP;
-    const state = docs.get(hover.uuid);
-    popover = createPortal(
-      <div
-        data-uuid-popover
-        data-testid="uuid-hover-popover"
-        onMouseEnter={cancelClose}
-        onMouseLeave={scheduleClose}
-        style={{ position: 'fixed', top, left, width: POPOVER_WIDTH }}
-        className="z-50 rounded border border-pf-border bg-pf-bg p-4 text-left shadow-xl"
-      >
-        <PopoverBody state={state} />
-      </div>,
-      document.body,
-    );
-  }
+    if (idx === 0) {
+      acc.push({
+        top: level.anchorRect.bottom + POPOVER_GAP,
+        left: Math.max(12, Math.min(level.anchorRect.left, maxLeft)),
+      });
+      return acc;
+    }
+    const parent = acc[idx - 1];
+    if (parent === undefined) {
+      acc.push({
+        top: level.anchorRect.bottom + POPOVER_GAP,
+        left: Math.max(12, Math.min(level.anchorRect.left, maxLeft)),
+      });
+      return acc;
+    }
+    // Prefer right of the parent; if that overflows the viewport,
+    // fall back to the left side so the preview stays reachable.
+    const rightOfParent = parent.left + POPOVER_WIDTH + POPOVER_GAP;
+    const leftOfParent = parent.left - POPOVER_WIDTH - POPOVER_GAP;
+    const left = rightOfParent <= maxLeft ? rightOfParent : Math.max(12, leftOfParent);
+    acc.push({ top: parent.top, left });
+    return acc;
+  }, []);
+
+  const popover =
+    stack.length > 0 ? (
+      <>
+        {stack.map((level, idx) => {
+          const pos = positions[idx];
+          if (pos === undefined) return null;
+          const state = docs.get(level.uuid);
+          return createPortal(
+            <div
+              key={idx.toString()}
+              ref={(el): void => {
+                if (el) popoverElsRef.current.set(idx, el);
+                else popoverElsRef.current.delete(idx);
+              }}
+              data-uuid-popover
+              data-popover-level={idx.toString()}
+              data-testid={idx === 0 ? 'uuid-hover-popover' : `uuid-hover-popover-${idx.toString()}`}
+              onMouseEnter={(): void => {
+                // Cursor landed in this popover — any pending close was
+                // about to trim too far. Cancel it and re-schedule a
+                // trim that keeps this level (and parents) alive.
+                cancelClose();
+                scheduleCloseToLength(idx + 1);
+              }}
+              onMouseLeave={(evt): void => {
+                const rel = evt.relatedTarget as Element | null;
+                // Moving to any other popover — let its onMouseEnter
+                // decide the trim level.
+                if (rel && rel.closest('[data-uuid-popover]')) return;
+                scheduleCloseToLength(0);
+              }}
+              style={{ position: 'fixed', top: pos.top, left: pos.left, width: POPOVER_WIDTH }}
+              className="z-50 rounded border border-pf-border bg-pf-bg p-4 text-left shadow-xl"
+            >
+              <PopoverBody state={state} />
+            </div>,
+            document.body,
+          );
+        })}
+      </>
+    ) : null;
 
   return {
     delegationHandlers: { onMouseOver, onMouseOut },
