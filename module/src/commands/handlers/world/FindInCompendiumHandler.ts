@@ -80,6 +80,8 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
 
   const requiredTraits = (params.traits ?? []).map((t) => t.toLowerCase()).filter((t) => t.length > 0);
   const hasTraitFilter = requiredTraits.length > 0;
+  const anyTraits = (params.anyTraits ?? []).map((t) => t.toLowerCase()).filter((t) => t.length > 0);
+  const hasAnyTraitFilter = anyTraits.length > 0;
   const hasLevelFilter = typeof params.maxLevel === 'number';
   const allowedSources = (params.sources ?? []).map((s) => s.toLowerCase()).filter((s) => s.length > 0);
   const hasSourceFilter = allowedSources.length > 0;
@@ -91,7 +93,15 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
   // and makes the network trip hurt. Force them to narrow.
   const hasPackFilter = params.packId !== undefined;
   const hasTypeFilter = params.documentType !== undefined;
-  if (!hasNameFilter && !hasTraitFilter && !hasLevelFilter && !hasPackFilter && !hasTypeFilter && !hasSourceFilter) {
+  if (
+    !hasNameFilter &&
+    !hasTraitFilter &&
+    !hasAnyTraitFilter &&
+    !hasLevelFilter &&
+    !hasPackFilter &&
+    !hasTypeFilter &&
+    !hasSourceFilter
+  ) {
     return { matches: [] };
   }
 
@@ -164,6 +174,11 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
       // tokenised tag-match above).
       if (hasTraitFilter) {
         if (!requiredTraits.every((req) => loweredTraits.includes(req))) return;
+      }
+      // OR-filter: at least one candidate trait must be in anyTraits.
+      // Composes with the AND check above when both filters are set.
+      if (hasAnyTraitFilter) {
+        if (!loweredTraits.some((t) => anyTraits.includes(t))) return;
       }
 
       const entryLevel = extractLevel(entry);

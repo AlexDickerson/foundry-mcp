@@ -19,7 +19,10 @@ interface Props {
   /** Pre-filters applied to every search. Text query is layered on top.
    *  `packIds` scopes silently (caller concern — which Foundry packs
    *  to read from); the user-visible filter is by publication source. */
-  filters: Pick<CompendiumSearchOptions, 'packIds' | 'documentType' | 'traits' | 'maxLevel' | 'ancestrySlug'>;
+  filters: Pick<
+    CompendiumSearchOptions,
+    'packIds' | 'documentType' | 'traits' | 'anyTraits' | 'maxLevel' | 'ancestrySlug'
+  >;
   /** Character state for prereq evaluation. Matches whose prereqs we
    *  can parse + fail get muted; optional "hide unmet" toggle filters
    *  them out entirely. `unknown` (unparseable prereqs) is always
@@ -129,11 +132,20 @@ export function FeatPicker({ title, filters, characterContext, onPick, onClose }
         sources: [...selectedSources].sort(),
         documentType: filters.documentType ?? null,
         traits: filters.traits ?? [],
+        anyTraits: filters.anyTraits ?? [],
         maxLevel: filters.maxLevel ?? null,
         packIds: callerPackIdsKey,
         ancestrySlug: filters.ancestrySlug ?? null,
       }),
-    [selectedSources, filters.documentType, filters.traits, filters.maxLevel, callerPackIdsKey, filters.ancestrySlug],
+    [
+      selectedSources,
+      filters.documentType,
+      filters.traits,
+      filters.anyTraits,
+      filters.maxLevel,
+      callerPackIdsKey,
+      filters.ancestrySlug,
+    ],
   );
 
   useEffect(() => {
@@ -151,6 +163,7 @@ export function FeatPicker({ title, filters, characterContext, onPick, onClose }
     if (selectedSources.length > 0) opts.sources = selectedSources;
     if (filters.documentType !== undefined) opts.documentType = filters.documentType;
     if (filters.traits !== undefined) opts.traits = filters.traits;
+    if (filters.anyTraits !== undefined) opts.anyTraits = filters.anyTraits;
     if (filters.maxLevel !== undefined) opts.maxLevel = filters.maxLevel;
     if (filters.ancestrySlug !== undefined) opts.ancestrySlug = filters.ancestrySlug;
     api

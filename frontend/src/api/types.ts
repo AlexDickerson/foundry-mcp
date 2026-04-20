@@ -77,6 +77,11 @@ export interface CompendiumSearchOptions {
    *  Creator pickers use this to scope e.g. class-feat slots to the
    *  character's class trait. */
   traits?: string[];
+  /** OR-filter: a candidate qualifies if any of its traits matches any
+   *  value here. Composes with `traits` when both are supplied.
+   *  Used by the ancestry-feat picker to surface both parent-ancestry
+   *  feats and versatile-heritage feats in the same list. */
+  anyTraits?: string[];
   /** Cap `system.level.value`. Creator pickers use this to hide feats
    *  the character doesn't yet qualify for. */
   maxLevel?: number;

@@ -79,6 +79,11 @@ interface Draft {
   // is in-flight.
   ancestrySlug: string | null;
   heritage: Slot | null;
+  // Heritage slug, fetched like ancestrySlug. Used so the ancestry-
+  // feat picker can surface versatile-heritage feats (changeling,
+  // aiuvarin, nephilim …) whose compendium items are tagged with the
+  // heritage slug rather than the parent ancestry's slug.
+  heritageSlug: string | null;
   class: Slot | null;
   // Class slug mirrors ancestrySlug — fetched from the class doc after
   // a class is picked so the class-feat picker can scope to that
@@ -105,6 +110,12 @@ interface Draft {
   // fixed languages. Flushed into `actor.system.details.languages.value`
   // merged with the granted list.
   languagePicks: string[];
+  // Ambient state surfaced by the step components so the Review
+  // section can distinguish "user hasn't picked yet" from "no pick
+  // was ever available" (Wizard doesn't grant an L1 class feat;
+  // Anadi with Int 0 has no free language picks).
+  classGrantsL1Feat: boolean | null;
+  languageAllowance: number | null;
   // Per-source boost picks. Each array mirrors the item's boost
   // slots in order; fixed slots carry the pre-determined ability,
   // choice/free slots start null until the user selects. Flushed to
@@ -124,6 +135,7 @@ const EMPTY_DRAFT: Draft = {
   ancestry: null,
   ancestrySlug: null,
   heritage: null,
+  heritageSlug: null,
   class: null,
   classSlug: null,
   background: null,
@@ -135,6 +147,8 @@ const EMPTY_DRAFT: Draft = {
   classKeyAbility: null,
   skillPicks: [],
   languagePicks: [],
+  classGrantsL1Feat: null,
+  languageAllowance: null,
 };
 
 const STEPS: readonly Step[] = [
@@ -171,7 +185,7 @@ const PICKER_LABEL: Record<PickerTarget, string> = {
 
 type PickerFilters = Pick<
   CompendiumSearchOptions,
-  'packIds' | 'documentType' | 'traits' | 'ancestrySlug' | 'maxLevel'
+  'packIds' | 'documentType' | 'traits' | 'anyTraits' | 'ancestrySlug' | 'maxLevel'
 >;
 
 const STATIC_PICKER_FILTERS: Record<Exclude<PickerTarget, 'heritage' | 'class-feat' | 'ancestry-feat'>, PickerFilters> = {
@@ -195,14 +209,9 @@ type CreatorState =
   | { kind: 'error'; message: string };
 
 export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElement {
-  const [step, setStep] = useState<Step>('identity');
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [openPicker, setOpenPicker] = useState<PickerTarget | null>(null);
   const [creator, setCreator] = useState<CreatorState>({ kind: 'creating' });
-  // Subscribe to module-initiated prompts (ChoiceSet dialogs the
-  // module intercepted). We render the first one in the queue so the
-  // user sees prompts in arrival order — additional ones stay
-  // queued until their predecessor resolves.
   const pendingPrompts = usePendingPrompts();
   const activePrompt = pendingPrompts[0] ?? null;
 
@@ -225,71 +234,50 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
 
   const actorId = creator.kind === 'ready' ? creator.actorId : null;
 
-  const stepIdx = STEPS.indexOf(step);
-  const isFirst = stepIdx === 0;
-  const isReview = step === 'review';
+  // Debounced flush of the identity text fields. Previously this ran
+  // on step-advance; the single-page layout has no natural gate, so
+  // we buffer typing for ~500ms then PATCH. Picks flush eagerly on
+  // their own click handlers regardless.
+  useEffect(() => {
+    if (actorId === null) return;
+    const timeout = window.setTimeout(() => {
+      void api
+        .updateActor(actorId, {
+          name: draft.name.trim().length > 0 ? draft.name : 'New Character',
+          system: {
+            details: {
+              gender: draft.gender,
+              age: draft.age,
+              ethnicity: draft.ethnicity,
+              nationality: draft.nationality,
+            },
+          },
+        })
+        .catch((err: unknown) => {
+          console.warn('Failed to flush identity fields', err);
+        });
+    }, 500);
+    return (): void => {
+      clearTimeout(timeout);
+    };
+  }, [
+    actorId,
+    draft.name,
+    draft.gender,
+    draft.age,
+    draft.ethnicity,
+    draft.nationality,
+  ]);
 
-  const canAdvance = (): boolean => {
-    if (actorId === null) return false;
-    switch (step) {
-      case 'identity':
-        return draft.name.trim().length > 0;
-      case 'ancestry':
-        // Advancing requires both an ancestry AND a heritage — heritage
-        // is a sub-choice embedded inside the ancestry step.
-        return draft.ancestry !== null && draft.heritage !== null;
-      case 'class':
-        return draft.class !== null;
-      case 'background':
-        return draft.background !== null;
-      case 'attributes':
-        return (
-          draft.levelOneBoosts.length === BOOSTS_REQUIRED &&
-          draft.ancestryBoosts.every((v) => v !== null) &&
-          draft.backgroundBoosts.every((v) => v !== null) &&
-          draft.classKeyAbility !== null
-        );
-      case 'skills':
-        // The skill step's "required" count is class-specific and
-        // computed inside the step component — this gate just checks
-        // that the user has made at least one pick before the
-        // advance button lights up; the step also exposes its own
-        // "X/Y filled" indicator.
-        return true;
-      case 'languages':
-        return true;
-      case 'review':
-        return false;
-    }
+  const jumpToSection = (id: Step): void => {
+    const el = document.getElementById(`creator-section-${id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const goPrev = (): void => {
-    if (!isFirst) setStep(STEPS[stepIdx - 1] ?? 'identity');
-  };
-
-  // Push text-field draft state to the actor when advancing off the
-  // identity step. Picks are already synced on selection, so other
-  // steps don't need a flush here.
-  const flushIdentity = async (id: string): Promise<void> => {
-    await api.updateActor(id, {
-      name: draft.name.trim().length > 0 ? draft.name : 'New Character',
-      system: {
-        details: {
-          gender: draft.gender,
-          age: draft.age,
-          ethnicity: draft.ethnicity,
-          nationality: draft.nationality,
-        },
-      },
-    });
-  };
-
-  const goNext = (): void => {
-    if (stepIdx >= STEPS.length - 1) return;
-    if (step === 'identity' && actorId !== null) {
-      void flushIdentity(actorId);
-    }
-    setStep(STEPS[stepIdx + 1] ?? 'review');
+  const handleFinish = (): void => {
+    if (actorId === null) return;
+    resetPendingActor();
+    onFinish(actorId);
   };
 
   const applyPick = (match: CompendiumMatch): void => {
@@ -335,6 +323,30 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
       cancelled = true;
     };
   }, [draft.ancestry, draft.ancestrySlug]);
+
+  // Same dance for heritage — the ancestry-feat picker pools the
+  // heritage's slug into `anyTraits` so versatile-heritage feats
+  // (changeling, aiuvarin, etc.) show up alongside the parent
+  // ancestry's feats.
+  useEffect(() => {
+    const heritage = draft.heritage;
+    if (heritage === null || draft.heritageSlug !== null) return;
+    let cancelled = false;
+    void api
+      .getCompendiumDocument(heritage.match.uuid)
+      .then((res) => {
+        if (cancelled) return;
+        const sys = res.document.system as { slug?: unknown };
+        const slug = typeof sys.slug === 'string' ? sys.slug : null;
+        setDraft((d) => (d.heritage === heritage ? { ...d, heritageSlug: slug } : d));
+      })
+      .catch(() => {
+        /* ignore — picker falls back to just the ancestry trait */
+      });
+    return (): void => {
+      cancelled = true;
+    };
+  }, [draft.heritage, draft.heritageSlug]);
 
   // Same dance for the class slug — drives the class-feat picker's
   // trait filter. pf2e tags class feats with the class slug (e.g.
@@ -395,115 +407,109 @@ export function CharacterCreator({ onBack, onFinish }: Props): React.ReactElemen
 
       {creator.kind === 'ready' && (
         <>
-          <StepNav steps={STEPS} active={step} onJump={(s): void => setStep(s)} draft={draft} />
-
-          <div className="my-6 min-h-[14rem] rounded border border-pf-border bg-white p-4">
-            {step === 'identity' && (
-              <IdentityStep
-                draft={draft}
-                onChange={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
-                onPickDeity={(): void => setOpenPicker('deity')}
-              />
-            )}
-            {step === 'ancestry' && (
-              <AncestryStep
-                ancestry={draft.ancestry?.match ?? null}
-                heritage={draft.heritage?.match ?? null}
-                ancestryFeat={draft.ancestryFeat?.match ?? null}
-                ancestrySlugResolved={draft.ancestrySlug !== null}
-                onPickAncestry={(): void => setOpenPicker('ancestry')}
-                onPickHeritage={(): void => setOpenPicker('heritage')}
-                onPickAncestryFeat={(): void => setOpenPicker('ancestry-feat')}
-              />
-            )}
-            {step === 'class' && (
-              <ClassStep
-                classPick={draft.class?.match ?? null}
-                classFeat={draft.classFeat?.match ?? null}
-                classSlugResolved={draft.classSlug !== null}
-                onPickClass={(): void => setOpenPicker('class')}
-                onPickClassFeat={(): void => setOpenPicker('class-feat')}
-              />
-            )}
-            {step === 'background' && (
-              <PickerCard
-                label="Background"
-                selection={draft.background?.match ?? null}
-                onOpen={(): void => setOpenPicker('background')}
-              />
-            )}
-            {step === 'attributes' && (
-              <AttributesStep
-                actorId={actorId}
-                ancestryPick={draft.ancestry?.match ?? null}
-                ancestryItemId={draft.ancestry?.itemId ?? null}
-                backgroundPick={draft.background?.match ?? null}
-                backgroundItemId={draft.background?.itemId ?? null}
-                classPick={draft.class?.match ?? null}
-                classItemId={draft.class?.itemId ?? null}
-                levelOneBoosts={draft.levelOneBoosts}
-                ancestryBoosts={draft.ancestryBoosts}
-                backgroundBoosts={draft.backgroundBoosts}
-                classKeyAbility={draft.classKeyAbility}
-                onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
-              />
-            )}
-            {step === 'skills' && (
-              <SkillsStep
-                actorId={actorId}
-                backgroundPick={draft.background?.match ?? null}
-                classPick={draft.class?.match ?? null}
-                classItemId={draft.class?.itemId ?? null}
-                skillPicks={draft.skillPicks}
-                intMod={computeIntMod(draft)}
-                onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
-              />
-            )}
-            {step === 'languages' && (
-              <LanguagesStep
-                actorId={actorId}
-                ancestryPick={draft.ancestry?.match ?? null}
-                languagePicks={draft.languagePicks}
-                intMod={computeIntMod(draft)}
-                onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
-              />
-            )}
-            {step === 'review' && <ReviewStep draft={draft} />}
+          {/* Sticky anchor nav — clicking a pill scrolls the matching
+              section into view. Filled state still derives from
+              `isStepFilled` so users can see what's outstanding. */}
+          <div className="sticky top-0 z-10 -mx-1 mb-4 bg-gradient-to-b from-white via-white/95 to-transparent px-1 pb-2 pt-2">
+            <StepNav steps={STEPS} active={null} onJump={jumpToSection} draft={draft} />
           </div>
 
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={goPrev}
-              disabled={isFirst}
-              className="rounded border border-pf-border bg-white px-3 py-1.5 text-sm text-pf-text disabled:opacity-40"
-            >
-              ← Back
-            </button>
-            {isReview ? (
+          <CreatorSection id="identity" title="Identity">
+            <IdentityStep
+              draft={draft}
+              onChange={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
+              onPickDeity={(): void => setOpenPicker('deity')}
+            />
+          </CreatorSection>
+
+          <CreatorSection id="ancestry" title="Ancestry & Heritage">
+            <AncestryStep
+              ancestry={draft.ancestry?.match ?? null}
+              heritage={draft.heritage?.match ?? null}
+              ancestryFeat={draft.ancestryFeat?.match ?? null}
+              ancestrySlugResolved={draft.ancestrySlug !== null}
+              onPickAncestry={(): void => setOpenPicker('ancestry')}
+              onPickHeritage={(): void => setOpenPicker('heritage')}
+              onPickAncestryFeat={(): void => setOpenPicker('ancestry-feat')}
+            />
+          </CreatorSection>
+
+          <CreatorSection id="class" title="Class">
+            <ClassStep
+              classPick={draft.class?.match ?? null}
+              classFeat={draft.classFeat?.match ?? null}
+              classSlugResolved={draft.classSlug !== null}
+              onPickClass={(): void => setOpenPicker('class')}
+              onPickClassFeat={(): void => setOpenPicker('class-feat')}
+              onL1FeatAvailability={(grants): void =>
+                setDraft((d) => (d.classGrantsL1Feat === grants ? d : { ...d, classGrantsL1Feat: grants }))
+              }
+            />
+          </CreatorSection>
+
+          <CreatorSection id="background" title="Background">
+            <PickerCard
+              label="Background"
+              selection={draft.background?.match ?? null}
+              onOpen={(): void => setOpenPicker('background')}
+            />
+          </CreatorSection>
+
+          <CreatorSection id="attributes" title="Attributes">
+            <AttributesStep
+              actorId={actorId}
+              ancestryPick={draft.ancestry?.match ?? null}
+              ancestryItemId={draft.ancestry?.itemId ?? null}
+              backgroundPick={draft.background?.match ?? null}
+              backgroundItemId={draft.background?.itemId ?? null}
+              classPick={draft.class?.match ?? null}
+              classItemId={draft.class?.itemId ?? null}
+              levelOneBoosts={draft.levelOneBoosts}
+              ancestryBoosts={draft.ancestryBoosts}
+              backgroundBoosts={draft.backgroundBoosts}
+              classKeyAbility={draft.classKeyAbility}
+              onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
+            />
+          </CreatorSection>
+
+          <CreatorSection id="skills" title="Skills">
+            <SkillsStep
+              actorId={actorId}
+              backgroundPick={draft.background?.match ?? null}
+              classPick={draft.class?.match ?? null}
+              classItemId={draft.class?.itemId ?? null}
+              skillPicks={draft.skillPicks}
+              intMod={computeIntMod(draft)}
+              onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
+            />
+          </CreatorSection>
+
+          <CreatorSection id="languages" title="Languages">
+            <LanguagesStep
+              actorId={actorId}
+              ancestryPick={draft.ancestry?.match ?? null}
+              languagePicks={draft.languagePicks}
+              intMod={computeIntMod(draft)}
+              onDraftPatch={(patch): void => setDraft((d) => ({ ...d, ...patch }))}
+              onAllowanceResolved={(n): void =>
+                setDraft((d) => (d.languageAllowance === n ? d : { ...d, languageAllowance: n }))
+              }
+            />
+          </CreatorSection>
+
+          <CreatorSection id="review" title="Review">
+            <ReviewStep draft={draft} />
+            <div className="mt-4 flex justify-end">
               <button
                 type="button"
-                onClick={(): void => {
-                  if (actorId === null) return;
-                  resetPendingActor();
-                  onFinish(actorId);
-                }}
+                onClick={handleFinish}
                 disabled={actorId === null}
                 className="rounded border border-pf-primary bg-pf-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-pf-primary-dark disabled:opacity-40"
               >
                 Open sheet →
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={goNext}
-                disabled={!canAdvance()}
-                className="rounded border border-pf-primary bg-pf-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-pf-primary-dark disabled:opacity-40"
-              >
-                Next →
-              </button>
-            )}
-          </div>
+            </div>
+          </CreatorSection>
 
           {openPicker !== null && pickerFilters !== undefined && (
             <FeatPicker
@@ -532,7 +538,10 @@ function StepNav({
   draft,
 }: {
   steps: readonly Step[];
-  active: Step;
+  // `active` is nullable now that the creator is single-page — the
+  // nav no longer tracks a current step, it just surfaces which
+  // sections have something filled in so the user can see progress.
+  active: Step | null;
   onJump: (s: Step) => void;
   draft: Draft;
 }): React.ReactElement {
@@ -564,6 +573,33 @@ function StepNav({
         );
       })}
     </ol>
+  );
+}
+
+// Section shell used by the single-page creator layout. Each section
+// gets an anchor id (so the StepNav pills can scroll to it) and a
+// serif header matching the rest of the sheet. `scroll-mt` backs off
+// the sticky nav so a jumped-to section doesn't hide under it.
+function CreatorSection({
+  id,
+  title,
+  children,
+}: {
+  id: Step;
+  title: string;
+  children: React.ReactNode;
+}): React.ReactElement {
+  return (
+    <section
+      id={`creator-section-${id}`}
+      data-creator-section={id}
+      className="mb-6 scroll-mt-20 rounded border border-pf-border bg-white p-4"
+    >
+      <h2 className="mb-3 border-b border-pf-border pb-1 font-serif text-base font-semibold uppercase tracking-widest text-pf-alt-dark">
+        {title}
+      </h2>
+      {children}
+    </section>
   );
 }
 
@@ -662,12 +698,18 @@ function ClassStep({
   classSlugResolved,
   onPickClass,
   onPickClassFeat,
+  onL1FeatAvailability,
 }: {
   classPick: CompendiumMatch | null;
   classFeat: CompendiumMatch | null;
   classSlugResolved: boolean;
   onPickClass: () => void;
   onPickClassFeat: () => void;
+  // Bubbles the `classFeatLevels.value.includes(1)` result up to the
+  // parent once the class doc resolves, so the Review section can
+  // distinguish "slot vacant" from "class never granted a slot" for
+  // classes like Wizard or Cleric.
+  onL1FeatAvailability: (grants: boolean) => void;
 }): React.ReactElement {
   const [docState, setDocState] = useState<ClassDocState>({ kind: 'idle' });
   // Hover previews on the feature chips reuse the same stack-based
@@ -691,6 +733,7 @@ function ClassStep({
         const features = extractLevel1Features(res.document.system);
         const grantsL1ClassFeat = extractGrantsL1ClassFeat(res.document.system);
         setDocState({ kind: 'ready', uuid, features, grantsL1ClassFeat });
+        onL1FeatAvailability(grantsL1ClassFeat);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1671,12 +1714,17 @@ function LanguagesStep({
   languagePicks,
   intMod,
   onDraftPatch,
+  onAllowanceResolved,
 }: {
   actorId: string | null;
   ancestryPick: CompendiumMatch | null;
   languagePicks: string[];
   intMod: number;
   onDraftPatch: (patch: Partial<Draft>) => void;
+  // Called when we've resolved the total free-language allowance
+  // (ancestry bonus count + positive Int mod), so the Review section
+  // can distinguish "no picks possible" from "user didn't pick any".
+  onAllowanceResolved: (allowance: number) => void;
 }): React.ReactElement {
   const [state, setState] = useState<LanguagesDocState>({ kind: 'idle' });
 
@@ -1692,7 +1740,9 @@ function LanguagesStep({
       .getCompendiumDocument(uuid)
       .then((res) => {
         if (cancelled) return;
-        setState({ kind: 'ready', uuid, data: normaliseAncestryLanguages(res.document.system) });
+        const data = normaliseAncestryLanguages(res.document.system);
+        setState({ kind: 'ready', uuid, data });
+        onAllowanceResolved(Math.max(0, intMod) + data.bonusCount);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -1702,7 +1752,8 @@ function LanguagesStep({
     return (): void => {
       cancelled = true;
     };
-  }, [ancestryPick?.uuid]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ancestryPick?.uuid, intMod]);
 
   const flushPicks = (picks: string[]): void => {
     if (actorId === null) return;
@@ -1886,6 +1937,12 @@ function prettySkillLabel(slug: string): string {
     .join(' ');
 }
 
+// Sentinel used by ReviewStep so the renderer can tell "user hasn't
+// picked yet" from "there was nothing available to pick" (Wizard
+// class with no L1 class feat, Anadi with Int 0 → no extra
+// languages, etc.).
+const UNAVAILABLE = '__creator_unavailable__';
+
 function ReviewStep({ draft }: { draft: Draft }): React.ReactElement {
   const textRow = (v: string): string | null => (v.trim().length > 0 ? v : null);
   const rows: Array<[string, string | null]> = [
@@ -1899,7 +1956,10 @@ function ReviewStep({ draft }: { draft: Draft }): React.ReactElement {
     ['Heritage', draft.heritage?.match.name ?? null],
     ['Ancestry Feat', draft.ancestryFeat?.match.name ?? null],
     ['Class', draft.class?.match.name ?? null],
-    ['Class Feat', draft.classFeat?.match.name ?? null],
+    [
+      'Class Feat',
+      draft.classFeat?.match.name ?? (draft.classGrantsL1Feat === false ? UNAVAILABLE : null),
+    ],
     ['Background', draft.background?.match.name ?? null],
     [
       'L1 Boosts',
@@ -1913,7 +1973,11 @@ function ReviewStep({ draft }: { draft: Draft }): React.ReactElement {
     ],
     [
       'Additional Languages',
-      draft.languagePicks.length > 0 ? draft.languagePicks.map(prettyLanguageLabel).join(', ') : null,
+      draft.languagePicks.length > 0
+        ? draft.languagePicks.map(prettyLanguageLabel).join(', ')
+        : draft.languageAllowance === 0
+          ? UNAVAILABLE
+          : null,
     ],
   ];
   return (
@@ -1924,6 +1988,8 @@ function ReviewStep({ draft }: { draft: Draft }): React.ReactElement {
           <dd>
             {value === null ? (
               <span className="italic text-neutral-400">Not chosen</span>
+            ) : value === UNAVAILABLE ? (
+              <span className="italic text-pf-alt-dark">Not granted by this character</span>
             ) : (
               value
             )}
@@ -1950,9 +2016,20 @@ function filtersForTarget(target: PickerTarget, draft: Draft): PickerFilters {
     return base;
   }
   if (target === 'ancestry-feat') {
-    const traits = draft.ancestrySlug !== null ? [draft.ancestrySlug] : undefined;
+    // Pool the ancestry slug + heritage slug (when different) so the
+    // picker surfaces versatile-heritage feats (changeling, aiuvarin,
+    // nephilim …) alongside the parent ancestry's feats. When only
+    // the ancestry slug is known, fall back to a simple `traits`
+    // filter.
     const base: PickerFilters = { packIds: ['pf2e.feats-srd'], documentType: 'Item', maxLevel: 1 };
-    if (traits) base.traits = traits;
+    const slugs: string[] = [];
+    if (draft.ancestrySlug !== null) slugs.push(draft.ancestrySlug);
+    if (draft.heritageSlug !== null && !slugs.includes(draft.heritageSlug)) slugs.push(draft.heritageSlug);
+    if (slugs.length > 1) {
+      base.anyTraits = slugs;
+    } else if (slugs.length === 1) {
+      base.traits = slugs;
+    }
     return base;
   }
   return STATIC_PICKER_FILTERS[target];
@@ -2083,12 +2160,17 @@ function applyPickedSlot(draft: Draft, target: PickerTarget, slot: Slot): Draft 
         ancestry: slot,
         ancestrySlug: null,
         heritage: null,
+        heritageSlug: null,
         ancestryFeat: null,
         ancestryBoosts: [],
         languagePicks: [],
+        languageAllowance: null,
       };
     case 'heritage':
-      return { ...draft, heritage: slot };
+      // New heritage resets the cached slug + ancestry-feat pick
+      // (versatile heritages open up a different feat pool, so the
+      // previous pick may not still qualify).
+      return { ...draft, heritage: slot, heritageSlug: null, ancestryFeat: null };
     case 'class':
       // New class wipes the cached slug + class feat + key attribute
       // pick for the same reason. Skill picks also reset since the
@@ -2100,6 +2182,7 @@ function applyPickedSlot(draft: Draft, target: PickerTarget, slot: Slot): Draft 
         classFeat: null,
         classKeyAbility: null,
         skillPicks: [],
+        classGrantsL1Feat: null,
       };
     case 'background':
       return { ...draft, background: slot, backgroundBoosts: [] };

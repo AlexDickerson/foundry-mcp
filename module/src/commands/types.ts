@@ -1109,6 +1109,14 @@ export interface FindInCompendiumParams {
    *  scope class feat slots to the character's class trait, ancestry
    *  feat slots to the ancestry trait, etc. */
   traits?: string[];
+  /** Optional — OR-filter: a candidate qualifies if any of its
+   *  `system.traits.value` entries matches any value in this list
+   *  (case-insensitive). Used for ancestry feat pickers where a
+   *  versatile heritage (Aiuvarin, Changeling …) exposes a second
+   *  pool of feats tagged with the heritage slug alongside the
+   *  parent ancestry's feats. `traits` and `anyTraits` compose — a
+   *  candidate must satisfy both filters when both are supplied. */
+  anyTraits?: string[];
   /** Optional — cap `system.level.value` at this level. Used by feat
    *  pickers to hide feats the character doesn't yet qualify for. */
   maxLevel?: number;

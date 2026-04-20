@@ -61,6 +61,7 @@ function buildCompendiumQuery(opts: CompendiumSearchOptions): string {
   if (opts.packIds !== undefined && opts.packIds.length > 0) params.set('packId', opts.packIds.join(','));
   if (opts.documentType !== undefined) params.set('documentType', opts.documentType);
   if (opts.traits !== undefined && opts.traits.length > 0) params.set('traits', opts.traits.join(','));
+  if (opts.anyTraits !== undefined && opts.anyTraits.length > 0) params.set('anyTraits', opts.anyTraits.join(','));
   if (opts.sources !== undefined && opts.sources.length > 0) params.set('sources', opts.sources.join(','));
   if (opts.ancestrySlug !== undefined && opts.ancestrySlug.length > 0) params.set('ancestrySlug', opts.ancestrySlug);
   if (opts.maxLevel !== undefined) params.set('maxLevel', opts.maxLevel.toString());

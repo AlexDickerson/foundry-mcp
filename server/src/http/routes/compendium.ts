@@ -9,14 +9,14 @@ import {
 
 export function registerCompendiumRoutes(app: FastifyInstance): void {
   app.get('/api/compendium/search', async (req) => {
-    const { q, packId, documentType, traits, sources, ancestrySlug, maxLevel, limit } = compendiumSearchQuery.parse(
-      req.query,
-    );
+    const { q, packId, documentType, traits, anyTraits, sources, ancestrySlug, maxLevel, limit } =
+      compendiumSearchQuery.parse(req.query);
     return sendCommand('find-in-compendium', {
       name: q ?? '',
       packId,
       documentType,
       traits,
+      anyTraits,
       sources,
       ancestrySlug,
       maxLevel,

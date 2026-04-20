@@ -27,6 +27,7 @@ export const compendiumSearchQuery = z.object({
   packId: csvParam,
   documentType: z.string().optional(),
   traits: csvParam,
+  anyTraits: csvParam,
   sources: csvParam,
   ancestrySlug: z.string().optional(),
   maxLevel: z.coerce.number().int().nonnegative().max(30).optional(),
