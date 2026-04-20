@@ -59,4 +59,20 @@
   --font-serif: Eczar, Georgia, 'Times New Roman', serif;
   --font-body: Gelasio, Georgia, 'Times New Roman', serif;
   --font-mono: 'Roboto Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Custom animations. Tailwind 4 surfaces each `--animate-*` entry
+     as an `animate-<name>` utility. */
+  --animate-boost: boost 250ms ease-out;
+}
+
+@keyframes boost {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

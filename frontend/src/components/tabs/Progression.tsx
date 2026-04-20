@@ -1,9 +1,31 @@
-import { useState } from 'react';
-import type { ClassFeatureEntry, ClassItem, CompendiumMatch, PreparedActorItem } from '../../api/types';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { api } from '../../api/client';
+import type {
+  AbilityKey,
+  ClassFeatureEntry,
+  ClassItem,
+  CompendiumDocument,
+  CompendiumMatch,
+  PreparedActorItem,
+  ProficiencyRank,
+} from '../../api/types';
 import { isClassItem } from '../../api/types';
+import { enrichDescription } from '../../lib/foundry-enrichers';
+import { useUuidHover } from '../../lib/useUuidHover';
 import type { CharacterContext } from '../../prereqs';
 import { SectionHeader } from '../common/SectionHeader';
+import { AbilityBoostPicker } from '../creator/AbilityBoostPicker';
 import { FeatPicker } from '../creator/FeatPicker';
+import { SkillIncreasePicker } from '../creator/SkillIncreasePicker';
+
+// All picks share the same map keyed by `${level}:${slot}`. The value
+// is a discriminated union so each slot kind can store the shape it
+// needs to reconstruct its chip / later feed into the scratch-actor.
+type Pick =
+  | { kind: 'feat'; match: CompendiumMatch }
+  | { kind: 'skill-increase'; skill: string; newRank: ProficiencyRank }
+  | { kind: 'ability-boosts'; abilities: AbilityKey[] };
 
 interface Props {
   characterLevel: number;
@@ -42,7 +64,7 @@ const slotKey = (level: number, slot: SlotType): SlotKey => `${level.toString()}
 // mutation flow comes later.
 export function Progression({ characterLevel, items, characterContext }: Props): React.ReactElement {
   const classItem = items.find(isClassItem);
-  const [picks, setPicks] = useState<Map<SlotKey, CompendiumMatch>>(new Map());
+  const [picks, setPicks] = useState<Map<SlotKey, Pick>>(new Map());
   const [pickerTarget, setPickerTarget] = useState<{ level: number; slot: SlotType } | null>(null);
 
   if (!classItem) {
@@ -51,6 +73,52 @@ export function Progression({ characterLevel, items, characterContext }: Props):
 
   const sys = classItem.system;
   const classTrait = sys.slug ?? classItem.name.toLowerCase();
+  // Prefetched full documents for every class feature on this class,
+  // indexed by uuid. A ref-backed cache survives React 18 StrictMode's
+  // double-mount (cleanup cancels the first run but the cached docs
+  // live on). `docsVersion` bumps to force a re-render after each
+  // cache write since React can't observe ref mutations.
+  const featureDocCacheRef = useRef<Map<string, CompendiumDocument>>(new Map());
+  const featureDocErrorsRef = useRef<Set<string>>(new Set());
+  const [docsVersion, setDocsVersion] = useState(0);
+  useEffect(() => {
+    const all = Object.values(classItem.system.items);
+    if (all.length === 0) return;
+    let cancelled = false;
+    const cache = featureDocCacheRef.current;
+    const errors = featureDocErrorsRef.current;
+    const queue = all.filter((f) => !cache.has(f.uuid));
+    const CONCURRENCY = 4;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+      while (queue.length > 0 && !cancelled) {
+        const entry = queue.shift();
+        if (!entry) break;
+        if (cache.has(entry.uuid)) continue;
+        try {
+          const result = await api.getCompendiumDocument(entry.uuid);
+          if (cancelled) return;
+          cache.set(entry.uuid, result.document);
+          errors.delete(entry.uuid);
+          setDocsVersion((v) => v + 1);
+        } catch (err) {
+          if (cancelled) return;
+          // Record the miss so the popover can show "couldn't load"
+          // instead of a forever-spinning "Loading…".
+          errors.add(entry.uuid);
+          setDocsVersion((v) => v + 1);
+          // eslint-disable-next-line no-console
+          console.warn('Failed to prefetch class feature', entry.uuid, err);
+        }
+      }
+    });
+    void Promise.all(workers);
+    return (): void => {
+      cancelled = true;
+    };
+  }, [classItem]);
+  // `docsVersion` read ensures dependents of the cache re-render when
+  // it grows. Not semantically meaningful, just a subscription hook.
+  void docsVersion;
   // Ancestry slot picker needs the ancestry's trait (e.g. "human").
   // The ancestry item on the character carries `system.slug`; fall back
   // to the lower-cased name if the slug is missing.
@@ -68,12 +136,12 @@ export function Progression({ characterLevel, items, characterContext }: Props):
   const closePicker = (): void => {
     setPickerTarget(null);
   };
-  const commitPick = (match: CompendiumMatch): void => {
+  const commitPick = (pick: Pick): void => {
     if (!pickerTarget) return;
     const key = slotKey(pickerTarget.level, pickerTarget.slot);
     setPicks((prev) => {
       const next = new Map(prev);
-      next.set(key, match);
+      next.set(key, pick);
       return next;
     });
     setPickerTarget(null);
@@ -111,6 +179,8 @@ export function Progression({ characterLevel, items, characterContext }: Props):
               features={features}
               slots={slots}
               picks={picks}
+              featureDocs={featureDocCacheRef.current}
+              featureDocErrors={featureDocErrorsRef.current}
               onOpenPicker={openPicker}
               onClearPick={clearPick}
             />
@@ -122,12 +192,46 @@ export function Progression({ characterLevel, items, characterContext }: Props):
           title={pickerTitleFor(pickerTarget.slot, pickerTarget.level)}
           filters={pickerFilters}
           characterContext={characterContext}
-          onPick={commitPick}
+          onPick={(match): void => {
+            commitPick({ kind: 'feat', match });
+          }}
           onClose={closePicker}
         />
       )}
+      {pickerTarget?.slot === 'skill-increase' && (
+        <SkillIncreasePicker
+          level={pickerTarget.level}
+          characterContext={characterContext}
+          onPick={(skill, newRank): void => {
+            commitPick({ kind: 'skill-increase', skill, newRank });
+          }}
+          onClose={closePicker}
+        />
+      )}
+      {pickerTarget?.slot === 'ability-boosts' &&
+        (() => {
+          const seed = abilityBoostInitialFor(picks, pickerTarget.level);
+          const boostProps = {
+            level: pickerTarget.level,
+            characterContext,
+            onPick: (abilities: AbilityKey[]): void => {
+              commitPick({ kind: 'ability-boosts', abilities });
+            },
+            onClose: closePicker,
+            ...(seed ? { initialSelection: seed } : {}),
+          };
+          return <AbilityBoostPicker {...boostProps} />;
+        })()}
     </section>
   );
+}
+
+// If the user has already picked boosts for this slot, re-opening the
+// picker should seed with their last selection so editing doesn't
+// force a full re-pick.
+function abilityBoostInitialFor(picks: Map<SlotKey, Pick>, level: number): readonly AbilityKey[] | undefined {
+  const existing = picks.get(slotKey(level, 'ability-boosts'));
+  return existing?.kind === 'ability-boosts' ? existing.abilities : undefined;
 }
 
 // Map from slot kind → the name used in the picker header. Only covers
@@ -191,6 +295,8 @@ function LevelRow({
   features,
   slots,
   picks,
+  featureDocs,
+  featureDocErrors,
   onOpenPicker,
   onClearPick,
 }: {
@@ -198,7 +304,9 @@ function LevelRow({
   characterLevel: number;
   features: ClassFeatureEntry[];
   slots: readonly SlotType[];
-  picks: Map<SlotKey, CompendiumMatch>;
+  picks: Map<SlotKey, Pick>;
+  featureDocs: Map<string, CompendiumDocument>;
+  featureDocErrors: Set<string>;
   onOpenPicker: (level: number, slot: SlotType) => void;
   onClearPick: (level: number, slot: SlotType) => void;
 }): React.ReactElement {
@@ -207,6 +315,9 @@ function LevelRow({
     <li
       data-level={level}
       data-state={state}
+      // The hover popover is portaled to <body>, so it escapes this
+      // row's opacity group — past-level popovers render full-
+      // strength even when the row itself is dimmed.
       className={[
         'grid grid-cols-[3rem_1fr] items-start gap-3 rounded border px-3 py-2',
         state === 'current' ? 'border-pf-primary bg-pf-tertiary/30' : 'border-pf-border bg-white',
@@ -215,7 +326,7 @@ function LevelRow({
     >
       <LevelBadge level={level} state={state} />
       <div className="min-w-0 space-y-1.5">
-        {features.length > 0 && <FeatureList features={features} />}
+        {features.length > 0 && <FeatureList features={features} docs={featureDocs} docErrors={featureDocErrors} />}
         {slots.length > 0 && (
           <SlotChips level={level} slots={slots} picks={picks} onOpenPicker={onOpenPicker} onClearPick={onClearPick} />
         )}
@@ -243,21 +354,154 @@ function LevelBadge({ level, state }: { level: number; state: LevelState }): Rea
   );
 }
 
-function FeatureList({ features }: { features: ClassFeatureEntry[] }): React.ReactElement {
+function FeatureList({
+  features,
+  docs,
+  docErrors,
+}: {
+  features: ClassFeatureEntry[];
+  docs: Map<string, CompendiumDocument>;
+  docErrors: Set<string>;
+}): React.ReactElement {
   return (
     <ul className="flex flex-wrap gap-1.5" data-role="features">
       {features.map((f) => (
-        <li
-          key={f.uuid}
-          className="inline-flex items-center gap-1.5 rounded border border-pf-border bg-white px-1.5 py-0.5 text-xs text-pf-text"
-          data-feature-uuid={f.uuid}
-        >
-          <img src={f.img} alt="" className="h-4 w-4 rounded bg-pf-bg-dark" />
-          <span className="truncate">{f.name}</span>
-        </li>
+        <FeatureChip key={f.uuid} feature={f} doc={docs.get(f.uuid)} failed={docErrors.has(f.uuid)} />
       ))}
     </ul>
   );
+}
+
+// Popover width is load-bearing for viewport clamping, so it's a
+// constant the CSS (`w-[...]px`) and the JS positioning both read.
+const FEATURE_POPOVER_WIDTH = 420;
+const FEATURE_POPOVER_GAP = 6;
+// Tiny delay before closing on mouseleave gives the cursor time to
+// bridge from chip → popover without the popover winking out.
+const HOVER_CLOSE_DELAY_MS = 120;
+// Open delay filters out incidental mouseovers while the cursor
+// passes across the chip row.
+const HOVER_OPEN_DELAY_MS = 300;
+
+function FeatureChip({
+  feature,
+  doc,
+  failed,
+}: {
+  feature: ClassFeatureEntry;
+  doc: CompendiumDocument | undefined;
+  failed: boolean;
+}): React.ReactElement {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const chipRef = useRef<HTMLLIElement>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const openTimerRef = useRef<number | null>(null);
+  const uuidHover = useUuidHover();
+
+  const cancelClose = (): void => {
+    if (closeTimerRef.current !== null) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+  const cancelOpen = (): void => {
+    if (openTimerRef.current !== null) {
+      clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+  };
+  const scheduleClose = (): void => {
+    cancelOpen();
+    cancelClose();
+    closeTimerRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimerRef.current = null;
+    }, HOVER_CLOSE_DELAY_MS);
+  };
+  const scheduleOpen = (): void => {
+    cancelClose();
+    if (open) return;
+    cancelOpen();
+    openTimerRef.current = window.setTimeout(() => {
+      openTimerRef.current = null;
+      if (!chipRef.current) return;
+      const rect = chipRef.current.getBoundingClientRect();
+      // Keep the popover inside the viewport — shift left if it'd overflow
+      // the right edge, and snap a minimum margin on the left.
+      const maxLeft = window.innerWidth - FEATURE_POPOVER_WIDTH - 12;
+      const left = Math.max(12, Math.min(rect.left, maxLeft));
+      setPos({ top: rect.bottom + FEATURE_POPOVER_GAP, left });
+      setOpen(true);
+    }, HOVER_OPEN_DELAY_MS);
+  };
+
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current !== null) clearTimeout(closeTimerRef.current);
+      if (openTimerRef.current !== null) clearTimeout(openTimerRef.current);
+    },
+    [],
+  );
+
+  const description = doc ? extractDescription(doc) : undefined;
+  return (
+    <li
+      ref={chipRef}
+      className="inline-flex items-center gap-1.5 rounded border border-pf-border bg-white px-1.5 py-0.5 text-xs text-pf-text"
+      data-feature-uuid={feature.uuid}
+      onMouseEnter={scheduleOpen}
+      onMouseLeave={scheduleClose}
+    >
+      <img src={feature.img} alt="" className="h-4 w-4 rounded bg-pf-bg-dark" />
+      <span className="truncate">{feature.name}</span>
+      {open &&
+        pos &&
+        createPortal(
+          <div
+            role="tooltip"
+            data-testid="feature-tooltip"
+            onMouseEnter={cancelClose}
+            onMouseLeave={scheduleClose}
+            style={{ position: 'fixed', top: pos.top, left: pos.left, width: FEATURE_POPOVER_WIDTH }}
+            className="z-50 rounded border border-pf-border bg-pf-bg p-4 text-left shadow-xl"
+          >
+            <div className="mb-2 flex items-center gap-2">
+              <img
+                src={feature.img}
+                alt=""
+                className="h-10 w-10 rounded border border-pf-border bg-pf-bg-dark"
+              />
+              <div className="min-w-0 flex-1">
+                <h4 className="font-serif text-base font-semibold text-pf-text">{feature.name}</h4>
+                <p className="text-[10px] uppercase tracking-widest text-pf-alt">Level {feature.level}</p>
+              </div>
+            </div>
+            {description !== undefined && description.length > 0 ? (
+              <div
+                {...uuidHover.delegationHandlers}
+                className="max-h-[28rem] overflow-y-auto pr-1 text-sm leading-relaxed text-pf-text [&_.pf-damage]:font-semibold [&_.pf-damage]:text-pf-primary [&_.pf-template]:italic [&_.pf-template]:text-pf-secondary [&_a]:cursor-pointer [&_a]:text-pf-primary [&_a]:underline [&_p]:my-2 [&_p]:leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: enrichDescription(description) }}
+              />
+            ) : failed ? (
+              <p className="text-xs italic text-pf-primary">
+                Couldn&apos;t load description — check the devtools console.
+              </p>
+            ) : (
+              <p className="text-xs italic text-pf-alt">{doc ? 'No description.' : 'Loading…'}</p>
+            )}
+          </div>,
+          document.body,
+        )}
+      {uuidHover.popover}
+    </li>
+  );
+}
+
+function extractDescription(doc: CompendiumDocument): string {
+  const sys = doc.system as { description?: { value?: unknown } };
+  const raw = sys.description?.value;
+  return typeof raw === 'string' ? raw : '';
 }
 
 // ─── Slot chips ────────────────────────────────────────────────────────
@@ -282,7 +526,14 @@ const SLOT_CLASSES: Record<SlotType, string> = {
   'ability-boosts': 'border-pf-rarity-unique bg-pf-rarity-unique/10 text-pf-rarity-unique',
 };
 
-const CLICKABLE_SLOTS: ReadonlySet<SlotType> = new Set(['class-feat', 'ancestry-feat', 'skill-feat', 'general-feat']);
+const CLICKABLE_SLOTS: ReadonlySet<SlotType> = new Set([
+  'class-feat',
+  'ancestry-feat',
+  'skill-feat',
+  'general-feat',
+  'skill-increase',
+  'ability-boosts',
+]);
 
 function SlotChips({
   level,
@@ -293,7 +544,7 @@ function SlotChips({
 }: {
   level: number;
   slots: readonly SlotType[];
-  picks: Map<SlotKey, CompendiumMatch>;
+  picks: Map<SlotKey, Pick>;
   onOpenPicker: (level: number, slot: SlotType) => void;
   onClearPick: (level: number, slot: SlotType) => void;
 }): React.ReactElement {
@@ -303,7 +554,7 @@ function SlotChips({
         const pick = picks.get(slotKey(level, slot));
         if (pick) {
           return (
-            <li key={slot} data-slot={slot} data-pick-uuid={pick.uuid}>
+            <li key={slot} data-slot={slot} data-pick-kind={pick.kind}>
               <PickedChip
                 slot={slot}
                 pick={pick}
@@ -357,16 +608,18 @@ function PickedChip({
   onClear,
 }: {
   slot: SlotType;
-  pick: CompendiumMatch;
+  pick: Pick;
   onClear: () => void;
 }): React.ReactElement {
+  const body = renderPickBody(pick);
+  const title = renderPickTitle(slot, pick);
   return (
     <span
+      data-pick-uuid={pick.kind === 'feat' ? pick.match.uuid : undefined}
       className="inline-flex items-center gap-1 rounded border border-pf-border bg-white pl-1 pr-0.5 text-[11px] text-pf-text"
-      title={`${SLOT_LABEL[slot]}: ${pick.name}`}
+      title={title}
     >
-      {pick.img && <img src={pick.img} alt="" className="h-4 w-4 rounded bg-pf-bg-dark" />}
-      <span className="max-w-[16ch] truncate">{pick.name}</span>
+      {body}
       <button
         type="button"
         aria-label={`Clear ${SLOT_LABEL[slot]} pick`}
@@ -377,6 +630,57 @@ function PickedChip({
       </button>
     </span>
   );
+}
+
+function renderPickBody(pick: Pick): React.ReactElement {
+  switch (pick.kind) {
+    case 'feat':
+      return (
+        <>
+          {pick.match.img && <img src={pick.match.img} alt="" className="h-4 w-4 rounded bg-pf-bg-dark" />}
+          <span className="max-w-[16ch] truncate">{pick.match.name}</span>
+        </>
+      );
+    case 'skill-increase':
+      return (
+        <span className="max-w-[20ch] truncate">
+          {capitaliseSkillSlug(pick.skill)}
+          <span className="ml-1 text-pf-primary">→ {SKILL_RANK_SHORT[pick.newRank]}</span>
+        </span>
+      );
+    case 'ability-boosts':
+      return (
+        <span className="max-w-[20ch] truncate">
+          {pick.abilities.map((a) => a.toUpperCase()).join(' · ')}
+        </span>
+      );
+  }
+}
+
+function renderPickTitle(slot: SlotType, pick: Pick): string {
+  switch (pick.kind) {
+    case 'feat':
+      return `${SLOT_LABEL[slot]}: ${pick.match.name}`;
+    case 'skill-increase':
+      return `${SLOT_LABEL[slot]}: ${capitaliseSkillSlug(pick.skill)} → ${SKILL_RANK_SHORT[pick.newRank]}`;
+    case 'ability-boosts':
+      return `${SLOT_LABEL[slot]}: +1 ${pick.abilities.map((a) => a.toUpperCase()).join(', ')}`;
+  }
+}
+
+const SKILL_RANK_SHORT: Record<ProficiencyRank, string> = {
+  0: 'U',
+  1: 'T',
+  2: 'E',
+  3: 'M',
+  4: 'L',
+};
+
+function capitaliseSkillSlug(s: string): string {
+  return s
+    .split(/[-_\s]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────

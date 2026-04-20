@@ -11,6 +11,7 @@ import { Feats } from '../components/tabs/Feats';
 import { Inventory } from '../components/tabs/Inventory';
 import { Proficiencies } from '../components/tabs/Proficiencies';
 import { Progression } from '../components/tabs/Progression';
+import { Spells } from '../components/tabs/Spells';
 import { fromPreparedCharacter } from '../prereqs';
 
 type State =
@@ -18,11 +19,20 @@ type State =
   | { kind: 'error'; message: string; suggestion?: string }
   | { kind: 'ready'; actor: PreparedCharacter };
 
-type TabId = 'character' | 'actions' | 'inventory' | 'feats' | 'proficiencies' | 'progression' | 'background';
+type TabId =
+  | 'character'
+  | 'actions'
+  | 'spells'
+  | 'inventory'
+  | 'feats'
+  | 'proficiencies'
+  | 'progression'
+  | 'background';
 
 const TABS: readonly Tab<TabId>[] = [
   { id: 'character', label: 'Character' },
   { id: 'actions', label: 'Actions' },
+  { id: 'spells', label: 'Spells' },
   { id: 'inventory', label: 'Inventory' },
   { id: 'feats', label: 'Feats' },
   { id: 'proficiencies', label: 'Proficiencies' },
@@ -94,6 +104,7 @@ export function CharacterSheet({ actorId, onBack }: Props): React.ReactElement {
           <TabStrip tabs={TABS} active={activeTab} onChange={setActiveTab} />
           {activeTab === 'character' && <Character system={state.actor.system} />}
           {activeTab === 'actions' && <Actions actions={state.actor.system.actions} items={state.actor.items} />}
+          {activeTab === 'spells' && <Spells items={state.actor.items} />}
           {activeTab === 'inventory' && <Inventory items={state.actor.items} />}
           {activeTab === 'feats' && <Feats items={state.actor.items} />}
           {activeTab === 'proficiencies' && <Proficiencies system={state.actor.system} />}

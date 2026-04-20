@@ -3,6 +3,7 @@ import { api, ApiRequestError } from '../../api/client';
 import type { CompendiumDocument, CompendiumMatch, CompendiumSearchOptions, CompendiumSource } from '../../api/types';
 import { enrichDescription } from '../../lib/foundry-enrichers';
 import { useDebounce } from '../../lib/useDebounce';
+import { useUuidHover } from '../../lib/useUuidHover';
 import { evaluateDocument } from '../../prereqs';
 import type { CharacterContext, Evaluation } from '../../prereqs';
 
@@ -725,6 +726,12 @@ function MatchRow({
 }): React.ReactElement {
   const traitsSummary = match.traits && match.traits.length > 0 ? match.traits.slice(0, 5).join(', ') : '';
   const fails = evaluation === 'fails';
+  const unknown = evaluation === 'unknown';
+  const rowTitle = fails
+    ? "Character doesn't meet this feat's prerequisites"
+    : unknown
+      ? "Prereqs couldn't be auto-checked — verify manually before picking"
+      : undefined;
   return (
     <button
       type="button"
@@ -734,7 +741,7 @@ function MatchRow({
       data-match-uuid={match.uuid}
       data-prereq-state={evaluation ?? 'pending'}
       aria-pressed={active}
-      title={fails ? "Character doesn't meet this feat's prerequisites" : undefined}
+      title={rowTitle}
       className={[
         'flex w-full items-center gap-3 px-4 py-2 text-left transition-colors',
         active ? 'bg-pf-tertiary/50' : 'hover:bg-pf-tertiary/20',
@@ -746,7 +753,18 @@ function MatchRow({
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="truncate text-sm font-medium text-pf-text">{match.name}</span>
+          <span className="flex min-w-0 items-baseline gap-1.5">
+            <span className="truncate text-sm font-medium text-pf-text">{match.name}</span>
+            {unknown && (
+              <span
+                data-testid="prereq-unknown-badge"
+                aria-label="Prereqs unchecked"
+                className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-amber-500 bg-amber-100 text-[10px] font-semibold text-amber-800"
+              >
+                !
+              </span>
+            )}
+          </span>
           {match.level !== undefined && (
             <span className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-pf-alt-dark">
               L{match.level}
@@ -778,6 +796,7 @@ function DetailPanel({
   onPick: () => void;
   onClose: () => void;
 }): React.ReactElement | null {
+  const uuidHover = useUuidHover();
   const [prereqResolutions, setPrereqResolutions] = useState<Map<string, string | null>>(new Map());
 
   const doc = detail.kind === 'ready' ? detail.doc : null;
@@ -894,6 +913,7 @@ function DetailPanel({
             {bio.requirements && <DetailRow label="Requirements" value={bio.requirements} />}
             {bio.description && (
               <div
+                {...uuidHover.delegationHandlers}
                 className="text-sm leading-relaxed text-pf-text [&_.pf-damage]:font-semibold [&_.pf-damage]:text-pf-primary [&_.pf-template]:italic [&_.pf-template]:text-pf-secondary [&_a]:cursor-pointer [&_a]:text-pf-primary [&_a]:underline [&_p]:my-2 [&_p]:leading-relaxed"
                 // Trusted source: our own Foundry. enrichDescription converts
                 // Foundry enricher tokens (@UUID, @Damage, @Template, @Check,
@@ -901,6 +921,7 @@ function DetailPanel({
                 dangerouslySetInnerHTML={{ __html: enrichDescription(bio.description) }}
               />
             )}
+            {uuidHover.popover}
           </div>
         )}
       </div>
