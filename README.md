@@ -2,6 +2,14 @@
 
 Self-hosted MCP server that bridges Claude (or any MCP client) to a live Foundry VTT instance over WebSocket.
 
+## A message from the author on AI Usage
+
+These projects are intended as resources for the Pathfinder community to use as they desire. They are free and open source and will remain so forever.
+
+These projects are made with extensive use of AI coding agents; I know this is a contentious issue among the community, for a number of valid reasons. I can say that these have been built with reasonable diligence and care, but I understand this will not assuage the concerns of many.
+
+For those that find any AI unacceptable (and honestly, for anyone), I would encourage you to use and, importantly, support [Pathbuilder 2e](https://pathbuilder.app), an entirely handmade tool that continues to be an incredible pillar of the community.
+
 ## Architecture
 
 ```
@@ -69,7 +77,3 @@ The server is runtime-independent. For a full local stack:
    npm install
    npm run dev
    ```
-
-## A message from the author
-
-These projects are intended as resources for the Pathfinder community to use as they desire. They are free and open source and will remain so forever. These projects are made with extensive use of AI coding agents; I know this is a contentious issue among the community, for a number of valid reasons. I can say that these have been built with reasonable diligence and care, but I understand this will not assuage the concerns of many. For those that find any AI unacceptable (and frankly, everyone), I would encourage you to use and, importantly, support [Pathbuilder 2e](https://pathbuilder.app), an entirely handmade tool that continues to be an incredible pillar of the community.
