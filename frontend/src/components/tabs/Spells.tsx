@@ -44,12 +44,7 @@ export function Spells({ items, characterLevel }: Props): React.ReactElement {
       onMouseOut={uuidHover.delegationHandlers.onMouseOut}
     >
       {entries.map((entry) => (
-        <EntryBlock
-          key={entry.id}
-          entry={entry}
-          spells={byEntry.get(entry.id) ?? []}
-          characterLevel={characterLevel}
-        />
+        <EntryBlock key={entry.id} entry={entry} spells={byEntry.get(entry.id) ?? []} characterLevel={characterLevel} />
       ))}
       {orphans.length > 0 && (
         <div data-testid="spells-orphans">
@@ -121,11 +116,7 @@ function RankedSpellList({
   return (
     <div className="space-y-4">
       {cantrips.length > 0 && (
-        <RankGroup
-          label="Cantrips"
-          spells={[...cantrips].sort(sortByName)}
-          characterLevel={characterLevel}
-        />
+        <RankGroup label="Cantrips" spells={[...cantrips].sort(sortByName)} characterLevel={characterLevel} />
       )}
       {ranks.map((r) => (
         <RankGroup
@@ -160,21 +151,13 @@ function RankGroup({
   );
 }
 
-function SpellCard({
-  spell,
-  characterLevel,
-}: {
-  spell: SpellItem;
-  characterLevel: number;
-}): React.ReactElement {
+function SpellCard({ spell, characterLevel }: { spell: SpellItem; characterLevel: number }): React.ReactElement {
   const traits = spell.system.traits.value.filter((t) => t !== 'cantrip');
   const castCost = formatCastCost(spell.system.time?.value);
   const description = spell.system.description?.value ?? '';
   const heightening = computeHeighteningStep(spell, characterLevel);
   const enriched =
-    description.length > 0
-      ? enrichDescription(description, heightening !== null ? { heightening } : undefined)
-      : '';
+    description.length > 0 ? enrichDescription(description, heightening !== null ? { heightening } : undefined) : '';
 
   return (
     <li
@@ -269,10 +252,7 @@ function effectiveRank(spell: SpellItem, characterLevel: number): number {
 // spell isn't heightened above its base rank, lacks interval-type
 // heightening, or exposes no damage step — those cases render the
 // description unchanged.
-function computeHeighteningStep(
-  spell: SpellItem,
-  characterLevel: number,
-): { delta: number; perStep: string } | null {
+function computeHeighteningStep(spell: SpellItem, characterLevel: number): { delta: number; perStep: string } | null {
   const base = spell.system.level.value;
   const cast = effectiveRank(spell, characterLevel);
   const delta = cast - base;

@@ -115,8 +115,8 @@ export function AbilityBoostPicker({
           </button>
         </header>
         <p className="border-b border-pf-border px-4 py-2 text-xs text-pf-alt">
-          Pick {BOOSTS_PER_SET} distinct abilities to boost.{' '}
-          <span className="tabular-nums">{selected.length}</span>/{BOOSTS_PER_SET} selected.
+          Pick {BOOSTS_PER_SET} distinct abilities to boost. <span className="tabular-nums">{selected.length}</span>/
+          {BOOSTS_PER_SET} selected.
         </p>
         <div className="grid flex-1 grid-cols-2 gap-2 overflow-y-auto p-4 sm:grid-cols-3">
           {ABILITY_KEYS.map((key) => {

@@ -69,11 +69,7 @@ function FeatCard({ feat }: { feat: FeatItem }): React.ReactElement {
     .filter((v) => typeof v === 'string' && v.length > 0);
 
   return (
-    <li
-      className="relative"
-      data-item-id={feat.id}
-      data-feat-slug={feat.system.slug ?? ''}
-    >
+    <li className="relative" data-item-id={feat.id} data-feat-slug={feat.system.slug ?? ''}>
       <details className="group rounded border border-pf-border bg-white open:rounded-b-none open:border-pf-primary/60 open:shadow-lg">
         <summary className="flex cursor-pointer list-none items-start gap-3 px-3 py-2 hover:bg-pf-bg-dark/40">
           <img

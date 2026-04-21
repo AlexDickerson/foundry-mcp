@@ -23,10 +23,7 @@ interface HoverLevel {
   anchorRect: DOMRect;
 }
 
-type DocState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; doc: CompendiumDocument }
-  | { kind: 'error'; message: string };
+type DocState = { kind: 'loading' } | { kind: 'ready'; doc: CompendiumDocument } | { kind: 'error'; message: string };
 
 const POPOVER_WIDTH = 420;
 const POPOVER_GAP = 6;
@@ -154,8 +151,12 @@ export function useUuidHover(): {
   };
 
   useEffect(() => {
-    const overProxy = (e: MouseEvent): void => { latestHandlersRef.current.over(e); };
-    const outProxy = (e: MouseEvent): void => { latestHandlersRef.current.out(e); };
+    const overProxy = (e: MouseEvent): void => {
+      latestHandlersRef.current.over(e);
+    };
+    const outProxy = (e: MouseEvent): void => {
+      latestHandlersRef.current.out(e);
+    };
     const attached: HTMLDivElement[] = [];
     for (const el of popoverElsRef.current.values()) {
       el.addEventListener('mouseover', overProxy);
@@ -271,7 +272,8 @@ function DocPreview({ doc }: { doc: CompendiumDocument }): React.ReactElement {
     traits?: { value?: unknown };
   };
   const description = typeof sys.description?.value === 'string' ? sys.description.value : '';
-  const level = typeof sys.level === 'number' ? sys.level : typeof sys.level?.value === 'number' ? sys.level.value : undefined;
+  const level =
+    typeof sys.level === 'number' ? sys.level : typeof sys.level?.value === 'number' ? sys.level.value : undefined;
   const traitsRaw = sys.traits?.value;
   const traits = Array.isArray(traitsRaw) ? traitsRaw.filter((v): v is string => typeof v === 'string') : [];
 

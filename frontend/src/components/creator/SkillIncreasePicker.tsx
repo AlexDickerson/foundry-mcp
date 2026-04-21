@@ -108,7 +108,11 @@ export function SkillIncreasePicker({ level, characterContext, onPick, onClose }
                   disabled={!s.canIncrease}
                   data-skill={s.slug}
                   aria-pressed={isSelected}
-                  title={s.canIncrease ? undefined : `Already at ${RANK_LABEL[s.rank]} — can't advance at L${level.toString()}`}
+                  title={
+                    s.canIncrease
+                      ? undefined
+                      : `Already at ${RANK_LABEL[s.rank]} — can't advance at L${level.toString()}`
+                  }
                   onClick={(): void => {
                     setSelected(s.slug);
                   }}

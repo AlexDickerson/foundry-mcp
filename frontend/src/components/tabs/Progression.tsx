@@ -514,11 +514,7 @@ function FeatureChip({
             className="z-50 rounded border border-pf-border bg-pf-bg p-4 text-left shadow-xl"
           >
             <div className="mb-2 flex items-center gap-2">
-              <img
-                src={feature.img}
-                alt=""
-                className="h-10 w-10 rounded border border-pf-border bg-pf-bg-dark"
-              />
+              <img src={feature.img} alt="" className="h-10 w-10 rounded border border-pf-border bg-pf-bg-dark" />
               <div className="min-w-0 flex-1">
                 <h4 className="font-serif text-base font-semibold text-pf-text">{feature.name}</h4>
                 <p className="text-[10px] uppercase tracking-widest text-pf-alt">Level {feature.level}</p>
@@ -649,15 +645,7 @@ function SlotChips({
   );
 }
 
-function PickedChip({
-  slot,
-  pick,
-  onClear,
-}: {
-  slot: SlotType;
-  pick: Pick;
-  onClear: () => void;
-}): React.ReactElement {
+function PickedChip({ slot, pick, onClear }: { slot: SlotType; pick: Pick; onClear: () => void }): React.ReactElement {
   const body = renderPickBody(pick);
   const title = renderPickTitle(slot, pick);
   return (
@@ -696,11 +684,7 @@ function renderPickBody(pick: Pick): React.ReactElement {
         </span>
       );
     case 'ability-boosts':
-      return (
-        <span className="max-w-[20ch] truncate">
-          {pick.abilities.map((a) => a.toUpperCase()).join(' · ')}
-        </span>
-      );
+      return <span className="max-w-[20ch] truncate">{pick.abilities.map((a) => a.toUpperCase()).join(' · ')}</span>;
   }
 }
 

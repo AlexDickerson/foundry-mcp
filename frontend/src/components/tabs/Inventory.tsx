@@ -79,13 +79,7 @@ export function Inventory({ items }: Props): React.ReactElement {
   );
 }
 
-function ViewToggle({
-  view,
-  onChange,
-}: {
-  view: ViewMode;
-  onChange: (v: ViewMode) => void;
-}): React.ReactElement {
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }): React.ReactElement {
   const base = 'px-2 py-1 text-xs font-medium uppercase tracking-widest transition-colors';
   const active = 'bg-pf-primary text-white';
   const inactive = 'text-pf-alt-dark hover:bg-pf-bg-dark/60';
@@ -100,7 +94,9 @@ function ViewToggle({
         type="button"
         className={`${base} ${view === 'grid' ? active : inactive}`}
         aria-pressed={view === 'grid'}
-        onClick={(): void => { onChange('grid'); }}
+        onClick={(): void => {
+          onChange('grid');
+        }}
       >
         Grid
       </button>
@@ -108,7 +104,9 @@ function ViewToggle({
         type="button"
         className={`${base} border-l border-pf-border ${view === 'list' ? active : inactive}`}
         aria-pressed={view === 'list'}
-        onClick={(): void => { onChange('list'); }}
+        onClick={(): void => {
+          onChange('list');
+        }}
       >
         List
       </button>
@@ -228,21 +226,14 @@ function GridTile({ item }: { item: PhysicalItem }): React.ReactElement {
       <details className="group">
         <summary className="flex cursor-pointer list-none flex-col items-center gap-1 rounded border border-pf-border bg-white p-2 text-center hover:bg-pf-bg-dark/40 group-open:border-pf-primary/60 group-open:shadow-lg">
           <div className="relative">
-            <img
-              src={item.img}
-              alt=""
-              className="h-14 w-14 rounded border border-pf-border bg-pf-bg-dark"
-            />
+            <img src={item.img} alt="" className="h-14 w-14 rounded border border-pf-border bg-pf-bg-dark" />
             {item.system.quantity > 1 && (
               <span className="absolute -right-1 -top-1 rounded bg-pf-primary px-1 text-[10px] font-semibold text-white shadow">
                 ×{item.system.quantity}
               </span>
             )}
           </div>
-          <span
-            className="line-clamp-2 text-[11px] font-medium leading-tight text-pf-text"
-            title={item.name}
-          >
+          <span className="line-clamp-2 text-[11px] font-medium leading-tight text-pf-text" title={item.name}>
             {item.name}
           </span>
           <div className="flex min-h-[16px] flex-wrap justify-center gap-1">

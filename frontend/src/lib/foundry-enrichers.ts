@@ -241,7 +241,10 @@ function heightenDamageContent(content: string, perStep: string, delta: number):
   if (step === null) return null;
   if (firstExpr.die !== step.die) return null; // only merge same die
   const newCount = firstExpr.count + step.count * delta;
-  const rebuilt = firstExpr.const === 0 ? `${newCount.toString()}d${firstExpr.die.toString()}` : `${newCount.toString()}d${firstExpr.die.toString()}+${firstExpr.const.toString()}`;
+  const rebuilt =
+    firstExpr.const === 0
+      ? `${newCount.toString()}d${firstExpr.die.toString()}`
+      : `${newCount.toString()}d${firstExpr.die.toString()}+${firstExpr.const.toString()}`;
   // Splice the rewritten dice back in. `match` is the exact text we
   // matched against so a regex-free replace keeps nested brackets
   // unharmed.

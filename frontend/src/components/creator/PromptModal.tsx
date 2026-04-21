@@ -28,9 +28,7 @@ type DetailState =
 export function PromptModal({ prompt }: Props): React.ReactElement {
   const { payload } = prompt;
   const [resolving, setResolving] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(
-    payload.choices.length > 0 ? 0 : null,
-  );
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(payload.choices.length > 0 ? 0 : null);
   const [detail, setDetail] = useState<DetailState>({ kind: 'idle' });
   // Cache docs across selection changes so toggling back is instant
   // and avoids duplicate round-trips.
@@ -50,7 +48,7 @@ export function PromptModal({ prompt }: Props): React.ReactElement {
 
   // Fetch the full document whenever a UUID-valued choice is selected.
   // Non-UUID selections idle the detail panel.
-  const selectedChoice = selectedIndex !== null ? payload.choices[selectedIndex] ?? null : null;
+  const selectedChoice = selectedIndex !== null ? (payload.choices[selectedIndex] ?? null) : null;
   const selectedUuid = selectedChoice !== null ? extractUuid(selectedChoice.value) : null;
   useEffect(() => {
     if (selectedUuid === null) {
@@ -60,11 +58,10 @@ export function PromptModal({ prompt }: Props): React.ReactElement {
     }
     const cached = docCache.current.get(selectedUuid);
     if (cached !== undefined) {
-       
       setDetail({ kind: 'ready', uuid: selectedUuid, doc: cached });
       return;
     }
-     
+
     setDetail({ kind: 'loading', uuid: selectedUuid });
     let cancelled = false;
     void api
@@ -145,12 +142,12 @@ export function PromptModal({ prompt }: Props): React.ReactElement {
                         <button
                           type="button"
                           disabled={resolving}
-                          onClick={(): void => { setSelectedIndex(index); }}
+                          onClick={(): void => {
+                            setSelectedIndex(index);
+                          }}
                           className={[
                             'flex w-full items-center gap-2 px-3 py-2 text-left text-sm disabled:opacity-50',
-                            isActive
-                              ? 'bg-pf-primary/10 text-pf-primary'
-                              : 'text-pf-text hover:bg-pf-bg-dark/40',
+                            isActive ? 'bg-pf-primary/10 text-pf-primary' : 'text-pf-text hover:bg-pf-bg-dark/40',
                           ].join(' ')}
                         >
                           {c.img !== null && (
@@ -172,11 +169,7 @@ export function PromptModal({ prompt }: Props): React.ReactElement {
 
           {/* Detail pane */}
           <div className="flex-1 overflow-y-auto p-4">
-            <DetailPane
-              choice={selectedChoice}
-              uuid={selectedUuid}
-              state={detail}
-            />
+            <DetailPane choice={selectedChoice} uuid={selectedUuid} state={detail} />
           </div>
         </div>
 
@@ -262,22 +255,14 @@ function DocDetail({ doc }: { doc: CompendiumDocument }): React.ReactElement {
   };
   const description = typeof sys.description?.value === 'string' ? sys.description.value : '';
   const level =
-    typeof sys.level === 'number'
-      ? sys.level
-      : typeof sys.level?.value === 'number'
-        ? sys.level.value
-        : undefined;
+    typeof sys.level === 'number' ? sys.level : typeof sys.level?.value === 'number' ? sys.level.value : undefined;
   const traitsRaw = sys.traits?.value;
   const traits = Array.isArray(traitsRaw) ? traitsRaw.filter((v): v is string => typeof v === 'string') : [];
   return (
     <div>
       <div className="mb-3 flex items-start gap-3">
         {doc.img && (
-          <img
-            src={doc.img}
-            alt=""
-            className="h-12 w-12 flex-shrink-0 rounded border border-pf-border bg-pf-bg-dark"
-          />
+          <img src={doc.img} alt="" className="h-12 w-12 flex-shrink-0 rounded border border-pf-border bg-pf-bg-dark" />
         )}
         <div className="min-w-0 flex-1">
           <h3 className="font-serif text-base font-semibold text-pf-text">{doc.name}</h3>

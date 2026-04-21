@@ -102,16 +102,14 @@ export const api = {
       quantity?: number;
       systemOverrides?: Record<string, unknown>;
     },
-  ): Promise<ActorItemRef> =>
-    request<ActorItemRef>(`/actors/${id}/items/from-compendium`, { method: 'POST', body }),
+  ): Promise<ActorItemRef> => request<ActorItemRef>(`/actors/${id}/items/from-compendium`, { method: 'POST', body }),
   deleteActorItem: (id: string, itemId: string): Promise<{ success: boolean }> =>
     request<{ success: boolean }>(`/actors/${id}/items/${itemId}`, { method: 'DELETE' }),
   updateActorItem: (
     id: string,
     itemId: string,
     patch: { name?: string; img?: string; system?: Record<string, unknown> },
-  ): Promise<ActorItemRef> =>
-    request<ActorItemRef>(`/actors/${id}/items/${itemId}`, { method: 'PATCH', body: patch }),
+  ): Promise<ActorItemRef> => request<ActorItemRef>(`/actors/${id}/items/${itemId}`, { method: 'PATCH', body: patch }),
   resolvePrompt: (bridgeId: string, value: unknown): Promise<{ ok: boolean }> =>
     request<{ ok: boolean }>(`/prompts/${bridgeId}/resolve`, { method: 'POST', body: { value } }),
   listCompendiumSources: (

@@ -288,12 +288,11 @@ export function FeatPicker({ title, filters, characterContext, onPick, onClose }
     }
     const cached = docCacheRef.current.get(detailTarget.uuid);
     if (cached) {
-       
       setDetail({ kind: 'ready', doc: cached });
       return;
     }
     let cancelled = false;
-     
+
     setDetail({ kind: 'loading', uuid: detailTarget.uuid });
     api
       .getCompendiumDocument(detailTarget.uuid)
@@ -897,7 +896,7 @@ function DetailPanel({
       const cached = prereqCache.current.get(p.toLowerCase());
       if (cached !== undefined) initial.set(p, cached);
     }
-     
+
     setPrereqResolutions(initial);
 
     // The prefetch usually has these cached already, but fall back to
