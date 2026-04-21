@@ -8,8 +8,8 @@ import { log } from './logger.js';
 import { registerTools } from './tools/index.js';
 import { buildHttpApp } from './http/app.js';
 
-// REST surface for the character-creator frontend. Routed at /api/* alongside
-// the existing /mcp, /logs, /health endpoints on the same HTTP port.
+// Fastify app — handles /api/*, /healthz, static SPA assets, and SPA
+// fallback for unmatched GETs. Routed from the parent http.Server below.
 const httpApp = await buildHttpApp();
 
 // ---------------------------------------------------------------------------
@@ -43,18 +43,17 @@ async function createSession(): Promise<StreamableHTTPServerTransport> {
 }
 
 // ---------------------------------------------------------------------------
-// HTTP Server — routes MCP traffic and Foundry WS upgrades
+// HTTP Server — routes MCP traffic and Foundry WS upgrades. Everything else
+// falls through to the Fastify app (/api/*, /healthz, SPA assets, fallback).
 // ---------------------------------------------------------------------------
 
 const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-  // REST API for the character-creator frontend
-  if (req.url?.startsWith('/api/') || req.url === '/api') {
-    httpApp.routing(req, res);
-    return;
-  }
+  // Strip query string for path-only matching.
+  const path = (req.url ?? '').split('?')[0] ?? '';
 
-  // MCP Streamable HTTP endpoint
-  if (req.url === '/mcp' || req.url === '/') {
+  // MCP Streamable HTTP endpoint. Previously `/` was also accepted as a
+  // convenience alias; dropped now so the SPA can live at the root path.
+  if (path === '/mcp') {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     let transport: StreamableHTTPServerTransport;
 
@@ -80,17 +79,18 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
     return;
   }
 
-  // Server logs
-  if (req.url?.startsWith('/logs')) {
-    const url = new URL(req.url, `http://${req.headers.host}`);
+  // Server logs (legacy).
+  if (path.startsWith('/logs')) {
+    const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
     const n = parseInt(url.searchParams.get('n') ?? '50', 10);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(log.tail(n)));
     return;
   }
 
-  // Health probe
-  if (req.url === '/health') {
+  // Rich health probe — keeps bridge/session state. `/healthz` (the
+  // lightweight container probe) is handled inside the Fastify app.
+  if (path === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(
       JSON.stringify({
@@ -102,8 +102,9 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
     return;
   }
 
-  res.writeHead(404);
-  res.end('Not found');
+  // Everything else — /api/*, /healthz, static SPA assets, SPA fallback —
+  // goes through Fastify.
+  httpApp.routing(req, res);
 });
 
 httpServer.on('upgrade', (req, socket, head) => {
@@ -123,6 +124,7 @@ httpServer.listen(PORT, HOST, () => {
   log.info(`  MCP endpoint: http://${HOST}:${PORT}/mcp`);
   log.info(`  REST API:     http://${HOST}:${PORT}/api/`);
   log.info(`  Foundry WS:   ws://${HOST}:${PORT}/foundry`);
-  log.info(`  Health:       http://${HOST}:${PORT}/health`);
+  log.info(`  Health:       http://${HOST}:${PORT}/health (rich) and /healthz (probe)`);
   log.info(`  Logs:         http://${HOST}:${PORT}/logs`);
+  log.info(`  SPA:          http://${HOST}:${PORT}/`);
 });
