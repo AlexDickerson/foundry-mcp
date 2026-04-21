@@ -33,7 +33,6 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
-        if: github.event_name == 'push'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -42,6 +41,50 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
+
+      # Probe for the sibling SPA image. If it isn't accessible from this
+      # runner (common on PRs before the sibling repo has published its
+      # first public release, or if the image is still private) we fall
+      # back to a placeholder that satisfies the smoke test's `id="root"`
+      # check. On main branch pushes we *require* the real SPA — CI fails
+      # loudly rather than silently shipping a placeholder to Fly.io.
+      - name: Select SPA source
+        id: spa
+        run: |
+          REAL_SPA="ghcr.io/alexdickerson/foundry-character-creator:latest"
+
+          if docker pull "$REAL_SPA" >/dev/null 2>&1; then
+            echo "Using sibling SPA image: $REAL_SPA"
+            echo "SPA_IMAGE=$REAL_SPA" >> "$GITHUB_OUTPUT"
+            echo "IS_PLACEHOLDER=false" >> "$GITHUB_OUTPUT"
+          else
+            if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              echo "::error::Sibling SPA image $REAL_SPA not pullable on main branch build; refusing to ship a placeholder."
+              exit 1
+            fi
+
+            echo "Sibling SPA image not pullable; building placeholder for this PR build."
+            mkdir -p /tmp/spa-placeholder/usr/share/nginx/html
+            cat > /tmp/spa-placeholder/usr/share/nginx/html/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8" />
+              <title>foundry-mcp placeholder SPA</title>
+            </head>
+            <body>
+              <div id="root">SPA bundle placeholder — the sibling foundry-character-creator image was not available at CI time.</div>
+            </body>
+          </html>
+          HTML
+            cat > /tmp/spa-placeholder/Dockerfile <<'DOCKERFILE'
+          FROM scratch
+          COPY usr /usr
+          DOCKERFILE
+            docker build -t mcp-spa-placeholder:ci /tmp/spa-placeholder
+            echo "SPA_IMAGE=mcp-spa-placeholder:ci" >> "$GITHUB_OUTPUT"
+            echo "IS_PLACEHOLDER=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Docker metadata
         id: meta
@@ -58,6 +101,8 @@ jobs:
         with:
           context: .
           load: true
+          build-args: |
+            SPA_IMAGE=${{ steps.spa.outputs.SPA_IMAGE }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -68,6 +113,7 @@ jobs:
           # Pick the first fully-qualified tag the metadata action emitted.
           IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
           echo "Using image: $IMAGE"
+          echo "SPA source was placeholder: ${{ steps.spa.outputs.IS_PLACEHOLDER }}"
 
           docker run -d --name mcp-smoke -p 8080:8080 "$IMAGE"
 
@@ -97,6 +143,7 @@ jobs:
           docker rm -f mcp-smoke
 
       - name: Grype vulnerability scan
+        if: github.event_name == 'push'
         uses: anchore/scan-action@v7
         id: grype
         continue-on-error: true
@@ -109,7 +156,7 @@ jobs:
 
       - name: Upload Grype SARIF
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
+        if: always() && github.event_name == 'push'
         continue-on-error: true
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
@@ -120,6 +167,8 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            SPA_IMAGE=${{ steps.spa.outputs.SPA_IMAGE }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

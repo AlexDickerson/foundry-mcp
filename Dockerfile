@@ -26,8 +26,11 @@ RUN npm prune --omit=dev
 # -- Static SPA assets --
 # Sibling repo publishes the built SPA as a public image with index.html +
 # assets/ under /usr/share/nginx/html. We just need the files; we don't run
-# this image, we COPY --from it.
-FROM ghcr.io/alexdickerson/foundry-character-creator:latest AS spa
+# this image, we COPY --from it. SPA_IMAGE is overridable so PR CI (where
+# the sibling image isn't accessible anonymously yet) can substitute a
+# placeholder built inline — see .github/workflows/docker.yml.
+ARG SPA_IMAGE=ghcr.io/alexdickerson/foundry-character-creator:latest
+FROM ${SPA_IMAGE} AS spa
 
 
 # -- Runtime: node 20 alpine with compiled JS + SPA + production node_modules --
