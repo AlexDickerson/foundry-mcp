@@ -110,12 +110,7 @@ export async function findInCompendiumHandler(params: FindInCompendiumParams): P
   // (source filter + display-ready), and the heritage ancestry link
   // (used both for the `ancestrySlug` filter and for surfacing the
   // `isVersatile` flag on heritage results so the picker can group).
-  const indexFields = [
-    'system.traits.value',
-    'system.level.value',
-    'system.publication.title',
-    'system.ancestry.slug',
-  ];
+  const indexFields = ['system.traits.value', 'system.level.value', 'system.publication.title', 'system.ancestry.slug'];
 
   // Collect all candidate packs first so we can await getIndex for each in
   // sequence — packs have internal caching so the cost is bounded by the
