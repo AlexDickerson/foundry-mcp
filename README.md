@@ -5,27 +5,40 @@ Self-hosted MCP server that bridges Claude (or any MCP client) to a live Foundry
 ## Architecture
 
 ```
-MCP Client ──HTTP──> foundry-mcp server ──WebSocket──> Foundry API Bridge module (in GM browser)
-                          (server.ad:8765)                      (Foundry VTT v13)
+MCP client ──HTTP──> foundry-mcp server ──WebSocket──> foundry-api-bridge (in GM browser)
+                         (host:8765)                        (Foundry VTT v13+)
+                    │
+                    └──REST /api/*──> foundry-character-creator (React SPA)
 ```
 
-- **`server/`** — Node.js MCP server using Streamable HTTP transport. Accepts MCP tool calls, translates them to Foundry commands, and relays them over a WebSocket to the GM's browser session. Also handles asset uploads directly to the Foundry data directory.
-- **`module/`** — Forked Foundry VTT module that runs in the GM's browser tab. Receives commands via WebSocket, executes them against the Foundry API, and returns results.
+- **This repo (`foundry-mcp`)** — Node.js MCP server using Streamable HTTP transport. Accepts MCP tool calls, translates them to Foundry commands, and relays them over a WebSocket to the GM's browser session. Also exposes a Fastify REST surface at `/api/*` for the character-creator UI, and handles asset uploads directly to the Foundry data directory.
+- **[foundry-api-bridge](https://github.com/AlexDickerson/foundry-api-bridge)** — Foundry VTT module that runs in the GM's browser tab. Receives commands via WebSocket, executes them against the Foundry API, returns results. Ships with its own Docker image that layers the module onto `felddy/foundryvtt`.
+- **[foundry-character-creator](https://github.com/AlexDickerson/foundry-character-creator)** — React SPA that consumes this server's `/api/*` endpoints for a Pathfinder 2e character creator/viewer.
 
 ## MCP Tools
 
-| Tool | Description |
-|------|-------------|
-| `get_scenes_list` | List all scenes with id, name, active status |
-| `get_scene` | Full scene detail: grid, tokens, walls, lights, notes, ASCII map |
-| `activate_scene` | Set a scene as active for all players |
-| `capture_scene` | WebP screenshot of the active scene canvas |
-| `create_scene` | Create a new scene with background image and grid settings |
-| `upload_asset` | Upload a file (image, audio) to the Foundry data directory |
+| Tool              | Description                                                      |
+| ----------------- | ---------------------------------------------------------------- |
+| `get_scenes_list` | List all scenes with id, name, active status                     |
+| `get_scene`       | Full scene detail: grid, tokens, walls, lights, notes, ASCII map |
+| `activate_scene`  | Set a scene as active for all players                            |
+| `capture_scene`   | WebP screenshot of the active scene canvas                       |
+| `create_scene`    | Create a new scene with background image and grid settings       |
+| `upload_asset`    | Upload a file (image, audio) to the Foundry data directory       |
+
+(And more — see `src/tools/` for the full surface.)
 
 ## Setup
 
-The MCP server runs as a systemd user service on the Foundry host:
+Copy `.env.example` to `.env` and fill in `OPENAI_API_KEY`.
+
+```bash
+npm install
+npm run dev                          # Development
+npm run build && npm start           # Production
+```
+
+The server runs as a systemd user service on the production Foundry host:
 
 ```bash
 systemctl --user status foundry-mcp    # check status
@@ -33,32 +46,26 @@ systemctl --user restart foundry-mcp   # restart
 journalctl --user -u foundry-mcp -f    # tail logs
 ```
 
-MCP clients connect to `http://server.ad:8765/mcp`. The Foundry module connects its WebSocket to `ws://server.ad:8765/foundry`.
+MCP clients connect to `http://<host>:8765/mcp`. The Foundry module connects its WebSocket to `ws://<host>:8765/foundry`.
 
-## Local development (Docker Desktop)
+## Local development
 
-Run the whole stack on the dev machine instead of deploying to the remote server. Useful for iterating on module/server code without the rsync round-trip that `dev.sh` performs.
+The server is runtime-independent. For a full local stack:
 
-```bash
-cp .env.example .env         # fill in FOUNDRY_USERNAME/PASSWORD/OPENAI_API_KEY
-./local.sh up                # build image, deps, dist, start container
-# open http://localhost:30000 and set up a world
-
-# after editing module/ or server/ code:
-./local.sh rebuild           # rebuild dist + restart container (seconds)
-
-./local.sh logs              # tail container logs
-./local.sh status            # container + MCP health
-./local.sh stop              # keep data
-./local.sh nuke              # destroy the data volume (asks first)
-```
-
-Data lives in a named Docker volume (`foundry-data-local`) by default, so the workflow is OS-portable. Set `FOUNDRY_DATA=/some/host/path` in `.env` to bind to a host path instead. Ports default to 30000/8765 and can be overridden via `FOUNDRY_PORT` / `MCP_PORT` if you already have a production container running on the same machine.
-
-The image is built from the checked-out `Dockerfile` — `./local.sh up` will also rebuild it if the Dockerfile changes. For source-only changes, `./local.sh rebuild` just refreshes the bind-mounted `dist/` directories and restarts.
-
-## Acknowledgments
-
-The Foundry VTT module in `module/` is a fork of [foundry-api-bridge](https://github.com/alexivenkov/foundry-api-bridge-module) v7.7.0 by [Alex Ivenkov](https://github.com/alexivenkov) (AI DM Project), licensed under MIT.
-
-The fork removes all upstream SaaS connectivity (Patreon auth flow, auto-update manifest, external WebSocket default) and adds a `create-scene` command handler. All modifications are documented in [`module/PATCHES.md`](module/PATCHES.md). The original license and copyright are preserved in `module/LICENSE`.
+1. Start the Foundry + module container from the [foundry-api-bridge](https://github.com/AlexDickerson/foundry-api-bridge) repo:
+   ```bash
+   cd ../foundry-api-bridge
+   ./local.sh up
+   ```
+2. Run the server here (in this repo):
+   ```bash
+   npm install
+   npm run dev
+   ```
+3. In Foundry, enable the foundry-api-bridge module and set the WebSocket URL to `ws://localhost:8765/foundry`.
+4. (Optional) Start the character-creator SPA from [foundry-character-creator](https://github.com/AlexDickerson/foundry-character-creator):
+   ```bash
+   cd ../foundry-character-creator
+   npm install
+   npm run dev
+   ```

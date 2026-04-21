@@ -3,6 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   lint-and-typecheck:
@@ -15,89 +16,18 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Install module dependencies
-        run: npm ci
-        working-directory: module
-
-      - name: Install server dependencies
-        run: npm ci
-        working-directory: server
-
-      - name: Install frontend dependencies
-        run: npm ci
-        working-directory: frontend
-
-      - name: Audit root dependencies
+      - name: Audit dependencies
         run: npm audit --audit-level=high
         continue-on-error: true
 
-      - name: Audit module dependencies
-        run: npm audit --audit-level=high
-        continue-on-error: true
-        working-directory: module
-
-      - name: Audit server dependencies
-        run: npm audit --audit-level=high
-        continue-on-error: true
-        working-directory: server
-
-      - name: Audit frontend dependencies
-        run: npm audit --audit-level=high
-        continue-on-error: true
-        working-directory: frontend
-
-      - name: Lint module
+      - name: Lint
         run: npm run lint
-        working-directory: module
 
-      - name: Lint server
-        run: npm run lint
-        working-directory: server
-
-      - name: Lint frontend
-        run: npm run lint
-        working-directory: frontend
-
-      - name: Type-check module
-        run: npm run type-check
-        working-directory: module
-
-      - name: Build server (type-check)
+      - name: Build (type-check)
         run: npm run build
-        working-directory: server
-
-      - name: Type-check frontend
-        run: npm run typecheck
-        working-directory: frontend
 
       - name: Prettier check
-        run: npx prettier --check "module/src/**/*.ts" "server/src/**/*.ts" "frontend/src/**/*.{ts,tsx}"
-
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 20
-
-      - name: Install module dependencies
-        run: npm ci
-        working-directory: module
-
-      - name: Install frontend dependencies
-        run: npm ci
-        working-directory: frontend
-
-      - name: Run module tests
-        run: npm test
-        working-directory: module
-
-      - name: Run frontend tests
-        run: npm test
-        working-directory: frontend
+        run: npx prettier --check "src/**/*.ts"
