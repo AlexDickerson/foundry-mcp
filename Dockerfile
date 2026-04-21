@@ -5,6 +5,12 @@
 #          (pulled from the sibling foundry-character-creator GHCR image).
 # =============================================================================
 
+# SPA source image. Declared BEFORE the first FROM so it's in global scope
+# and usable in subsequent `FROM ${SPA_IMAGE}` lines. Overridable via
+# `--build-arg SPA_IMAGE=...` — see .github/workflows/docker.yml for the
+# CI fallback behaviour when the sibling image isn't reachable.
+ARG SPA_IMAGE=ghcr.io/alexdickerson/foundry-character-creator:latest
+
 # -- Build: compile TypeScript --
 FROM node:20-alpine AS build
 
@@ -24,12 +30,9 @@ RUN npm prune --omit=dev
 
 
 # -- Static SPA assets --
-# Sibling repo publishes the built SPA as a public image with index.html +
+# Sibling repo publishes the built SPA as an image with index.html +
 # assets/ under /usr/share/nginx/html. We just need the files; we don't run
-# this image, we COPY --from it. SPA_IMAGE is overridable so PR CI (where
-# the sibling image isn't accessible anonymously yet) can substitute a
-# placeholder built inline — see .github/workflows/docker.yml.
-ARG SPA_IMAGE=ghcr.io/alexdickerson/foundry-character-creator:latest
+# this image, we COPY --from it.
 FROM ${SPA_IMAGE} AS spa
 
 
