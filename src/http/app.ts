@@ -6,6 +6,7 @@ import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { log } from '../logger.js';
 import { registerActorRoutes } from './routes/actors.js';
+import { registerAssetRoutes } from './routes/assets.js';
 import { registerCompendiumRoutes } from './routes/compendium.js';
 import { registerEvalRoutes } from './routes/eval.js';
 import { registerPromptRoutes } from './routes/prompts.js';
@@ -76,8 +77,11 @@ export async function buildHttpApp(): Promise<FastifyInstance> {
 
   // NOTE: route registration order matters. /api/* and /healthz are
   // registered BEFORE @fastify/static so they take precedence over the
-  // static plugin's wildcard catch-all.
+  // static plugin's wildcard catch-all. The asset-proxy prefixes
+  // (/icons, /systems, /modules, /worlds, /ui) must also register
+  // before @fastify/static so they beat the SPA fallback.
   registerActorRoutes(app);
+  registerAssetRoutes(app);
   registerCompendiumRoutes(app);
   registerEvalRoutes(app);
   registerPromptRoutes(app);

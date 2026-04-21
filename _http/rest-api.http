@@ -143,3 +143,21 @@ Content-Type: application/json
 {
   "script": ""
 }
+
+###############################################################################
+# Asset proxy — browser-friendly GETs for Foundry asset paths. The SPA
+# loads actor `img` fields as relative URLs; these routes fetch the asset
+# through the WebSocket bridge and serve the decoded bytes with an
+# immutable Cache-Control header.
+###############################################################################
+
+### PF2e iconic portrait (any Foundry data path under the whitelisted
+### prefixes — /icons, /systems, /modules, /worlds, /ui — works).
+GET {{host}}/systems/pf2e/icons/iconics/portraits/amiri.webp
+
+### 503 — bridge-disconnected check (expect this when Foundry is off)
+GET {{host}}/systems/pf2e/icons/does-not-exist.webp
+
+### Ops visibility — entry count, byte total, and hit rate for the
+### in-memory LRU that sits in front of these routes.
+GET {{host}}/api/_debug/asset-cache
