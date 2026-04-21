@@ -1,0 +1,126 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'fly.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.npmrc'
+      - 'src/**'
+      - 'tsconfig.json'
+      - '.github/workflows/docker.yml'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.version.outputs.VERSION }}
+            type=sha,format=short
+
+      - name: Build image (local)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test container
+        run: |
+          # Pick the first fully-qualified tag the metadata action emitted.
+          IMAGE=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          echo "Using image: $IMAGE"
+
+          docker run -d --name mcp-smoke -p 8080:8080 "$IMAGE"
+
+          # Wait for /healthz (up to ~30s).
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/healthz >/dev/null 2>&1; then
+              echo "healthz ok after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+          echo '--- /healthz ---'
+          curl -fsS -o /tmp/healthz.txt -w 'HTTP %{http_code}\n' http://127.0.0.1:8080/healthz
+          cat /tmp/healthz.txt
+          grep -q '^ok$' /tmp/healthz.txt
+
+          echo '--- / (SPA index) ---'
+          curl -fsS -o /tmp/index.html -w 'HTTP %{http_code}\n' http://127.0.0.1:8080/
+          head -c 500 /tmp/index.html
+          echo
+          grep -q 'id="root"' /tmp/index.html
+
+          echo '--- container logs ---'
+          docker logs mcp-smoke || true
+
+          docker rm -f mcp-smoke
+
+      - name: Grype vulnerability scan
+        uses: anchore/scan-action@v7
+        id: grype
+        continue-on-error: true
+        with:
+          image: ghcr.io/${{ github.repository }}:latest
+          fail-build: false
+          severity-cutoff: high
+          only-fixed: true
+          output-format: sarif
+
+      - name: Upload Grype SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: ${{ steps.grype.outputs.sarif }}
+
+      - name: Push image
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
