@@ -24,6 +24,12 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy to Fly.io
-        run: flyctl deploy --remote-only --image ghcr.io/${{ github.repository }}:latest
+        # GHCR is case-insensitive for discovery but Fly's machine API rejects
+        # uppercase in image identifiers. github.repository preserves the
+        # owner's original casing, so lowercase it before passing to flyctl.
+        run: |
+          IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):latest"
+          echo "deploying $IMAGE"
+          flyctl deploy --remote-only --image "$IMAGE"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
