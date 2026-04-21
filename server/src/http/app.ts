@@ -4,6 +4,7 @@ import { log } from '../logger.js';
 import { registerActorRoutes } from './routes/actors.js';
 import { registerCompendiumRoutes } from './routes/compendium.js';
 import { registerEvalRoutes } from './routes/eval.js';
+import { registerPromptRoutes } from './routes/prompts.js';
 
 export async function buildHttpApp(): Promise<FastifyInstance> {
   // We route `/api/*` requests into this Fastify instance from the parent
@@ -73,6 +74,7 @@ export async function buildHttpApp(): Promise<FastifyInstance> {
   registerActorRoutes(app);
   registerCompendiumRoutes(app);
   registerEvalRoutes(app);
+  registerPromptRoutes(app);
 
   await app.ready();
   return app;

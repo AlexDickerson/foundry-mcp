@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, cleanup, within } from '@testing-library/react';
+import { render, cleanup } from '@testing-library/react';
 import amiri from '../../fixtures/amiri-prepared.json';
 import type { PreparedActorItem } from '../../api/types';
 import { Feats } from './Feats';
@@ -33,8 +33,17 @@ describe('Feats tab', () => {
     const { container } = render(<Feats items={items} />);
     for (const [category, featNames] of Object.entries(EXPECTED)) {
       const section = container.querySelector(`[data-feat-category="${category}"]`);
+      // Look in the card's summary row only — expanded descriptions
+      // can contain @UUID links to other feats, which would otherwise
+      // make getByText match multiple elements.
+      const summaries = Array.from((section as HTMLElement).querySelectorAll('summary')).map(
+        (el) => el.textContent ?? '',
+      );
       for (const name of featNames) {
-        expect(within(section as HTMLElement).getByText(name), `${name} in ${category}`).toBeTruthy();
+        expect(
+          summaries.some((s) => s.includes(name)),
+          `${name} in ${category} (summaries: ${summaries.join(' | ')})`,
+        ).toBe(true);
       }
     }
   });
