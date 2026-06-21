@@ -12,7 +12,7 @@ jobs:
       should_release: ${{ steps.check.outputs.SHOULD_RELEASE }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Read version from package.json
         id: version
@@ -37,7 +37,7 @@ jobs:
     if: needs.check-version.outputs.should_release == 'true'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
